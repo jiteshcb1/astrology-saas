@@ -78,8 +78,9 @@ model Organization {
   createdAt   DateTime    @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime    @updatedAt @db.Timestamptz(6)
 
-  owner   User?       @relation("OrgOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
-  members OrgMember[]
+  owner        User?         @relation("OrgOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  members      OrgMember[]
+  subscription Subscription?
 
   @@map("organizations")
 }
@@ -183,4 +184,57 @@ model AuditLog {
   @@index([orgId, createdAt])
   @@index([resourceType, resourceId])
   @@map("audit_logs")
+}
+
+// ─── Billing (our subscription revenue) ──────────────────────────────────────
+// Platform-level (super-admin managed). Money is integer paise + explicit currency — never float.
+// subscription_plans is global; subscriptions is 1:1 with an org but managed by the super admin
+// + the SP-1.6 gateway/cron (no tenant-actor path), so it is NOT registered in tenantDb.
+
+enum BillingInterval {
+  monthly
+  yearly
+}
+
+enum SubscriptionStatus {
+  active
+  past_due
+  canceled
+}
+
+model SubscriptionPlan {
+  id              String          @id @default(cuid())
+  name            String
+  price           Int // paise — base price, includes `includedSeats` seats
+  currency        String          @default("INR")
+  billingInterval BillingInterval @default(monthly)
+  includedSeats   Int             @default(1)
+  perSeatPrice    Int             @default(0) // paise per seat beyond includedSeats
+  features        Json            @default("{}") // key→bool map (consumed by SP-1.5)
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime        @updatedAt @db.Timestamptz(6)
+
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                     String             @id @default(cuid())
+  orgId                  String             @unique
+  planId                 String
+  seatCount              Int                @default(1)
+  status                 SubscriptionStatus @default(active)
+  currentPeriodEnd       DateTime?          @db.Timestamptz(6) // set by SP-1.6 gateway
+  gatewaySubscriptionRef String? // set by SP-1.6
+  createdAt              DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt              DateTime           @updatedAt @db.Timestamptz(6)
+
+  organization Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  plan         SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@index([planId])
+  @@index([status])
+  @@map("subscriptions")
 }

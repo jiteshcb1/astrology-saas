@@ -6,7 +6,10 @@ export default async function ConsultantsPage() {
   // Super admin is cross-tenant by design; organizations is the tenant root (not org-scoped).
   const orgs = await prisma.organization.findMany({
     orderBy: { createdAt: "desc" },
-    include: { owner: { select: { email: true } } },
+    include: {
+      owner: { select: { email: true } },
+      subscription: { include: { plan: { select: { name: true } } } },
+    },
   });
 
   return (
@@ -46,7 +49,11 @@ export default async function ConsultantsPage() {
                   </td>
                   <td className="px-4 py-3 text-muted">/{org.slug}</td>
                   <td className="px-4 py-3 text-muted">{org.owner?.email ?? "—"}</td>
-                  <td className="px-4 py-3 text-muted">—</td>
+                  <td className="px-4 py-3 text-muted">
+                    {org.subscription
+                      ? `${org.subscription.plan.name} (${org.subscription.status})`
+                      : "—"}
+                  </td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs ${

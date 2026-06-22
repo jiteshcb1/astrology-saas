@@ -19,7 +19,11 @@ export default async function SuperadminHome() {
           <Link className="text-terra hover:underline" href="/superadmin/consultants">
             Consultants
           </Link>{" "}
-          is live. Plans, feature flags & oversight arrive in SP-1.4–1.7.
+          and{" "}
+          <Link className="text-terra hover:underline" href="/superadmin/plans">
+            Plans
+          </Link>{" "}
+          are live. Feature flags & oversight arrive in SP-1.5–1.7.
         </p>
       </Card>
     </main>

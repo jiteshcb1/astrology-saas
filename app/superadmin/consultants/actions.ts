@@ -9,6 +9,7 @@ import {
   setOrgStatusCore,
   updateConsultantCore,
 } from "@/lib/consultants";
+import { assignPlanCore } from "@/lib/billing";
 
 // Server actions are independently invokable POST endpoints, so each re-checks authorization —
 // the layout guard alone is not sufficient.
@@ -45,6 +46,21 @@ export async function updateConsultantAction(
   );
   if (!result.ok) return { error: result.error };
   revalidatePath(`/superadmin/consultants/${orgId}`);
+  return {};
+}
+
+export async function assignPlanAction(
+  _prev: ConsultantFormState,
+  formData: FormData,
+): Promise<ConsultantFormState> {
+  const { session } = await requireRole("access:superadmin");
+  const orgId = String(formData.get("orgId") ?? "");
+  const planId = String(formData.get("planId") ?? "");
+  const seatCount = Number(String(formData.get("seatCount") ?? "1"));
+  const result = await assignPlanCore(orgId, planId, seatCount, session.user.id);
+  if (!result.ok) return { error: result.error };
+  revalidatePath(`/superadmin/consultants/${orgId}`);
+  revalidatePath("/superadmin/consultants");
   return {};
 }
 

@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { computeEffectivePrice, formatMoney } from "@/lib/billing";
 import { ConsultantEditForm } from "../ConsultantEditForm";
+import { AssignPlanForm } from "../AssignPlanForm";
 import { setOrgStatusAction } from "../actions";
 
 export default async function ConsultantDetailPage({
@@ -12,13 +14,24 @@ export default async function ConsultantDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const org = await prisma.organization.findUnique({
-    where: { id },
-    include: { owner: { select: { email: true, name: true } } },
-  });
+  const [org, activePlans] = await Promise.all([
+    prisma.organization.findUnique({
+      where: { id },
+      include: {
+        owner: { select: { email: true, name: true } },
+        subscription: { include: { plan: true } },
+      },
+    }),
+    prisma.subscriptionPlan.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
   if (!org) notFound();
 
   const suspended = org.status === "suspended";
+  const sub = org.subscription;
 
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-6 py-12">
@@ -39,6 +52,28 @@ export default async function ConsultantDetailPage({
           (immutable public URL in Phase 1).
         </p>
         <ConsultantEditForm orgId={org.id} name={org.name} />
+      </Card>
+
+      <Card className="mb-5">
+        <h2 className="mb-1 font-display text-lg text-ink">Plan &amp; billing</h2>
+        {sub ? (
+          <p className="mb-3 text-sm text-muted">
+            Current: <span className="text-ink">{sub.plan.name}</span> · {sub.seatCount} seat
+            {sub.seatCount === 1 ? "" : "s"} · status {sub.status} ·{" "}
+            <span className="text-ink">
+              {formatMoney(computeEffectivePrice(sub.plan, sub.seatCount), sub.plan.currency)}
+            </span>{" "}
+            / {sub.plan.billingInterval}
+          </p>
+        ) : (
+          <p className="mb-3 text-sm text-muted">No plan assigned yet.</p>
+        )}
+        <AssignPlanForm
+          orgId={org.id}
+          plans={activePlans}
+          currentPlanId={sub?.planId}
+          currentSeatCount={sub?.seatCount}
+        />
       </Card>
 
       <Card>
