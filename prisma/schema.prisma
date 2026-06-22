@@ -164,3 +164,23 @@ model VerificationCode {
   @@index([email, createdAt])
   @@map("verification_codes")
 }
+
+// ─── Audit log ────────────────────────────────────────────────────────────────
+// Append-only record of privileged mutations (org create/update/suspend/reactivate, …).
+// Cross-tenant by design (written by privileged paths, read by the super admin); NOT scoped
+// via tenantDb. No FK on actorUserId so history is retained even if a user is removed.
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?
+  action       String
+  resourceType String
+  resourceId   String?
+  orgId        String?
+  metadata     Json?
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([orgId, createdAt])
+  @@index([resourceType, resourceId])
+  @@map("audit_logs")
+}

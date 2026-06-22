@@ -111,6 +111,21 @@ do NOT create all tables at once.
 - Keep the app **deployable and green** after each change: `npm run build` and `npm run lint`
   pass; `opennextjs-cloudflare build` succeeds.
 
+## Tenant data access (enforced invariant)
+- **All access to tenant-scoped models goes through `lib/tenant-db.ts`** — `tenantDb(orgId)` for
+  single ops and `tenantTransaction(({ db, tenant }) => …)` for transactions. The org filter is
+  injected by the data layer (last-wins), so cross-tenant reads/writes are structurally impossible.
+- **Bare `prisma.<tenantModel>` and bare `prisma.$transaction` are lint-banned** (ESLint
+  `no-restricted-properties`, driven by `config/tenant-models.json`) everywhere except
+  `lib/tenant-db.ts`, `lib/db.ts`, and `tests/**`. `"prebuild": "eslint"` makes a violation **fail
+  `npm run build`**, not just `npm run lint`. Inside `tenantTransaction`, the handed-out `db` blocks
+  tenant models at the type level and throws at runtime — a raw `tx` is never exposed.
+- **To add a tenant-scoped model:** add its delegate key to `config/tenant-models.json`, add a
+  scoped wrapper in `scope()` (`lib/tenant-db.ts`), and extend the `TenantModelKey` union. Then any
+  bare `prisma.<newModel>` immediately fails lint/build.
+- Postgres RLS remains deferred (defense-in-depth, later); this app-layer guard is the Phase-1
+  enforcement. `organizations`/`users` are not org-scoped here (tenant root / global).
+
 ## Verify changes
 ```bash
 npm run lint

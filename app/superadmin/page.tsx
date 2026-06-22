@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { Card } from "@/components/ui/Card";
 import { SignOutForm } from "@/components/SignOutForm";
@@ -15,7 +16,10 @@ export default async function SuperadminHome() {
           Signed in as <strong>{session?.user?.email}</strong> ({session?.user?.role}).
         </p>
         <p className="mt-2 text-sm text-muted">
-          Consultant CRUD, plans, feature flags & oversight arrive in SP-1.3–1.7.
+          <Link className="text-terra hover:underline" href="/superadmin/consultants">
+            Consultants
+          </Link>{" "}
+          is live. Plans, feature flags & oversight arrive in SP-1.4–1.7.
         </p>
       </Card>
     </main>
