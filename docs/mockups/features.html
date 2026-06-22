@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Features — Jyoti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{--night:#14122b;--ink:#2a2748;--marigold:#e8a33d;--marigold-soft:#f0c074;--sand:#f6efe2;--sand-2:#efe5d2;--terra:#b9543a;--line-light:rgba(42,39,72,0.12);--line-dark:rgba(240,224,192,0.16);--muted:rgba(42,39,72,0.68);--star:rgba(240,192,116,0.9);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--ink);line-height:1.65;overflow-x:hidden;}
+  a{text-decoration:none;color:inherit;}
+  nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:16px 7vw;background:rgba(20,18,43,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line-dark);}
+  .logo{display:flex;align-items:center;gap:10px;color:var(--sand);font-family:'Marcellus',serif;font-size:1.35rem;}
+  .logo .mark{color:var(--marigold);}
+  .nav-links{display:flex;align-items:center;gap:26px;}
+  .nav-links a{color:rgba(246,239,226,0.75);font-size:.92rem;transition:color .2s;}
+  .nav-links a:hover,.nav-links a.cur{color:var(--marigold-soft);}
+  .btn-primary{background:var(--marigold);color:var(--night);border:none;padding:10px 20px;border-radius:999px;font-weight:600;font-size:.9rem;cursor:pointer;font-family:inherit;}
+  @media(max-width:860px){.nav-links a:not(.btnlink){display:none;}}
+  .phead{background:radial-gradient(ellipse at 50% -20%,#26224d,var(--night) 60%,#0f0d22);color:var(--sand);padding:80px 7vw 90px;text-align:center;position:relative;overflow:hidden;}
+  .phead .stars span{position:absolute;width:3px;height:3px;background:var(--star);border-radius:50%;animation:tw 4s infinite;}
+  @keyframes tw{0%,100%{opacity:.3}50%{opacity:1}}
+  .phead .eyebrow{display:inline-block;font-size:.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--marigold-soft);border:1px solid var(--line-dark);padding:6px 15px;border-radius:999px;margin-bottom:20px;position:relative;}
+  .phead h1{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(2.3rem,5vw,3.6rem);line-height:1.1;position:relative;}
+  .phead p{color:rgba(246,239,226,.75);max-width:560px;margin:16px auto 0;position:relative;}
+  .wrap{max-width:1080px;margin:0 auto;padding:80px 7vw;}
+  .feat-block{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center;margin-bottom:64px;}
+  .feat-block:nth-child(even) .feat-visual{order:-1;}
+  @media(max-width:820px){.feat-block{grid-template-columns:1fr;gap:24px;}.feat-block:nth-child(even) .feat-visual{order:0;}}
+  .feat-text .tag{display:inline-block;font-size:.74rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--terra);margin-bottom:10px;}
+  .feat-text h2{font-family:'Fraunces',serif;font-weight:500;font-size:1.7rem;margin-bottom:12px;}
+  .feat-text p{color:var(--muted);margin-bottom:16px;}
+  .feat-text ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .feat-text li{display:flex;gap:10px;align-items:flex-start;font-size:.93rem;}
+  .feat-text li svg{color:var(--marigold);flex-shrink:0;margin-top:4px;}
+  .feat-visual{background:var(--night);border-radius:22px;padding:34px;min-height:260px;display:grid;place-items:center;position:relative;overflow:hidden;}
+  .feat-visual .vstars span{position:absolute;width:2px;height:2px;background:var(--star);border-radius:50%;opacity:.5;}
+  .vmock{background:rgba(246,239,226,0.06);border:1px solid var(--line-dark);border-radius:14px;padding:20px;width:100%;max-width:280px;color:var(--sand);position:relative;z-index:2;}
+  .vmock .ic{color:var(--marigold);margin-bottom:12px;}
+  .vmock h5{font-family:'Fraunces',serif;font-weight:500;font-size:1.15rem;margin-bottom:6px;}
+  .vmock p{font-size:.85rem;color:rgba(246,239,226,.7);}
+  .vmock .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line-dark);font-size:.82rem;}
+  .vmock .row:last-child{border:none;}
+  .vmock .amt{color:var(--marigold-soft);}
+  .cta-band{background:radial-gradient(ellipse at 50% 120%,#2a2552,var(--night));color:var(--sand);text-align:center;padding:80px 7vw;}
+  .cta-band h2{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:14px;}
+  .cta-band p{color:rgba(246,239,226,.7);max-width:480px;margin:0 auto 28px;}
+  footer{background:var(--night);color:rgba(246,239,226,.55);padding:40px 7vw;text-align:center;font-size:.85rem;}
+  footer a{color:var(--marigold-soft);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="landing-page.html"><div class="logo"><span class="mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M20 4l-2 2M6 18l-2 2" stroke-linecap="round"/></svg></span>Jyoti</div></a>
+  <div class="nav-links">
+    <a href="how-it-works.html">How it works</a>
+    <a href="features.html" class="cur">Features</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="demo-login.html" class="btnlink"><button class="btn-primary">Try demo</button></a>
+  </div>
+</nav>
+
+<header class="phead">
+  <div class="stars" id="stars"></div>
+  <span class="eyebrow">Everything you need</span>
+  <h1>Powerful tools, gently designed</h1>
+  <p>Jyoti brings scheduling, payments, teams, and seeker records into one calm, beautiful place — built for Indian consultants.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="feat-block">
+    <div class="feat-text">
+      <div class="tag">Scheduling</div>
+      <h2>A calendar that never lets you down</h2>
+      <p>Set your hours once. Seekers see only your free slots, in their own timezone, and a Google Meet link appears automatically on every booking.</p>
+      <ul>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Weekly hours, multiple slots per day, date overrides</li>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Buffers, minimum notice, and daily limits</li>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Double-bookings are impossible, by design</li>
+      </ul>
+    </div>
+    <div class="feat-visual"><div class="vstars"></div><div class="vmock"><div class="ic"><svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="22" height="20" rx="2"/><path d="M3 10h22M9 2v4M19 2v4" stroke-linecap="round"/></svg></div><h5>Mon, 22 June</h5><div class="row"><span>9:00 AM</span><span class="amt">Open</span></div><div class="row"><span>10:30 AM</span><span class="amt">Open</span></div><div class="row"><span>12:00 PM</span><span style="color:rgba(246,239,226,.4)">Booked</span></div></div></div>
+  </div>
+
+  <div class="feat-block">
+    <div class="feat-text">
+      <div class="tag">Payments</div>
+      <h2>Your money goes straight to you</h2>
+      <p>Jyoti is a tool, not a middleman. We never hold your funds. Take payments by UPI QR, or connect your own gateway for instant confirmation.</p>
+      <ul>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>UPI QR with payment proof, or your own gateway</li>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Receipts under your name and GST</li>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Discounts and coupons, fully your call</li>
+      </ul>
+    </div>
+    <div class="feat-visual"><div class="vstars"></div><div class="vmock"><div class="ic"><svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h22v13H3zM3 11h22" stroke-linecap="round"/></svg></div><h5>Today's earnings</h5><div class="row"><span>Kundali Reading</span><span class="amt">₹1,100</span></div><div class="row"><span>Career & Finance</span><span class="amt">₹676</span></div><div class="row"><span>To your bank</span><span class="amt">Direct ✓</span></div></div></div>
+  </div>
+
+  <div class="feat-block">
+    <div class="feat-text">
+      <div class="tag">Teams</div>
+      <h2>Grow with helpers, fairly</h2>
+      <p>Add team members in two clear roles. Calls share out automatically across your consultants — no manual juggling, no favouritism.</p>
+      <ul>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Consulting role — takes calls on your behalf</li>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Accounts role — manages payments &amp; receipts</li>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Round-robin assignment, paid simply per seat</li>
+      </ul>
+    </div>
+    <div class="feat-visual"><div class="vstars"></div><div class="vmock"><div class="ic"><svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="9" r="4"/><path d="M3 23c0-4.5 3.5-7 8-7s8 2.5 8 7M20 12l3 3 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h5>This month</h5><div class="row"><span>You</span><span class="amt">27 calls</span></div><div class="row"><span>Amit</span><span class="amt">15 calls</span></div><div class="row"><span>Shared</span><span class="amt">Automatically</span></div></div></div>
+  </div>
+
+  <div class="feat-block">
+    <div class="feat-text">
+      <div class="tag">Seeker records</div>
+      <h2>Remember every soul you guide</h2>
+      <p>Keep private reading notes and upload the charts you prepare. Share a secure link with a seeker, or print a clean PDF — all in your branding.</p>
+      <ul>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Reading notes &amp; booking history per seeker</li>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Upload your own chart files (image or PDF)</li>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Private share links &amp; PDF export</li>
+      </ul>
+    </div>
+    <div class="feat-visual"><div class="vstars"></div><div class="vmock"><div class="ic"><svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h18v16H8l-3 3z" stroke-linejoin="round"/><path d="M9 10h10M9 14h6" stroke-linecap="round"/></svg></div><h5>Meena Kapoor</h5><div class="row"><span>Consultations</span><span class="amt">3</span></div><div class="row"><span>Notes</span><span class="amt">2 entries</span></div><div class="row"><span>Charts</span><span class="amt">1 file</span></div></div></div>
+  </div>
+
+  <div class="feat-block">
+    <div class="feat-text">
+      <div class="tag">Your brand &amp; language</div>
+      <h2>It looks like you — not like us</h2>
+      <p>Seekers see your logo, your colours, your font, and your language. Jyoti stays invisible. Hindi, English, or Hinglish, in beautiful Devanagari.</p>
+      <ul>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Logo, theme colour, and Indic fonts</li>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>Hindi / English / Hinglish, switchable by seekers</li>
+        <li><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l4 4 8-9" stroke-linecap="round" stroke-linejoin="round"/></svg>A complaints contact, shown clearly for trust</li>
+      </ul>
+    </div>
+    <div class="feat-visual"><div class="vstars"></div><div class="vmock" style="text-align:center"><div style="width:50px;height:50px;border-radius:50%;background:var(--marigold);color:var(--night);display:grid;place-items:center;font-family:'Marcellus',serif;font-size:1.3rem;margin:0 auto 12px">R</div><h5>Pandit Ravi Sharma</h5><p>वैदिक ज्योतिषी · 18 वर्ष</p></div></div>
+  </div>
+
+</div>
+
+<section class="cta-band">
+  <h2>Everything, working together</h2>
+  <p>See how it all comes together in a live demo dashboard.</p>
+  <a href="demo-login.html"><button class="btn-primary" style="padding:13px 26px">Try the demo →</button></a>
+</section>
+
+<footer>© 2026 Jyoti · <a href="landing-page.html">Home</a> · <a href="how-it-works.html">How it works</a> · <a href="pricing.html">Pricing</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></footer>
+
+<script>
+  const sc=document.getElementById('stars');for(let i=0;i<40;i++){const s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.animationDelay=Math.random()*4+'s';sc.appendChild(s);}
+  document.querySelectorAll('.vstars').forEach(c=>{for(let i=0;i<20;i++){const s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';c.appendChild(s);}});
+</script>
+</body>
+</html>

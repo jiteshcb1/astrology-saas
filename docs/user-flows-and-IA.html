@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Jyoti — User Flows &amp; Information Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{--night:#14122b;--night-2:#1d1a3d;--ink:#2a2748;--marigold:#e8a33d;--marigold-soft:#f0c074;--sand:#f6efe2;--sand-2:#efe5d2;--terra:#b9543a;--rose:#d98b6f;--green:#4f9d69;--blue:#4f6d9d;--purple:#7d4f9d;
+    --line:rgba(42,39,72,0.12);--line-dark:rgba(240,224,192,0.16);--muted:rgba(42,39,72,0.66);--star:rgba(240,192,116,0.9);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--ink);line-height:1.6;}
+  a{text-decoration:none;color:inherit;}
+
+  /* HEADER */
+  .top{background:radial-gradient(ellipse at 50% -30%,#26224d,var(--night) 70%);color:var(--sand);padding:46px 6vw 38px;position:relative;overflow:hidden;}
+  .top .stars span{position:absolute;width:3px;height:3px;background:var(--star);border-radius:50%;animation:tw 4s infinite;}
+  @keyframes tw{0%,100%{opacity:.3}50%{opacity:1}}
+  .top .logo{display:flex;align-items:center;gap:10px;font-family:'Marcellus',serif;font-size:1.3rem;margin-bottom:18px;position:relative;}
+  .top .logo .mark{color:var(--marigold);}
+  .top h1{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(1.9rem,4vw,2.8rem);position:relative;}
+  .top p{color:rgba(246,239,226,.72);max-width:640px;margin-top:10px;position:relative;}
+
+  /* TABS */
+  .tabs{position:sticky;top:0;z-index:40;background:rgba(246,239,226,0.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;gap:6px;padding:10px 6vw;overflow-x:auto;}
+  .tab{padding:9px 18px;border-radius:999px;font-size:.9rem;cursor:pointer;white-space:nowrap;border:1px solid transparent;transition:all .2s;}
+  .tab:hover{background:#fff;}
+  .tab.active{background:var(--night);color:var(--sand);font-weight:600;}
+
+  .container{max-width:1180px;margin:0 auto;padding:36px 6vw 80px;}
+  .view{display:none;animation:fade .35s ease;}
+  .view.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .section-title{font-family:'Fraunces',serif;font-weight:500;font-size:1.7rem;margin:8px 0 4px;}
+  .section-sub{color:var(--muted);margin-bottom:26px;font-size:.95rem;}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:28px;padding:14px 18px;background:#fff;border:1px solid var(--line);border-radius:12px;font-size:.82rem;}
+  .legend .lg{display:flex;align-items:center;gap:7px;color:var(--muted);}
+  .swatch{width:14px;height:14px;border-radius:4px;}
+  .dot{width:12px;height:12px;border-radius:50%;}
+  .diamond{width:13px;height:13px;transform:rotate(45deg);}
+
+  /* ============ INFORMATION ARCHITECTURE (tree) ============ */
+  .persona-head{display:flex;align-items:center;gap:14px;margin:32px 0 16px;padding-bottom:12px;border-bottom:2px solid var(--line);}
+  .persona-head .pic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff;font-family:'Marcellus',serif;font-size:1.2rem;}
+  .persona-head h3{font-family:'Fraunces',serif;font-weight:500;font-size:1.35rem;}
+  .persona-head small{color:var(--muted);font-size:.85rem;display:block;}
+
+  .tree{list-style:none;margin-left:6px;}
+  .tree li{position:relative;padding-left:26px;margin:3px 0;}
+  .tree li::before{content:"";position:absolute;left:8px;top:0;bottom:0;width:1px;background:var(--line);}
+  .tree li::after{content:"";position:absolute;left:8px;top:16px;width:14px;height:1px;background:var(--line);}
+  .tree>li:last-child::before{height:16px;}
+  .node{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;background:#fff;border:1px solid var(--line);border-radius:9px;font-size:.9rem;cursor:pointer;transition:all .18s;margin:2px 0;}
+  .node:hover{border-color:var(--marigold);transform:translateX(2px);}
+  .node.l1{background:var(--night);color:var(--sand);border:none;font-weight:600;}
+  .node.l2{background:var(--sand-2);font-weight:500;}
+  .node .tag{font-size:.68rem;padding:2px 8px;border-radius:999px;background:rgba(232,163,61,0.18);color:#9a6a1a;}
+  .node .tag.new{background:rgba(79,157,105,0.16);color:var(--green);}
+  .node .tag.p2{background:rgba(42,39,72,0.1);color:var(--muted);}
+  .collapse-hint{font-size:.75rem;color:var(--muted);margin-left:6px;}
+  .children{overflow:hidden;transition:max-height .3s ease;}
+  .children.closed{max-height:0 !important;}
+
+  /* ============ FLOW DIAGRAMS ============ */
+  .flow-wrap{background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px 26px;margin-bottom:30px;overflow-x:auto;}
+  .flow-title{font-family:'Fraunces',serif;font-weight:500;font-size:1.2rem;margin-bottom:4px;}
+  .flow-desc{color:var(--muted);font-size:.88rem;margin-bottom:24px;}
+  .flow{display:flex;flex-direction:column;gap:0;min-width:560px;}
+  .frow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .fbox{padding:12px 18px;border-radius:11px;font-size:.88rem;font-weight:500;display:inline-flex;align-items:center;gap:8px;position:relative;}
+  .fbox.start{background:var(--night);color:var(--sand);}
+  .fbox.step{background:var(--sand-2);border:1px solid var(--line);}
+  .fbox.action{background:rgba(232,163,61,0.16);border:1px solid var(--marigold);}
+  .fbox.end{background:var(--green);color:#fff;}
+  .fbox.decision{background:#fff;border:2px solid var(--terra);color:var(--terra);font-weight:600;}
+  .fbox.edge{background:rgba(185,84,58,0.08);border:1px dashed var(--terra);color:var(--terra);font-size:.82rem;}
+  .arrow{color:var(--muted);font-size:1.2rem;flex-shrink:0;}
+  .arrow-down{display:flex;justify-content:flex-start;padding-left:24px;color:var(--muted);font-size:1.2rem;height:24px;align-items:center;}
+  .branch{margin:8px 0 8px 24px;padding-left:20px;border-left:2px dashed var(--terra);}
+  .branch-label{font-size:.74rem;text-transform:uppercase;letter-spacing:.5px;color:var(--terra);margin-bottom:8px;font-weight:600;}
+  .edge-list{margin-top:22px;padding-top:18px;border-top:1px dashed var(--line);}
+  .edge-list h5{font-size:.78rem;text-transform:uppercase;letter-spacing:1px;color:var(--terra);margin-bottom:10px;}
+  .edge-list ul{list-style:none;display:flex;flex-direction:column;gap:7px;}
+  .edge-list li{display:flex;gap:9px;align-items:flex-start;font-size:.86rem;color:var(--muted);}
+  .edge-list li::before{content:"⚠";color:var(--terra);flex-shrink:0;}
+
+  .pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .mini{font-size:.7rem;padding:2px 9px;border-radius:999px;background:var(--sand-2);color:var(--muted);}
+
+  .note-card{background:rgba(232,163,61,0.08);border:1px solid var(--marigold);border-radius:12px;padding:16px 20px;font-size:.88rem;margin-bottom:26px;display:flex;gap:12px;align-items:flex-start;}
+  .note-card svg{color:var(--terra);flex-shrink:0;margin-top:2px;}
+
+  @media(max-width:680px){.frow{flex-direction:column;align-items:flex-start;}.arrow{transform:rotate(90deg);}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="stars" id="stars"></div>
+  <div class="logo"><span class="mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M20 4l-2 2M6 18l-2 2" stroke-linecap="round"/></svg></span>Jyoti</div>
+  <h1>User Flows &amp; Information Architecture</h1>
+  <p>The journeys each persona takes, and how the whole product is structured. A blueprint to surface edge cases before they become code. Tap any tab to explore.</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('ia',this)">🗂 Information Architecture</div>
+  <div class="tab" onclick="show('seeker',this)">🙋 Seeker Flows</div>
+  <div class="tab" onclick="show('consultant',this)">🔮 Consultant Flows</div>
+  <div class="tab" onclick="show('team',this)">👥 Team Flows</div>
+  <div class="tab" onclick="show('superadmin',this)">🛡 Super Admin Flows</div>
+</div>
+
+<div class="container">
+
+  <!-- ============ INFORMATION ARCHITECTURE ============ -->
+  <div class="view active" id="ia">
+    <h2 class="section-title">Information Architecture</h2>
+    <p class="section-sub">The full structure of the product, organized by stakeholder area. Click a node to expand or collapse its children.</p>
+    <div class="legend">
+      <div class="lg"><span class="swatch" style="background:var(--night)"></span> Top-level area</div>
+      <div class="lg"><span class="swatch" style="background:var(--sand-2)"></span> Section</div>
+      <div class="lg"><span class="swatch" style="background:#fff;border:1px solid var(--line)"></span> Screen / page</div>
+      <div class="lg"><span class="tag new" style="position:static">new</span> Net-new build</div>
+      <div class="lg"><span class="tag p2" style="position:static">P2</span> Later phase</div>
+    </div>
+
+    <!-- PUBLIC -->
+    <div class="persona-head"><div class="pic" style="background:var(--terra)">🌐</div><div><h3>Public (unauthenticated)</h3><small>Anyone on the internet — marketing + seeker entry points</small></div></div>
+    <ul class="tree">
+      <li><span class="node l1" onclick="tog(this)">Marketing site</span>
+        <ul class="children">
+          <li><span class="node">Landing page</span></li>
+          <li><span class="node">How it works</span></li>
+          <li><span class="node">Features</span></li>
+          <li><span class="node">Pricing</span></li>
+          <li><span class="node">For astrologers</span></li>
+          <li><span class="node">About / Privacy / Terms</span></li>
+          <li><span class="node">Schedule a sales call</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Consultant's public booking page <span class="collapse-hint">/&lt;slug&gt;</span></span>
+        <ul class="children">
+          <li><span class="node l2" onclick="tog(this)">Profile header</span>
+            <ul class="children">
+              <li><span class="node">Logo, name, bio, socials</span></li>
+              <li><span class="node">Language switch (Hi/En/Hinglish)</span></li>
+              <li><span class="node">Complaints/feedback contact number</span></li>
+            </ul>
+          </li>
+          <li><span class="node l2" onclick="tog(this)">Package list</span>
+            <ul class="children">
+              <li><span class="node">Package detail (price, duration, discount)</span></li>
+              <li><span class="node">Slot picker (calendar + times)</span></li>
+              <li><span class="node">Booking form (questions + ToS)</span></li>
+              <li><span class="node">Payment step (UPI QR / gateway)</span></li>
+              <li><span class="node">Confirmation + Meet link</span></li>
+            </ul>
+          </li>
+          <li><span class="node">Public ratings/reviews <span class="tag p2">P2</span></span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Shared seeker profile <span class="collapse-hint">/p/&lt;token&gt;</span></span>
+        <ul class="children">
+          <li><span class="node">Read-only reading notes</span></li>
+          <li><span class="node">Uploaded chart files</span></li>
+          <li><span class="node">Booking history</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Auth</span>
+        <ul class="children">
+          <li><span class="node">Sign up / sign in (Google)</span></li>
+          <li><span class="node">Email + OTP</span></li>
+          <li><span class="node">Demo access gate</span></li>
+        </ul>
+      </li>
+    </ul>
+
+    <!-- CONSULTANT -->
+    <div class="persona-head"><div class="pic" style="background:var(--night)">🔮</div><div><h3>Consultant (Admin) area</h3><small>The paying customer — owns an organization</small></div></div>
+    <ul class="tree">
+      <li><span class="node l1" onclick="tog(this)">Onboarding wizard</span>
+        <ul class="children">
+          <li><span class="node">1. Profile (slug, name, business type, timezone)</span></li>
+          <li><span class="node">2. Connect Google Calendar</span></li>
+          <li><span class="node">3. Confirm → dashboard</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Dashboard home</span>
+        <ul class="children">
+          <li><span class="node">Stats (bookings, earnings, ratings)</span></li>
+          <li><span class="node">Upcoming consultations</span></li>
+          <li><span class="node">Setup checklist</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Packages</span>
+        <ul class="children">
+          <li><span class="node">List (enable/disable, edit, duplicate)</span></li>
+          <li><span class="node l2" onclick="tog(this)">Package editor</span>
+            <ul class="children">
+              <li><span class="node">Setup (price, durations, location)</span></li>
+              <li><span class="node">Availability schedule link</span></li>
+              <li><span class="node">Limits (buffers, notice, frequency)</span></li>
+              <li><span class="node">Booking questions</span></li>
+              <li><span class="node">Discounts &amp; coupons</span></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Availability</span>
+        <ul class="children">
+          <li><span class="node">Weekly schedules (multi-range, copy day)</span></li>
+          <li><span class="node">Date overrides</span></li>
+          <li><span class="node">Booking limits</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Bookings</span>
+        <ul class="children">
+          <li><span class="node">All bookings (filter by status)</span></li>
+          <li><span class="node">Booking detail (answers, reschedule)</span></li>
+          <li><span class="node">Confirm UPI-QR payment</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Payments</span>
+        <ul class="children">
+          <li><span class="node">Payments list</span></li>
+          <li><span class="node">Receipts (consultant GST)</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Team <span class="tag">paid per seat</span></span>
+        <ul class="children">
+          <li><span class="node">Members list (consulting / accounts)</span></li>
+          <li><span class="node">Invite member</span></li>
+          <li><span class="node">Round-robin distribution view</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Seekers</span>
+        <ul class="children">
+          <li><span class="node">Seeker list</span></li>
+          <li><span class="node l2" onclick="tog(this)">Seeker profile</span>
+            <ul class="children">
+              <li><span class="node">Reading notes (add/edit)</span></li>
+              <li><span class="node">Upload chart file</span></li>
+              <li><span class="node">Booking history</span></li>
+              <li><span class="node">Share link + PDF export</span></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Settings</span>
+        <ul class="children">
+          <li><span class="node">Branding (logo, theme, font, language)</span></li>
+          <li><span class="node">Payment setup (UPI QR / gateway keys)</span></li>
+          <li><span class="node">GST &amp; business details</span></li>
+          <li><span class="node">Complaints contact number</span></li>
+          <li><span class="node">Profile &amp; socials</span></li>
+          <li><span class="node">Subscription &amp; billing</span></li>
+          <li><span class="node">Preview (page + receipt)</span></li>
+        </ul>
+      </li>
+    </ul>
+
+    <!-- TEAM -->
+    <div class="persona-head"><div class="pic" style="background:var(--terra)">👥</div><div><h3>Team member area</h3><small>Role-scoped — two roles only</small></div></div>
+    <ul class="tree">
+      <li><span class="node l1" onclick="tog(this)">Consulting member</span>
+        <ul class="children">
+          <li><span class="node">Assigned bookings only</span></li>
+          <li><span class="node">Booking detail + seeker questions</span></li>
+          <li><span class="node">Join Google Meet</span></li>
+          <li><span class="node">Write reading notes / upload chart</span></li>
+          <li><span class="node">Own availability</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Accounts member</span>
+        <ul class="children">
+          <li><span class="node">Payments list</span></li>
+          <li><span class="node">Receipts &amp; GST</span></li>
+          <li><span class="node">Confirm UPI-QR payments</span></li>
+          <li><span class="node">Reconciliation</span></li>
+        </ul>
+      </li>
+    </ul>
+
+    <!-- SUPER ADMIN -->
+    <div class="persona-head"><div class="pic" style="background:var(--blue)">🛡</div><div><h3>Super Admin area (you)</h3><small>The operator's control plane</small></div></div>
+    <ul class="tree">
+      <li><span class="node l1" onclick="tog(this)">Consultants (tenants)</span>
+        <ul class="children">
+          <li><span class="node">List all orgs</span></li>
+          <li><span class="node">Create / edit / suspend</span></li>
+          <li><span class="node">Manual create + invite</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Plans &amp; billing</span>
+        <ul class="children">
+          <li><span class="node">Subscription plans + per-seat</span></li>
+          <li><span class="node">Assign / change plan</span></li>
+          <li><span class="node">Platform invoices (our GST)</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Feature flags</span>
+        <ul class="children">
+          <li><span class="node">Global / plan / org toggles</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Oversight (read-only)</span>
+        <ul class="children">
+          <li><span class="node">All seekers / bookings / calls</span></li>
+          <li><span class="node">All receipts</span></li>
+        </ul>
+      </li>
+      <li><span class="node l1" onclick="tog(this)">Catalogs</span>
+        <ul class="children">
+          <li><span class="node">Suggested themes &amp; fonts</span></li>
+          <li><span class="node">Available calendar providers</span></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ============ SEEKER FLOWS ============ -->
+  <div class="view" id="seeker">
+    <h2 class="section-title">Seeker (Advice-taker) Flows</h2>
+    <p class="section-sub">The client booking a consultation. Most critical conversion path — and the richest in edge cases.</p>
+    <div class="legend">
+      <div class="lg"><span class="dot" style="background:var(--night)"></span> Start</div>
+      <div class="lg"><span class="dot" style="background:var(--sand-2)"></span> Step</div>
+      <div class="lg"><span class="dot" style="background:var(--marigold)"></span> Action</div>
+      <div class="lg"><span class="diamond" style="background:var(--terra)"></span> Decision</div>
+      <div class="lg"><span class="dot" style="background:var(--green)"></span> Success</div>
+      <div class="lg"><span class="dot" style="background:rgba(185,84,58,0.4)"></span> Edge case</div>
+    </div>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Flow 1 — Book &amp; pay (gateway, instant)</div>
+      <div class="flow-desc">The happy path when the consultant uses their own payment gateway.</div>
+      <div class="flow">
+        <div class="frow"><span class="fbox start">Opens consultant link /&lt;slug&gt;</span><span class="arrow">→</span><span class="fbox step">Views profile &amp; packages</span><span class="arrow">→</span><span class="fbox action">Selects package</span></div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox step">Picks duration (if allowed)</span><span class="arrow">→</span><span class="fbox step">Picks date &amp; time slot</span><span class="arrow">→</span><span class="fbox action">Fills required questions</span></div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox action">Accepts ToS</span><span class="arrow">→</span><span class="fbox decision">◆ Payment mode?</span></div>
+        <div class="branch">
+          <div class="branch-label">Gateway</div>
+          <div class="frow"><span class="fbox step">Pays via consultant's gateway</span><span class="arrow">→</span><span class="fbox step">Webhook confirms</span><span class="arrow">→</span><span class="fbox step">Round-robin assigns host</span><span class="arrow">→</span><span class="fbox end">Meet link + receipt by email ✓</span></div>
+        </div>
+      </div>
+      <div class="edge-list">
+        <h5>Edge cases to design for</h5>
+        <ul>
+          <li>Slot taken by someone else during checkout → re-prompt with fresh availability</li>
+          <li>Payment succeeds but webhook is delayed/missed → reconciliation job confirms later; show "confirming…" state</li>
+          <li>Payment fails or is abandoned → hold slot briefly, then release; allow retry</li>
+          <li>No team member free at that slot (round-robin) → slot shouldn't have been offered; transactional re-check</li>
+          <li>Seeker closes tab after paying → confirmation email still fires (idempotent)</li>
+          <li>Duplicate submit / double-click → idempotency prevents two bookings</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Flow 2 — Book &amp; pay (UPI QR, manual proof)</div>
+      <div class="flow-desc">For small consultants taking UPI manually.</div>
+      <div class="flow">
+        <div class="frow"><span class="fbox start">…same up to payment step…</span><span class="arrow">→</span><span class="fbox decision">◆ Payment mode = UPI QR</span></div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox step">Scans QR, pays in own UPI app</span><span class="arrow">→</span><span class="fbox action">Uploads screenshot + UTR</span><span class="arrow">→</span><span class="fbox step">Booking = pending verification</span></div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox step">Consultant/Accounts confirms</span><span class="arrow">→</span><span class="fbox step">Round-robin assigns host</span><span class="arrow">→</span><span class="fbox end">Meet link + receipt by email ✓</span></div>
+      </div>
+      <div class="edge-list">
+        <h5>Edge cases to design for</h5>
+        <ul>
+          <li>Fake / wrong proof uploaded → consultant rejects; booking stays unconfirmed; seeker notified</li>
+          <li>Consultant never confirms → auto-expire after N hours, release slot (Phase 1.5)</li>
+          <li>Seeker paid but forgot to upload proof → reminder; manual reconciliation</li>
+          <li>Slot expires while waiting for confirmation → re-offer or refund (consultant-handled)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Flow 3 — Post-call: reschedule &amp; feedback</div>
+      <div class="flow">
+        <div class="frow"><span class="fbox start">Has a confirmed booking</span><span class="arrow">→</span><span class="fbox decision">◆ Reschedule?</span></div>
+        <div class="branch">
+          <div class="branch-label">Within limit</div>
+          <div class="frow"><span class="fbox step">Picks new slot</span><span class="arrow">→</span><span class="fbox step">Atomic move + new Meet</span><span class="arrow">→</span><span class="fbox end">Updated ✓</span></div>
+          <div class="branch-label" style="margin-top:10px">Limit reached</div>
+          <div class="frow"><span class="fbox edge">Blocked — shows consultant policy</span></div>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox step">Call completed</span><span class="arrow">→</span><span class="fbox action">Gets feedback link by email</span><span class="arrow">→</span><span class="fbox action">Submits rating + comment</span><span class="arrow">→</span><span class="fbox end">Shown publicly (if public) ✓</span></div>
+      </div>
+      <div class="edge-list">
+        <h5>Edge cases</h5>
+        <ul>
+          <li>Reschedule into a slot that's now taken → re-prompt</li>
+          <li>No-show by seeker or consultant → status + policy handling (consultant-owned)</li>
+          <li>Feedback link reused / expired → one-time token</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CONSULTANT FLOWS ============ -->
+  <div class="view" id="consultant">
+    <h2 class="section-title">Consultant (Admin) Flows</h2>
+    <p class="section-sub">The paying customer — from signup to running a growing practice.</p>
+    <div class="note-card"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="10" r="8"/><path d="M10 6v5M10 14h.01" stroke-linecap="round"/></svg><span>The consultant's first-run path (onboarding → first package → payment setup → publish) is the activation funnel. Every drop-off point here is a lost customer.</span></div>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Flow 1 — Sign up &amp; onboard</div>
+      <div class="flow">
+        <div class="frow"><span class="fbox start">Lands on marketing site</span><span class="arrow">→</span><span class="fbox decision">◆ Sign-up method?</span></div>
+        <div class="branch">
+          <div class="branch-label">Google</div>
+          <div class="frow"><span class="fbox step">OAuth consent</span><span class="arrow">→</span><span class="fbox step">Account created</span></div>
+          <div class="branch-label" style="margin-top:10px">Email + OTP</div>
+          <div class="frow"><span class="fbox step">Enters email</span><span class="arrow">→</span><span class="fbox step">Receives code</span><span class="arrow">→</span><span class="fbox step">Verifies</span></div>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox action">Step 1: profile (slug, name, timezone)</span><span class="arrow">→</span><span class="fbox decision">◆ Connect calendar?</span></div>
+        <div class="branch">
+          <div class="branch-label">Yes</div>
+          <div class="frow"><span class="fbox step">Google Calendar OAuth + busy-check</span></div>
+          <div class="branch-label" style="margin-top:10px">Later</div>
+          <div class="frow"><span class="fbox edge">Skips — reminded on dashboard</span></div>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox end">Dashboard + setup checklist ✓</span></div>
+      </div>
+      <div class="edge-list">
+        <h5>Edge cases</h5>
+        <ul>
+          <li>Desired slug already taken → live uniqueness check, suggest alternatives</li>
+          <li>Google Calendar permission denied → allow "connect later," degrade gracefully</li>
+          <li>OTP not received → resend + rate-limit; check spam guidance</li>
+          <li>Abandons mid-wizard → resume where left off on next login</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Flow 2 — Create a package &amp; go live</div>
+      <div class="flow">
+        <div class="frow"><span class="fbox start">Dashboard</span><span class="arrow">→</span><span class="fbox action">New package (title, price, duration)</span><span class="arrow">→</span><span class="fbox step">Assign availability schedule</span></div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox step">Set limits &amp; buffers</span><span class="arrow">→</span><span class="fbox step">Configure booking questions</span><span class="arrow">→</span><span class="fbox decision">◆ Payment set up?</span></div>
+        <div class="branch">
+          <div class="branch-label">No</div>
+          <div class="frow"><span class="fbox action">Add UPI QR or gateway keys + GST</span></div>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox action">Preview page &amp; receipt</span><span class="arrow">→</span><span class="fbox action">Publish &amp; share link</span><span class="arrow">→</span><span class="fbox end">Live ✓</span></div>
+      </div>
+      <div class="edge-list">
+        <h5>Edge cases</h5>
+        <ul>
+          <li>Publishes with no payment method → block or warn (can't take bookings)</li>
+          <li>Gateway keys invalid → "test connection" fails fast with clear error</li>
+          <li>No availability set → package can't show slots; prompt to fix</li>
+          <li>Theme color fails contrast → enforce minimum, suggest fix</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Flow 3 — Run a call &amp; record a reading</div>
+      <div class="flow">
+        <div class="frow"><span class="fbox start">Booking confirmed</span><span class="arrow">→</span><span class="fbox step">Joins Google Meet</span><span class="arrow">→</span><span class="fbox step">Consults seeker</span></div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox action">Writes reading notes</span><span class="arrow">→</span><span class="fbox action">Uploads chart file</span><span class="arrow">→</span><span class="fbox decision">◆ Share with seeker?</span></div>
+        <div class="branch">
+          <div class="branch-label">Yes</div>
+          <div class="frow"><span class="fbox step">Generate share link / PDF</span><span class="arrow">→</span><span class="fbox end">Sent ✓</span></div>
+        </div>
+      </div>
+      <div class="edge-list">
+        <h5>Edge cases</h5>
+        <ul>
+          <li>Wrong chart uploaded → replace/delete entry</li>
+          <li>Share link needs revoking later → disable/expire token</li>
+          <li>Team member (not consultant) ran the call → notes attributed to them, visible to consultant</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Flow 4 — Add a team member (per-seat billing)</div>
+      <div class="flow">
+        <div class="frow"><span class="fbox start">Team section</span><span class="arrow">→</span><span class="fbox action">Invite by email + role</span><span class="arrow">→</span><span class="fbox decision">◆ Role?</span></div>
+        <div class="branch">
+          <div class="branch-label">Consulting / Accounts</div>
+          <div class="frow"><span class="fbox step">Seat added to subscription (proration)</span><span class="arrow">→</span><span class="fbox step">Member accepts invite</span><span class="arrow">→</span><span class="fbox end">Active ✓</span></div>
+        </div>
+      </div>
+      <div class="edge-list">
+        <h5>Edge cases</h5>
+        <ul>
+          <li>Subscription payment fails when adding seat → block activation, dunning</li>
+          <li>Member never accepts invite → pending state, resend/expire</li>
+          <li>Removing a member with upcoming calls → reassign via round-robin</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TEAM FLOWS ============ -->
+  <div class="view" id="team">
+    <h2 class="section-title">Team Member Flows</h2>
+    <p class="section-sub">Two roles, strictly scoped. Role isolation is a security requirement, not just a UI choice.</p>
+    <div class="note-card"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="10" r="8"/><path d="M10 6v5M10 14h.01" stroke-linecap="round"/></svg><span>Consulting members must NOT see account-wide payments. Accounts members must NOT see call content/notes. Enforced server-side, not just hidden in UI.</span></div>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Flow 1 — Consulting member runs assigned calls</div>
+      <div class="flow">
+        <div class="frow"><span class="fbox start">Accepts invite + first login</span><span class="arrow">→</span><span class="fbox step">Sets own availability</span><span class="arrow">→</span><span class="fbox step">Receives auto-assigned bookings</span></div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox step">Opens assigned booking</span><span class="arrow">→</span><span class="fbox step">Reads seeker questions</span><span class="arrow">→</span><span class="fbox step">Joins Meet</span><span class="arrow">→</span><span class="fbox action">Writes notes / uploads chart</span><span class="arrow">→</span><span class="fbox end">Recorded ✓</span></div>
+      </div>
+      <div class="edge-list">
+        <h5>Edge cases</h5>
+        <ul>
+          <li>Tries to open a booking not assigned to them → blocked (server-side)</li>
+          <li>Tries to view payments → not in their nav, and API-denied</li>
+          <li>Goes unavailable → round-robin stops assigning to them</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Flow 2 — Accounts member manages money</div>
+      <div class="flow">
+        <div class="frow"><span class="fbox start">Accepts invite + first login</span><span class="arrow">→</span><span class="fbox step">Sees payments list</span><span class="arrow">→</span><span class="fbox decision">◆ Pending UPI-QR proof?</span></div>
+        <div class="branch">
+          <div class="branch-label">Yes</div>
+          <div class="frow"><span class="fbox action">Verifies proof → confirms</span><span class="arrow">→</span><span class="fbox step">Booking confirmed + receipt</span><span class="arrow">→</span><span class="fbox end">Done ✓</span></div>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox step">Reviews receipts &amp; GST</span><span class="arrow">→</span><span class="fbox action">Reconciles</span></div>
+      </div>
+      <div class="edge-list">
+        <h5>Edge cases</h5>
+        <ul>
+          <li>Tries to open call notes → not in their nav, API-denied</li>
+          <li>Confirms a payment then disputes → audit trail of who verified</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SUPER ADMIN FLOWS ============ -->
+  <div class="view" id="superadmin">
+    <h2 class="section-title">Super Admin (Operator) Flows</h2>
+    <p class="section-sub">Your control plane — low volume, high stakes. Mostly management + read-only oversight.</p>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Flow 1 — Onboard a consultant manually</div>
+      <div class="flow">
+        <div class="frow"><span class="fbox start">Super Admin console</span><span class="arrow">→</span><span class="fbox action">Create organization + owner</span><span class="arrow">→</span><span class="fbox step">Assign a plan + seats</span><span class="arrow">→</span><span class="fbox step">Send invite email</span><span class="arrow">→</span><span class="fbox end">Consultant activated ✓</span></div>
+      </div>
+      <div class="edge-list">
+        <h5>Edge cases</h5>
+        <ul>
+          <li>Email already exists → conflict handling</li>
+          <li>Consultant never activates → pending org state</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Flow 2 — Manage subscription &amp; suspension</div>
+      <div class="flow">
+        <div class="frow"><span class="fbox start">Consultant detail</span><span class="arrow">→</span><span class="fbox decision">◆ Payment status?</span></div>
+        <div class="branch">
+          <div class="branch-label">Lapsed</div>
+          <div class="frow"><span class="fbox step">Dunning → grace period</span><span class="arrow">→</span><span class="fbox action">Suspend org</span><span class="arrow">→</span><span class="fbox edge">Public page offline; calls retained</span></div>
+          <div class="branch-label" style="margin-top:10px">Recovered</div>
+          <div class="frow"><span class="fbox action">Reactivate</span><span class="arrow">→</span><span class="fbox end">Page live again ✓</span></div>
+        </div>
+      </div>
+      <div class="edge-list">
+        <h5>Edge cases</h5>
+        <ul>
+          <li>Suspend org with upcoming paid bookings → keep confirmed calls honored</li>
+          <li>Downgrade plan below current seat count → require seat removal first</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Flow 3 — Feature flags &amp; oversight</div>
+      <div class="flow">
+        <div class="frow"><span class="fbox start">Console</span><span class="arrow">→</span><span class="fbox action">Toggle feature (global/plan/org)</span><span class="arrow">→</span><span class="fbox step">Takes effect without deploy</span></div>
+        <div class="arrow-down">↓</div>
+        <div class="frow"><span class="fbox step">Open oversight (read-only)</span><span class="arrow">→</span><span class="fbox step">View any org's bookings/receipts</span><span class="arrow">→</span><span class="fbox end">For support/compliance ✓</span></div>
+      </div>
+      <div class="edge-list">
+        <h5>Edge cases</h5>
+        <ul>
+          <li>Flag precedence conflict → org &gt; plan &gt; global resolves it</li>
+          <li>Oversight must stay read-only → no accidental edits to tenant data</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const sc=document.getElementById('stars');for(let i=0;i<40;i++){const s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.animationDelay=Math.random()*4+'s';sc.appendChild(s);}
+
+  function show(id,el){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  // collapsible tree: set initial max-height then toggle
+  document.querySelectorAll('.children').forEach(c=>{c.style.maxHeight=c.scrollHeight+'px';});
+  function tog(node){
+    const li=node.parentElement;
+    const child=li.querySelector(':scope > .children');
+    if(!child)return;
+    if(child.classList.contains('closed')){
+      child.classList.remove('closed');
+      child.style.maxHeight=child.scrollHeight+'px';
+      // also expand any open descendants
+      child.querySelectorAll('.children:not(.closed)').forEach(d=>d.style.maxHeight=d.scrollHeight+'px');
+    } else {
+      child.classList.add('closed');
+      child.style.maxHeight='0px';
+    }
+  }
+  // recalc on resize
+  window.addEventListener('resize',()=>{document.querySelectorAll('.children:not(.closed)').forEach(c=>c.style.maxHeight=c.scrollHeight+'px');});
+</script>
+</body>
+</html>

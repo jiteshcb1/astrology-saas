@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>About — Jyoti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{--night:#14122b;--ink:#2a2748;--marigold:#e8a33d;--marigold-soft:#f0c074;--sand:#f6efe2;--sand-2:#efe5d2;--terra:#b9543a;--line-light:rgba(42,39,72,0.12);--line-dark:rgba(240,224,192,0.16);--muted:rgba(42,39,72,0.68);--star:rgba(240,192,116,0.9);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--ink);line-height:1.7;overflow-x:hidden;}
+  a{text-decoration:none;color:inherit;}
+  nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:16px 7vw;background:rgba(20,18,43,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line-dark);}
+  .logo{display:flex;align-items:center;gap:10px;color:var(--sand);font-family:'Marcellus',serif;font-size:1.35rem;}
+  .logo .mark{color:var(--marigold);}
+  .nav-links{display:flex;align-items:center;gap:26px;}
+  .nav-links a{color:rgba(246,239,226,0.75);font-size:.92rem;}
+  .nav-links a:hover{color:var(--marigold-soft);}
+  .btn-primary{background:var(--marigold);color:var(--night);border:none;padding:10px 20px;border-radius:999px;font-weight:600;font-size:.9rem;cursor:pointer;font-family:inherit;}
+  @media(max-width:860px){.nav-links a:not(.btnlink){display:none;}}
+  .phead{background:radial-gradient(ellipse at 50% -20%,#26224d,var(--night) 60%,#0f0d22);color:var(--sand);padding:80px 7vw 80px;text-align:center;position:relative;overflow:hidden;}
+  .phead .stars span{position:absolute;width:3px;height:3px;background:var(--star);border-radius:50%;animation:tw 4s infinite;}
+  @keyframes tw{0%,100%{opacity:.3}50%{opacity:1}}
+  .phead .eyebrow{display:inline-block;font-size:.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--marigold-soft);border:1px solid var(--line-dark);padding:6px 15px;border-radius:999px;margin-bottom:20px;position:relative;}
+  .phead h1{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(2.2rem,5vw,3.4rem);position:relative;}
+  .doc{max-width:760px;margin:0 auto;padding:70px 7vw;}
+  .doc .lead{font-family:'Fraunces',serif;font-size:1.5rem;line-height:1.5;margin-bottom:32px;color:var(--ink);}
+  .doc h2{font-family:'Fraunces',serif;font-weight:500;font-size:1.4rem;margin:36px 0 12px;}
+  .doc p{color:var(--muted);margin-bottom:16px;}
+  .values{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px;}
+  @media(max-width:760px){.values{grid-template-columns:1fr;}}
+  .value{background:#fff;border:1px solid var(--line-light);border-radius:14px;padding:22px;}
+  .value .ic{color:var(--terra);margin-bottom:10px;}
+  .value h4{font-family:'Fraunces',serif;font-weight:500;margin-bottom:6px;}
+  .value p{font-size:.88rem;margin:0;}
+  footer{background:var(--night);color:rgba(246,239,226,.55);padding:40px 7vw;text-align:center;font-size:.85rem;}
+  footer a{color:var(--marigold-soft);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="landing-page.html"><div class="logo"><span class="mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M20 4l-2 2M6 18l-2 2" stroke-linecap="round"/></svg></span>Jyoti</div></a>
+  <div class="nav-links">
+    <a href="how-it-works.html">How it works</a>
+    <a href="features.html">Features</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="demo-login.html" class="btnlink"><button class="btn-primary">Try demo</button></a>
+  </div>
+</nav>
+
+<header class="phead">
+  <div class="stars" id="stars"></div>
+  <span class="eyebrow">Our story</span>
+  <h1>About Jyoti</h1>
+</header>
+
+<div class="doc">
+  <p class="lead">Jyoti exists to give India's astrologers and spiritual consultants a beautiful, trustworthy home for their practice online — without ever taking a cut of what they earn.</p>
+
+  <h2>Why we built this</h2>
+  <p>Across India, gifted astrologers, palmists, and numerologists run thriving practices — but on tools never made for them. Bookings live in WhatsApp, payments in screenshots, schedules in memory. It works, but it's fragile, and it doesn't reflect the depth of their craft.</p>
+  <p>We wanted to change that with something calm, professional, and deeply respectful of both the consultant and the seeker — in their own language, in their own style.</p>
+
+  <h2>What we believe</h2>
+  <div class="values">
+    <div class="value"><div class="ic"><svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 3l3 6 6 1-4.5 4 1 6-5.5-3-5.5 3 1-6L4 10l6-1z" stroke-linejoin="round"/></svg></div><h4>Your craft first</h4><p>The tool should disappear so the practitioner can shine.</p></div>
+    <div class="value"><div class="ic"><svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h18v11H4zM4 12h18" stroke-linecap="round"/></svg></div><h4>Your money is yours</h4><p>We never hold funds or take commission. Ever.</p></div>
+    <div class="value"><div class="ic"><svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="13" cy="13" r="10"/><path d="M13 7v6l4 2" stroke-linecap="round"/></svg></div><h4>Built for India</h4><p>Indic languages, Devanagari, UPI — designed for here.</p></div>
+  </div>
+
+  <h2>Where we're headed</h2>
+  <p>We're just getting started. Our aim is to become the most loved, most trusted platform for spiritual consultants across India — and to keep every promise we make about respect, privacy, and fairness along the way.</p>
+</div>
+
+<footer>© 2026 Jyoti · <a href="landing-page.html">Home</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></footer>
+
+<script>const sc=document.getElementById('stars');for(let i=0;i<40;i++){const s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.animationDelay=Math.random()*4+'s';sc.appendChild(s);}</script>
+</body>
+</html>

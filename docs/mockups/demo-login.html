@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Jyoti — Demo Access</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{--night:#14122b;--night-2:#1d1a3d;--ink:#2a2748;--marigold:#e8a33d;--marigold-soft:#f0c074;--sand:#f6efe2;--terra:#b9543a;--line-dark:rgba(240,224,192,0.16);--star:rgba(240,192,116,0.9);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Inter',sans-serif;background:radial-gradient(ellipse at 50% -10%,#26224d,var(--night) 55%,#0f0d22);min-height:100vh;color:var(--sand);display:grid;place-items:center;padding:24px;overflow:hidden;}
+  .stars span{position:fixed;width:3px;height:3px;background:var(--star);border-radius:50%;box-shadow:0 0 6px 1px rgba(240,192,116,.5);animation:tw 4s ease-in-out infinite;}
+  @keyframes tw{0%,100%{opacity:.25;}50%{opacity:.9;}}
+  .card{position:relative;z-index:2;width:100%;max-width:440px;background:rgba(246,239,226,0.04);border:1px solid var(--line-dark);backdrop-filter:blur(10px);border-radius:26px;padding:44px 40px;text-align:center;}
+  .logo{display:inline-flex;align-items:center;gap:10px;color:var(--sand);font-family:'Marcellus',serif;font-size:1.4rem;margin-bottom:8px;}
+  .logo .mark{color:var(--marigold);}
+  .ribbon{display:inline-block;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--marigold-soft);border:1px solid var(--line-dark);border-radius:999px;padding:5px 14px;margin-bottom:22px;}
+  h1{font-family:'Fraunces',serif;font-weight:500;font-size:1.7rem;margin-bottom:8px;}
+  .sub{color:rgba(246,239,226,.65);font-size:.92rem;margin-bottom:28px;}
+  .field{text-align:left;margin-bottom:16px;}
+  .field label{display:block;font-size:.8rem;color:rgba(246,239,226,.7);margin-bottom:6px;}
+  .field input{width:100%;background:rgba(20,18,43,.55);border:1px solid var(--line-dark);border-radius:11px;padding:13px 15px;color:var(--sand);font-family:inherit;font-size:.95rem;transition:border-color .2s;}
+  .field input:focus{outline:none;border-color:var(--marigold);}
+  .btn{width:100%;background:var(--marigold);color:var(--night);border:none;padding:14px;border-radius:11px;font-weight:600;font-size:.98rem;cursor:pointer;font-family:inherit;transition:transform .2s,box-shadow .2s;box-shadow:0 6px 20px rgba(232,163,61,.25);}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(232,163,61,.35);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+  .otp-row{display:flex;gap:10px;justify-content:center;margin:6px 0 18px;}
+  .otp-row input{width:48px;height:56px;text-align:center;font-size:1.4rem;font-family:'Fraunces',serif;background:rgba(20,18,43,.55);border:1px solid var(--line-dark);border-radius:11px;color:var(--sand);}
+  .otp-row input:focus{outline:none;border-color:var(--marigold);}
+  .hint{font-size:.82rem;color:rgba(246,239,226,.55);margin-top:6px;}
+  .hint b{color:var(--marigold-soft);}
+  .step{display:none;}
+  .step.active{display:block;animation:fade .4s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+  .mock-mail{background:rgba(20,18,43,.6);border:1px dashed var(--marigold);border-radius:12px;padding:14px;margin-bottom:20px;text-align:left;font-size:.85rem;}
+  .mock-mail .from{color:rgba(246,239,226,.5);font-size:.75rem;margin-bottom:4px;}
+  .mock-mail .code{font-family:'Fraunces',serif;font-size:1.8rem;color:var(--marigold);letter-spacing:6px;}
+  .back{background:none;border:none;color:rgba(246,239,226,.55);font-size:.85rem;cursor:pointer;margin-top:16px;font-family:inherit;}
+  .back:hover{color:var(--marigold-soft);}
+  .foot{margin-top:22px;font-size:.78rem;color:rgba(246,239,226,.4);}
+  a{color:var(--marigold-soft);}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="card">
+  <div class="logo"><span class="mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M20 4l-2 2M6 18l-2 2" stroke-linecap="round"/></svg></span>Jyoti</div>
+  <div class="ribbon">Demo Access</div>
+
+  <!-- STEP 1: details -->
+  <div class="step active" id="step1">
+    <h1>Preview the dashboard</h1>
+    <p class="sub">Verify with your email to explore a live demo of the consultant dashboard. No account is created.</p>
+    <div class="field"><label>Full name</label><input type="text" id="d-name" placeholder="Pandit Ravi Sharma"></div>
+    <div class="field"><label>Email address</label><input type="email" id="d-email" placeholder="you@example.com"></div>
+    <div class="field"><label>WhatsApp number</label><input type="tel" id="d-phone" placeholder="+91 98XXX XXXXX"></div>
+    <button class="btn" onclick="sendOtp()">Send OTP to email</button>
+    <p class="foot">By continuing you agree to our <a href="terms.html">Terms</a> &amp; <a href="privacy.html">Privacy Policy</a>.</p>
+  </div>
+
+  <!-- STEP 2: OTP -->
+  <div class="step" id="step2">
+    <h1>Enter the code</h1>
+    <p class="sub">We sent a 6-digit code to <b id="email-echo">your email</b>.</p>
+    <div class="mock-mail">
+      <div class="from">📧 Demo inbox · from no-reply@jyoti.app</div>
+      Your Jyoti demo code is:
+      <div class="code" id="mock-code">482913</div>
+    </div>
+    <div class="otp-row" id="otp">
+      <input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric">
+    </div>
+    <button class="btn" id="verify-btn" onclick="verify()">Verify &amp; open dashboard</button>
+    <p class="hint">Demo code is shown above — auto-filled for you. <b>Just click verify.</b></p>
+    <button class="back" onclick="goStep(1)">← Use a different email</button>
+  </div>
+</div>
+
+<script>
+  // stars
+  const sc=document.getElementById('stars');
+  for(let i=0;i<50;i++){const s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.animationDelay=Math.random()*4+'s';sc.appendChild(s);}
+
+  function goStep(n){document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));document.getElementById('step'+n).classList.add('active');}
+
+  function sendOtp(){
+    const email=document.getElementById('d-email').value.trim();
+    if(!email||!email.includes('@')){alert('Please enter a valid email.');return;}
+    document.getElementById('email-echo').textContent=email;
+    // generate a demo code
+    const code=String(Math.floor(100000+Math.random()*900000));
+    document.getElementById('mock-code').textContent=code;
+    window._demoCode=code;
+    goStep(2);
+    // auto-fill the OTP for demo convenience
+    setTimeout(()=>{const ins=document.querySelectorAll('#otp input');code.split('').forEach((d,i)=>ins[i].value=d);},500);
+  }
+
+  // OTP auto-advance
+  const otpInputs=document.querySelectorAll('#otp input');
+  otpInputs.forEach((inp,i)=>{
+    inp.addEventListener('input',()=>{if(inp.value&&i<otpInputs.length-1)otpInputs[i+1].focus();});
+    inp.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!inp.value&&i>0)otpInputs[i-1].focus();});
+  });
+
+  function verify(){
+    const entered=[...otpInputs].map(i=>i.value).join('');
+    if(entered.length<6){alert('Enter the 6-digit code (it\\'s auto-filled for the demo).');return;}
+    // in demo, accept the shown code
+    window.location.href='demo-dashboard.html';
+  }
+</script>
+</body>
+</html>

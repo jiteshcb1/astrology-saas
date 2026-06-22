@@ -1,0 +1,55 @@
+import NextAuth from "next-auth";
+import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "@/lib/db";
+import { verifyOtp } from "@/lib/otp";
+import { env } from "@/lib/env";
+
+// Auth.js v5 (NextAuth) configuration.
+// Two providers: Google OAuth, and a custom email + OTP (Credentials) flow.
+// Safe to import with empty env — provider credentials are only exercised at request time.
+//
+// Dev Google redirect URI: http://localhost:3001/api/auth/callback/google
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  // Credentials-based sign-in requires the JWT session strategy.
+  session: { strategy: "jwt" },
+  // Allow the configured AUTH_URL host in dev/preview without extra setup.
+  trustHost: true,
+  providers: [
+    Google({
+      // Honor the project's explicit env var names (Auth.js would otherwise expect AUTH_GOOGLE_*).
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+    }),
+    Credentials({
+      id: "email-otp",
+      name: "Email OTP",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        code: { label: "Code", type: "text" },
+      },
+      async authorize(credentials) {
+        const email = typeof credentials?.email === "string" ? credentials.email : "";
+        const code = typeof credentials?.code === "string" ? credentials.code : "";
+        if (!email || !code) return null;
+
+        const valid = await verifyOtp(email, code);
+        if (!valid) return null;
+
+        // Upsert the user so OTP sign-in works alongside the Prisma adapter.
+        const user = await prisma.user.upsert({
+          where: { email },
+          update: {},
+          create: { email, emailVerified: new Date() },
+        });
+
+        return { id: user.id, email: user.email, name: user.name, image: user.image };
+      },
+    }),
+  ],
+  pages: {
+    // TODO: build custom sign-in UI; defaults are used for now.
+  },
+});

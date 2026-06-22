@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Jyoti — Consultant Dashboard (Demo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{--night:#14122b;--night-2:#1d1a3d;--ink:#2a2748;--marigold:#e8a33d;--marigold-soft:#f0c074;--sand:#f6efe2;--sand-2:#efe5d2;--terra:#b9543a;--rose:#d98b6f;
+    --line:rgba(42,39,72,0.1);--muted:rgba(42,39,72,0.6);--green:#4f9d69;--bg:#faf7f0;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh;}
+  .display{font-family:'Fraunces',serif;}
+  a{text-decoration:none;color:inherit;}
+
+  /* SIDEBAR */
+  .sidebar{width:248px;background:var(--night);color:var(--sand);padding:22px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;flex-shrink:0;}
+  .sb-logo{display:flex;align-items:center;gap:9px;font-family:'Marcellus',serif;font-size:1.3rem;padding:6px 10px 22px;}
+  .sb-logo .mark{color:var(--marigold);}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:11px;color:rgba(246,239,226,0.7);font-size:.92rem;cursor:pointer;transition:all .18s;margin-bottom:2px;}
+  .nav-item:hover{background:rgba(246,239,226,0.06);color:var(--sand);}
+  .nav-item.active{background:var(--marigold);color:var(--night);font-weight:600;}
+  .nav-item svg{flex-shrink:0;}
+  .nav-item .badge{margin-left:auto;background:var(--terra);color:#fff;font-size:.68rem;padding:2px 7px;border-radius:999px;}
+  .sb-foot{margin-top:auto;border-top:1px solid rgba(246,239,226,0.12);padding-top:14px;}
+  .sb-user{display:flex;align-items:center;gap:10px;padding:8px 10px;}
+  .sb-user .av{width:34px;height:34px;border-radius:50%;background:var(--marigold);color:var(--night);display:grid;place-items:center;font-family:'Marcellus',serif;}
+  .sb-user .nm{font-size:.85rem;}
+  .sb-user .nm small{display:block;color:rgba(246,239,226,0.5);font-size:.72rem;}
+
+  /* MAIN */
+  .main{flex:1;min-width:0;}
+  .topbar{background:#fff;border-bottom:1px solid var(--line);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;}
+  .topbar h1{font-family:'Fraunces',serif;font-weight:500;font-size:1.5rem;}
+  .topbar .sub{color:var(--muted);font-size:.85rem;}
+  .top-actions{display:flex;align-items:center;gap:12px;}
+  .demo-pill{background:var(--terra);color:#fff;font-size:.74rem;padding:5px 12px;border-radius:999px;font-weight:600;}
+  .btn{background:var(--marigold);color:var(--night);border:none;padding:9px 18px;border-radius:9px;font-weight:600;font-size:.88rem;cursor:pointer;font-family:inherit;transition:transform .15s;}
+  .btn:hover{transform:translateY(-1px);}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink);padding:9px 16px;border-radius:9px;font-size:.88rem;cursor:pointer;font-family:inherit;}
+  .btn-ghost:hover{border-color:var(--marigold);}
+
+  .content{padding:28px 32px;}
+  .screen{display:none;animation:fade .35s ease;}
+  .screen.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  /* cards & grids */
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px;}
+  @media(max-width:1100px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;}
+  .stat .lbl{font-size:.8rem;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:7px;}
+  .stat .lbl .ic{color:var(--terra);}
+  .stat .val{font-family:'Fraunces',serif;font-size:1.9rem;font-weight:500;}
+  .stat .delta{font-size:.78rem;margin-top:4px;}
+  .delta.up{color:var(--green);}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:20px;}
+  .card h3{font-family:'Fraunces',serif;font-weight:500;font-size:1.2rem;margin-bottom:4px;}
+  .card .csub{color:var(--muted);font-size:.85rem;margin-bottom:18px;}
+  .two-col{display:grid;grid-template-columns:1.6fr 1fr;gap:20px;}
+  @media(max-width:1000px){.two-col{grid-template-columns:1fr;}}
+
+  /* checklist */
+  .check{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line);}
+  .check:last-child{border-bottom:none;}
+  .check .box{width:24px;height:24px;border-radius:50%;border:2px solid var(--marigold);display:grid;place-items:center;flex-shrink:0;color:var(--marigold);}
+  .check.done .box{background:var(--green);border-color:var(--green);color:#fff;}
+  .check .ctext{flex:1;font-size:.92rem;}
+  .check.done .ctext{color:var(--muted);text-decoration:line-through;}
+  .check .go{color:var(--terra);font-size:.82rem;}
+
+  /* table */
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:.74rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);font-weight:600;}
+  td{padding:13px 12px;border-bottom:1px solid var(--line);font-size:.9rem;}
+  tr:last-child td{border-bottom:none;}
+  .tag{display:inline-block;font-size:.72rem;padding:3px 10px;border-radius:999px;font-weight:600;}
+  .tag.confirmed{background:rgba(79,157,105,0.14);color:var(--green);}
+  .tag.pending{background:rgba(232,163,61,0.16);color:#b07d22;}
+  .tag.completed{background:rgba(42,39,72,0.08);color:var(--muted);}
+  .tag.upcoming{background:rgba(185,84,58,0.12);color:var(--terra);}
+  .who{display:flex;align-items:center;gap:10px;}
+  .who .av{width:32px;height:32px;border-radius:50%;background:var(--sand-2);display:grid;place-items:center;font-size:.8rem;font-weight:600;color:var(--terra);}
+  .who small{display:block;color:var(--muted);font-size:.76rem;}
+
+  /* package cards */
+  .pkg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media(max-width:1000px){.pkg-grid{grid-template-columns:1fr;}}
+  .pkg-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;position:relative;transition:transform .2s,box-shadow .2s;}
+  .pkg-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(20,18,43,0.07);}
+  .pkg-card .toggle{position:absolute;top:18px;right:18px;width:38px;height:22px;background:var(--green);border-radius:999px;cursor:pointer;}
+  .pkg-card .toggle::after{content:"";position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:3px;right:3px;}
+  .pkg-card h4{font-family:'Fraunces',serif;font-weight:500;font-size:1.15rem;margin-bottom:6px;padding-right:46px;}
+  .pkg-card .desc{color:var(--muted);font-size:.84rem;margin-bottom:14px;min-height:38px;}
+  .pkg-card .meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .pkg-card .chip{font-size:.74rem;background:var(--sand);padding:4px 10px;border-radius:8px;color:var(--ink);}
+  .pkg-card .price{font-family:'Fraunces',serif;font-size:1.5rem;color:var(--terra);}
+  .pkg-card .price small{font-size:.8rem;color:var(--muted);font-family:'Inter';}
+
+  /* availability */
+  .avail-row{display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--line);}
+  .avail-row:last-child{border-bottom:none;}
+  .avail-row .day{width:110px;font-weight:500;display:flex;align-items:center;gap:10px;}
+  .sw{width:38px;height:22px;border-radius:999px;position:relative;cursor:pointer;flex-shrink:0;}
+  .sw.on{background:var(--green);}.sw.off{background:rgba(42,39,72,0.2);}
+  .sw::after{content:"";position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:3px;transition:all .2s;}
+  .sw.on::after{right:3px;}.sw.off::after{left:3px;}
+  .time-pill{background:var(--sand);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:.85rem;}
+  .avail-row .unavail{color:var(--muted);font-size:.88rem;}
+
+  /* team */
+  .team-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+  @media(max-width:900px){.team-grid{grid-template-columns:1fr;}}
+  .member{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px;}
+  .member .av{width:46px;height:46px;border-radius:50%;background:var(--night);color:var(--marigold);display:grid;place-items:center;font-family:'Marcellus',serif;font-size:1.1rem;}
+  .member .info{flex:1;}
+  .member .info h5{font-size:.98rem;}
+  .member .info small{color:var(--muted);font-size:.8rem;}
+  .role{font-size:.72rem;padding:3px 10px;border-radius:999px;font-weight:600;}
+  .role.consulting{background:rgba(185,84,58,0.12);color:var(--terra);}
+  .role.accounts{background:rgba(79,109,157,0.14);color:#4f6d9d;}
+
+  /* seeker profile */
+  .seeker-head{display:flex;align-items:center;gap:18px;margin-bottom:22px;}
+  .seeker-head .av{width:64px;height:64px;border-radius:50%;background:var(--terra);color:#fff;display:grid;place-items:center;font-family:'Marcellus',serif;font-size:1.6rem;}
+  .seeker-head h3{font-family:'Fraunces',serif;font-weight:500;font-size:1.4rem;}
+  .seeker-head .meta{color:var(--muted);font-size:.86rem;}
+  .note-entry{border-left:3px solid var(--marigold);padding:4px 0 4px 16px;margin-bottom:18px;}
+  .note-entry .date{font-size:.76rem;color:var(--muted);margin-bottom:4px;}
+  .note-entry p{font-size:.92rem;}
+  .chart-thumb{display:inline-flex;align-items:center;gap:10px;background:var(--sand);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:.85rem;margin-top:8px;}
+  .chart-thumb svg{color:var(--terra);}
+
+  /* settings */
+  .seg{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .seg .opt{border:1px solid var(--line);border-radius:10px;padding:10px 16px;cursor:pointer;font-size:.88rem;transition:all .18s;}
+  .seg .opt.active{border-color:var(--marigold);background:rgba(232,163,61,0.1);font-weight:600;}
+  .swatch{width:34px;height:34px;border-radius:9px;cursor:pointer;border:2px solid transparent;display:inline-block;}
+  .swatch.active{border-color:var(--ink);}
+  .field{margin-bottom:16px;max-width:480px;}
+  .field label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:6px;}
+  .field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 14px;font-family:inherit;font-size:.92rem;}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--marigold);}
+  .banner{background:rgba(232,163,61,0.1);border:1px solid var(--marigold);border-radius:12px;padding:14px 18px;font-size:.86rem;margin-bottom:24px;display:flex;align-items:center;gap:12px;}
+  .banner svg{color:var(--terra);flex-shrink:0;}
+  @media(max-width:760px){.sidebar{display:none;}.content{padding:20px;}.topbar{padding:14px 18px;}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo"><span class="mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M20 4l-2 2M6 18l-2 2" stroke-linecap="round"/></svg></span>Jyoti</div>
+  <div class="nav-item active" onclick="nav('home',this)"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l7-6 7 6v8a1 1 0 01-1 1h-3v-5H7v5H4a1 1 0 01-1-1z" stroke-linejoin="round"/></svg>Home</div>
+  <div class="nav-item" onclick="nav('packages',this)"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M3 8h14M8 3v14" stroke-linecap="round"/></svg>Packages</div>
+  <div class="nav-item" onclick="nav('bookings',this)"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14M7 2v4M13 2v4" stroke-linecap="round"/></svg>Bookings<span class="badge">3</span></div>
+  <div class="nav-item" onclick="nav('availability',this)"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="8"/><path d="M10 5v5l3 2" stroke-linecap="round"/></svg>Availability</div>
+  <div class="nav-item" onclick="nav('payments',this)"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="16" height="11" rx="2"/><path d="M2 9h16" stroke-linecap="round"/></svg>Payments</div>
+  <div class="nav-item" onclick="nav('team',this)"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="3"/><path d="M2 17c0-3 2-5 5-5s5 2 5 5M13 8l2 2 3-3" stroke-linecap="round" stroke-linejoin="round"/></svg>Team</div>
+  <div class="nav-item" onclick="nav('seekers',this)"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 3h12v14H6l-2 2z" stroke-linejoin="round"/><path d="M7 8h8M7 12h5" stroke-linecap="round"/></svg>Seekers</div>
+  <div class="nav-item" onclick="nav('settings',this)"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="3"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3M4 4l2 2M14 14l2 2M16 4l-2 2M6 14l-2 2" stroke-linecap="round"/></svg>Settings</div>
+  <div class="sb-foot">
+    <div class="sb-user"><div class="av">R</div><div class="nm">Pandit Ravi Sharma<small>ravi@example.com</small></div></div>
+    <a href="landing-page.html"><div class="nav-item" style="margin-top:6px"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3H4a1 1 0 00-1 1v12a1 1 0 001 1h3M13 14l4-4-4-4M17 10H7" stroke-linecap="round" stroke-linejoin="round"/></svg>Exit demo</div></a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1 id="page-title">Home</h1>
+      <div class="sub" id="page-sub">Your central hub for scheduling and consultations</div>
+    </div>
+    <div class="top-actions">
+      <span class="demo-pill">● DEMO</span>
+      <button class="btn-ghost" onclick="alert('Demo: this opens your public booking page.')">View public page</button>
+      <button class="btn" onclick="alert('Demo only.')">+ New package</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- HOME -->
+    <div class="screen active" id="home">
+      <div class="banner"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="8"/><path d="M10 6v5M10 14h.01" stroke-linecap="round"/></svg><span>You're exploring a <b>demo</b> with sample data. Nothing here is real, and no changes are saved.</span></div>
+      <div class="stat-row">
+        <div class="stat"><div class="lbl"><span class="ic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="11" height="10" rx="1.5"/><path d="M2 6h11M5 1v3M10 1v3" stroke-linecap="round"/></svg></span>Bookings this month</div><div class="val">42</div><div class="delta up">▲ 18% vs last month</div></div>
+        <div class="stat"><div class="lbl"><span class="ic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4h11v7H2zM2 7h11" stroke-linecap="round"/></svg></span>Earnings (₹)</div><div class="val">38,200</div><div class="delta up">▲ 22% vs last month</div></div>
+        <div class="stat"><div class="lbl"><span class="ic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7.5" cy="6" r="3"/><path d="M2 14c0-3 2-4 5.5-4s5.5 1 5.5 4" stroke-linecap="round"/></svg></span>Upcoming calls</div><div class="val">3</div><div class="delta">Next: today 4:00 PM</div></div>
+        <div class="stat"><div class="lbl"><span class="ic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7.5 1l2 4 4.5.5-3.3 3 .9 4.5-4.1-2.2-4.1 2.2.9-4.5L1 5.5 5.5 5z" stroke-linejoin="round"/></svg></span>Avg. rating</div><div class="val">4.9</div><div class="delta up">From 128 reviews</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <h3>Upcoming consultations</h3>
+          <div class="csub">Your next scheduled calls</div>
+          <table>
+            <tr><th>Seeker</th><th>Package</th><th>When</th><th>Status</th></tr>
+            <tr><td><div class="who"><div class="av">MK</div><div>Meena Kapoor<small>meena@example.com</small></div></div></td><td>Kundali Reading</td><td>Today, 4:00 PM</td><td><span class="tag upcoming">Upcoming</span></td></tr>
+            <tr><td><div class="who"><div class="av">AS</div><div>Arjun Singh<small>arjun@example.com</small></div></div></td><td>Career & Finance</td><td>Tomorrow, 11:30 AM</td><td><span class="tag upcoming">Upcoming</span></td></tr>
+            <tr><td><div class="who"><div class="av">PD</div><div>Priya Desai<small>priya@example.com</small></div></div></td><td>Quick Question</td><td>Sat, 12:00 PM</td><td><span class="tag confirmed">Confirmed</span></td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Finish your setup</h3>
+          <div class="csub">3 of 5 complete</div>
+          <div class="check done"><div class="box"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 6l3 3 6-7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ctext">Set up your profile</div></div>
+          <div class="check done"><div class="box"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 6l3 3 6-7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ctext">Connect Google Calendar</div></div>
+          <div class="check done"><div class="box"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 6l3 3 6-7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ctext">Create your first package</div></div>
+          <div class="check"><div class="box"></div><div class="ctext">Add payment method</div><span class="go">Set up →</span></div>
+          <div class="check"><div class="box"></div><div class="ctext">Invite a team member</div><span class="go">Invite →</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PACKAGES -->
+    <div class="screen" id="packages">
+      <div class="pkg-grid">
+        <div class="pkg-card"><div class="toggle"></div><h4>Kundali Reading</h4><div class="desc">Full birth-chart analysis with remedies and guidance for the year ahead.</div><div class="meta"><span class="chip">60 min</span><span class="chip">Google Meet</span><span class="chip">Questions: required</span></div><div class="price">₹1,100 <small>per session</small></div></div>
+        <div class="pkg-card"><div class="toggle"></div><h4>Career & Finance</h4><div class="desc">Focused session on professional growth, money, and timing of decisions.</div><div class="meta"><span class="chip">30 min</span><span class="chip">Google Meet</span><span class="chip">10% launch off</span></div><div class="price">₹751 <small>per session</small></div></div>
+        <div class="pkg-card"><div class="toggle"></div><h4>Quick Question</h4><div class="desc">One specific question answered with a short, clear reading.</div><div class="meta"><span class="chip">15 min</span><span class="chip">Google Meet</span></div><div class="price">₹351 <small>per session</small></div></div>
+        <div class="pkg-card" style="border-style:dashed;display:grid;place-items:center;text-align:center;color:var(--muted);cursor:pointer;" onclick="alert('Demo only.')"><div><div style="font-size:2rem;color:var(--marigold);">+</div>Create a new package</div></div>
+      </div>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div class="screen" id="bookings">
+      <div class="card">
+        <h3>All bookings</h3>
+        <div class="csub">Auto-distributed across your consulting team via round-robin</div>
+        <table>
+          <tr><th>Seeker</th><th>Package</th><th>Assigned to</th><th>When</th><th>Payment</th><th>Status</th></tr>
+          <tr><td><div class="who"><div class="av">MK</div><div>Meena Kapoor</div></div></td><td>Kundali Reading</td><td>You</td><td>Today, 4:00 PM</td><td>₹1,100 · Gateway</td><td><span class="tag upcoming">Upcoming</span></td></tr>
+          <tr><td><div class="who"><div class="av">AS</div><div>Arjun Singh</div></div></td><td>Career & Finance</td><td>Amit (team)</td><td>Tomorrow, 11:30 AM</td><td>₹676 · Gateway</td><td><span class="tag upcoming">Upcoming</span></td></tr>
+          <tr><td><div class="who"><div class="av">PD</div><div>Priya Desai</div></div></td><td>Quick Question</td><td>You</td><td>Sat, 12:00 PM</td><td>₹351 · UPI QR</td><td><span class="tag pending">Verify payment</span></td></tr>
+          <tr><td><div class="who"><div class="av">RV</div><div>Rohan Verma</div></div></td><td>Kundali Reading</td><td>You</td><td>Yesterday, 5:00 PM</td><td>₹1,100 · Gateway</td><td><span class="tag completed">Completed</span></td></tr>
+          <tr><td><div class="who"><div class="av">SN</div><div>Sneha Nair</div></div></td><td>Career & Finance</td><td>Amit (team)</td><td>2 days ago</td><td>₹751 · Gateway</td><td><span class="tag completed">Completed</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- AVAILABILITY -->
+    <div class="screen" id="availability">
+      <div class="card">
+        <h3>Working hours</h3>
+        <div class="csub">Default schedule · Asia/Kolkata · used by 3 packages</div>
+        <div class="avail-row"><div class="day"><span class="sw on"></span>Monday</div><span class="time-pill">9:00 AM</span><span>–</span><span class="time-pill">1:00 PM</span><span class="time-pill">5:00 PM</span><span>–</span><span class="time-pill">8:00 PM</span></div>
+        <div class="avail-row"><div class="day"><span class="sw on"></span>Tuesday</div><span class="time-pill">9:00 AM</span><span>–</span><span class="time-pill">1:00 PM</span></div>
+        <div class="avail-row"><div class="day"><span class="sw on"></span>Wednesday</div><span class="time-pill">9:00 AM</span><span>–</span><span class="time-pill">1:00 PM</span></div>
+        <div class="avail-row"><div class="day"><span class="sw on"></span>Thursday</div><span class="time-pill">9:00 AM</span><span>–</span><span class="time-pill">1:00 PM</span></div>
+        <div class="avail-row"><div class="day"><span class="sw on"></span>Friday</div><span class="time-pill">9:00 AM</span><span>–</span><span class="time-pill">1:00 PM</span></div>
+        <div class="avail-row"><div class="day"><span class="sw off"></span>Saturday</div><span class="unavail">Unavailable</span></div>
+        <div class="avail-row"><div class="day"><span class="sw off"></span>Sunday</div><span class="unavail">Unavailable</span></div>
+      </div>
+      <div class="card">
+        <h3>Booking limits</h3>
+        <div class="csub">Protecting your calendar</div>
+        <div class="avail-row"><div class="day" style="width:auto">Minimum notice</div><span class="time-pill">2 hours</span></div>
+        <div class="avail-row"><div class="day" style="width:auto">Buffer between calls</div><span class="time-pill">15 minutes</span></div>
+        <div class="avail-row"><div class="day" style="width:auto">Max per day</div><span class="time-pill">6 consultations</span></div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="screen" id="payments">
+      <div class="stat-row">
+        <div class="stat"><div class="lbl">This month</div><div class="val">₹38,200</div><div class="delta up">▲ 22%</div></div>
+        <div class="stat"><div class="lbl">Pending verification</div><div class="val">₹351</div><div class="delta">1 UPI QR booking</div></div>
+        <div class="stat"><div class="lbl">Via gateway</div><div class="val">₹34,400</div><div class="delta">Direct to your bank</div></div>
+        <div class="stat"><div class="lbl">Via UPI QR</div><div class="val">₹3,800</div><div class="delta">Manually confirmed</div></div>
+      </div>
+      <div class="card">
+        <h3>Recent payments</h3>
+        <div class="csub">Receipts are issued under your name &amp; GST — money never touches Jyoti</div>
+        <table>
+          <tr><th>Seeker</th><th>Package</th><th>Amount</th><th>Method</th><th>Status</th><th>Receipt</th></tr>
+          <tr><td>Meena Kapoor</td><td>Kundali Reading</td><td>₹1,100</td><td>Gateway</td><td><span class="tag confirmed">Success</span></td><td><span class="go" style="color:var(--terra);cursor:pointer">PDF ↓</span></td></tr>
+          <tr><td>Arjun Singh</td><td>Career & Finance</td><td>₹676</td><td>Gateway</td><td><span class="tag confirmed">Success</span></td><td><span class="go" style="color:var(--terra);cursor:pointer">PDF ↓</span></td></tr>
+          <tr><td>Priya Desai</td><td>Quick Question</td><td>₹351</td><td>UPI QR</td><td><span class="tag pending">Verify</span></td><td>—</td></tr>
+          <tr><td>Rohan Verma</td><td>Kundali Reading</td><td>₹1,100</td><td>Gateway</td><td><span class="tag confirmed">Success</span></td><td><span class="go" style="color:var(--terra);cursor:pointer">PDF ↓</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- TEAM -->
+    <div class="screen" id="team">
+      <div class="card">
+        <h3>Your team</h3>
+        <div class="csub">Two roles: consulting (takes calls) and accounts (manages money). Billed per seat.</div>
+        <div class="team-grid">
+          <div class="member"><div class="av">A</div><div class="info"><h5>Amit Joshi</h5><small>amit@example.com · 14 calls this month</small></div><span class="role consulting">Consulting</span></div>
+          <div class="member"><div class="av">P</div><div class="info"><h5>Priya Menon</h5><small>priya.m@example.com · manages receipts</small></div><span class="role accounts">Accounts</span></div>
+          <div class="member" style="border-style:dashed;justify-content:center;color:var(--muted);cursor:pointer" onclick="alert('Demo only.')"><div style="text-align:center"><div style="font-size:1.6rem;color:var(--marigold)">+</div>Invite team member</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Round-robin distribution</h3>
+        <div class="csub">How calls were shared this month</div>
+        <div class="avail-row"><div class="day" style="width:140px">You (Ravi)</div><div style="flex:1;background:var(--sand);border-radius:8px;height:14px;overflow:hidden"><div style="width:64%;height:100%;background:var(--marigold)"></div></div><span style="font-size:.85rem">27 calls</span></div>
+        <div class="avail-row"><div class="day" style="width:140px">Amit Joshi</div><div style="flex:1;background:var(--sand);border-radius:8px;height:14px;overflow:hidden"><div style="width:36%;height:100%;background:var(--terra)"></div></div><span style="font-size:.85rem">15 calls</span></div>
+      </div>
+    </div>
+
+    <!-- SEEKERS -->
+    <div class="screen" id="seekers">
+      <div class="card">
+        <div class="seeker-head"><div class="av">MK</div><div><h3>Meena Kapoor</h3><div class="meta">meena@example.com · +91 98XXX XXXXX · 3 consultations</div></div><button class="btn-ghost" style="margin-left:auto" onclick="alert('Demo: copies a private share link.')">Share profile</button><button class="btn" onclick="alert('Demo: exports profile as PDF.')">Export PDF</button></div>
+        <h3 style="font-size:1.05rem;margin-bottom:14px">Reading notes</h3>
+        <div class="note-entry"><div class="date">12 June 2026 · Kundali Reading · by You</div><p>Strong Jupiter in 5th house — favourable period for education and creative pursuits through 2026. Advised gemstone (yellow sapphire) and Thursday fast. Follow-up suggested after 3 months.</p><div class="chart-thumb"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="14" height="14" rx="1"/><path d="M2 2l14 14M16 2L2 16" stroke-linecap="round"/></svg>kundali-meena-jun2026.pdf</div></div>
+        <div class="note-entry"><div class="date">2 March 2026 · Career & Finance · by Amit</div><p>Discussed job change timing. Recommended waiting until after Mercury retrograde ends. Client reported positive outcome in follow-up message.</p></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="screen" id="settings">
+      <div class="card">
+        <h3>Branding</h3>
+        <div class="csub">Personalise your public booking page</div>
+        <div class="field"><label>Theme colour</label><div>
+          <span class="swatch active" style="background:#b9543a"></span>
+          <span class="swatch" style="background:#3a6ea5"></span>
+          <span class="swatch" style="background:#4f9d69"></span>
+          <span class="swatch" style="background:#7d4f9d"></span>
+          <span class="swatch" style="background:#c2872a"></span>
+        </div></div>
+        <div class="field"><label>Display font</label>
+          <div class="seg"><div class="opt active">Fraunces (serif)</div><div class="opt">Mukta (Devanagari)</div><div class="opt">Inter (clean)</div></div>
+        </div>
+        <div class="field"><label>Default language</label>
+          <div class="seg"><div class="opt active">English</div><div class="opt">हिंदी</div><div class="opt">Hinglish</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Payment method</h3>
+        <div class="csub">Money goes directly to you — Jyoti never holds funds</div>
+        <div class="seg"><div class="opt active">UPI QR + manual proof</div><div class="opt">Connect Razorpay (your keys)</div></div>
+        <div class="field" style="margin-top:14px"><label>GST number (for receipts)</label><input value="22ABCDE1234F1Z5"></div>
+        <div class="field"><label>Complaints / feedback contact</label><input value="+91 98XXX XXXXX"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const titles={
+    home:["Home","Your central hub for scheduling and consultations"],
+    packages:["Packages","Your consultation offerings and prices"],
+    bookings:["Bookings","All consultations, auto-distributed to your team"],
+    availability:["Availability","When you're open for bookings"],
+    payments:["Payments","Earnings and receipts — directly to you"],
+    team:["Team","Helpers who take calls or manage accounts"],
+    seekers:["Seekers","Reading notes and records for your clients"],
+    settings:["Settings","Branding, payments, and preferences"]
+  };
+  function nav(id,el){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('page-title').textContent=titles[id][0];
+    document.getElementById('page-sub').textContent=titles[id][1];
+    window.scrollTo(0,0);
+  }
+  // swatch + segment interactivity
+  document.addEventListener('click',e=>{
+    if(e.target.classList.contains('swatch')){e.target.parentNode.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));e.target.classList.add('active');}
+    if(e.target.classList.contains('opt')){e.target.parentNode.querySelectorAll('.opt').forEach(o=>o.classList.remove('active'));e.target.classList.add('active');}
+    if(e.target.classList.contains('sw')){e.target.classList.toggle('on');e.target.classList.toggle('off');}
+  });
+</script>
+</body>
+</html>
