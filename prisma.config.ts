@@ -15,5 +15,7 @@ export default defineConfig({
   },
   migrations: {
     path: "prisma/migrations",
+    // Run after `prisma migrate dev/reset`. Also available standalone via `npm run prisma:seed`.
+    seed: "node --env-file=.env.local node_modules/.bin/tsx prisma/seed.ts",
   },
 });

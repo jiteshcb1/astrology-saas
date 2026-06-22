@@ -1,26 +1,32 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* SP-1.2 minimal design-system slice — tokens from the approved mockups
+   (midnight indigo + temple marigold + sandalwood ivory + terracotta).
+   Full component library + i18n (Devanagari) arrive in later phases. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-night: #14122b;
+  --color-night-2: #1d1a3d;
+  --color-ink: #2a2748;
+  --color-marigold: #e8a33d;
+  --color-marigold-soft: #f0c074;
+  --color-sand: #f6efe2;
+  --color-sand-2: #efe5d2;
+  --color-terra: #b9543a;
+  --color-green: #4f9d69;
+  --color-line: rgba(42, 39, 72, 0.12);
+  --color-line-dark: rgba(240, 224, 192, 0.16);
+  --color-muted: rgba(42, 39, 72, 0.6);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --radius-control: 11px;
+  --radius-card: 16px;
+
+  --font-sans: var(--font-inter), Inter, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-logo: var(--font-marcellus), serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-sand);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
 }

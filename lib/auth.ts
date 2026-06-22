@@ -3,7 +3,7 @@ import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/db";
-import { verifyOtp } from "@/lib/otp";
+import { normalizeEmail, verifyOtp } from "@/lib/otp";
 import { env } from "@/lib/env";
 
 // Auth.js v5 (NextAuth) configuration.
@@ -14,7 +14,9 @@ import { env } from "@/lib/env";
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   // Credentials-based sign-in requires the JWT session strategy.
-  session: { strategy: "jwt" },
+  // maxAge bounds how long cached (routing/UX) claims can be stale; authorization is always
+  // decided against the live DB role in lib/rbac.ts#requireRole.
+  session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
   // Allow the configured AUTH_URL host in dev/preview without extra setup.
   trustHost: true,
   providers: [
@@ -31,14 +33,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         code: { label: "Code", type: "text" },
       },
       async authorize(credentials) {
-        const email = typeof credentials?.email === "string" ? credentials.email : "";
+        const rawEmail = typeof credentials?.email === "string" ? credentials.email : "";
         const code = typeof credentials?.code === "string" ? credentials.code : "";
-        if (!email || !code) return null;
+        if (!rawEmail || !code) return null;
 
+        const email = normalizeEmail(rawEmail);
         const valid = await verifyOtp(email, code);
         if (!valid) return null;
 
         // Upsert the user so OTP sign-in works alongside the Prisma adapter.
+        // `update: {}` intentionally never overwrites `role` — provisioned roles are preserved;
+        // brand-new users get the `seeker` schema default.
         const user = await prisma.user.upsert({
           where: { email },
           update: {},
@@ -50,6 +55,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   pages: {
-    // TODO: build custom sign-in UI; defaults are used for now.
+    signIn: "/signin",
+  },
+  callbacks: {
+    // On initial sign-in, cache identity + role/org for routing & UI. Authorization is decided
+    // live in lib/rbac.ts#requireRole, so these claims are convenience-only.
+    async jwt({ token, user }) {
+      if (user?.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: {
+            role: true,
+            memberships: {
+              where: { status: "active" },
+              orderBy: { createdAt: "asc" },
+              take: 1,
+              select: { organizationId: true },
+            },
+          },
+        });
+        token.userId = user.id;
+        token.role = dbUser?.role ?? "seeker";
+        token.orgId = dbUser?.memberships[0]?.organizationId ?? null;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.userId ?? "";
+        session.user.role = token.role ?? null;
+        session.user.orgId = token.orgId ?? null;
+      }
+      return session;
+    },
   },
 });

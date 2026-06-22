@@ -1,0 +1,23 @@
+import { auth } from "@/lib/auth";
+import { Card } from "@/components/ui/Card";
+import { SignOutForm } from "@/components/SignOutForm";
+
+export default async function DashboardHome() {
+  const session = await auth();
+  return (
+    <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="font-display text-2xl text-ink">Dashboard</h1>
+        <SignOutForm />
+      </div>
+      <Card>
+        <p>
+          Signed in as <strong>{session?.user?.email}</strong> ({session?.user?.role}).
+        </p>
+        <p className="mt-2 text-sm text-muted">
+          Onboarding, packages, availability & payments arrive in SP-2 onward.
+        </p>
+      </Card>
+    </main>
+  );
+}

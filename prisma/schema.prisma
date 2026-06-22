@@ -9,55 +9,101 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─── Row-Level Security (RLS) — deferred, documented for later ────────────────
+// Tenant = organization. Tenant-scoped tables carry an org reference and will be
+// guarded by Postgres RLS in a later phase, e.g.:
+//   USING (org_id = current_org())  with a super_admin bypass policy.
+// In Phase 1, tenant isolation is enforced at the application / query layer.
+// `users` is global (operators, seekers, consultants); the only tenant-scoped
+// table so far is `org_members` (via organizationId). Grow RLS coverage as more
+// tenant-scoped tables (packages, bookings, …) are added in later sub-phases.
+
 // ─── Tenancy ────────────────────────────────────────────────────────────────
 
-enum Role {
-  OWNER
-  CONSULTING
-  ACCOUNTS
+enum UserRole {
+  super_admin
+  consultant
+  team_consulting
+  team_accounts
+  seeker
+}
+
+enum MemberRole {
+  consultant
+  team_consulting
+  team_accounts
+}
+
+enum OrgStatus {
+  active
+  suspended
+}
+
+enum MemberStatus {
+  active
+  invited
+  removed
+}
+
+model User {
+  id            String      @id @default(cuid())
+  role          UserRole    @default(seeker)
+  name          String?
+  // Unique + normalized to lowercase at write time (see lib/* / seed).
+  // `citext` is a future option if DB-level case-insensitivity is preferred.
+  email         String?     @unique
+  phone         String?
+  authProvider  String?
+  passwordHash  String?
+  emailVerified DateTime?   @db.Timestamptz(6)
+  image         String?
+  createdAt     DateTime    @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime    @updatedAt @db.Timestamptz(6)
+
+  accounts           Account[]
+  sessions           Session[]
+  memberships        OrgMember[]
+  ownedOrganizations Organization[] @relation("OrgOwner")
+
+  @@map("users")
 }
 
 model Organization {
-  id        String      @id @default(cuid())
-  name      String
-  slug      String      @unique
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  members   OrgMember[]
+  id          String      @id @default(cuid())
+  ownerUserId String?
+  name        String
+  // Unique + normalized to lowercase at write time. `citext` is a future option.
+  slug        String      @unique
+  status      OrgStatus   @default(active)
+  createdAt   DateTime    @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(6)
+
+  owner   User?       @relation("OrgOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  members OrgMember[]
 
   @@map("organizations")
 }
 
 model OrgMember {
   id             String       @id @default(cuid())
-  role           Role         @default(OWNER)
-  userId         String
   organizationId String
-  createdAt      DateTime     @default(now())
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  role           MemberRole   @default(consultant)
+  status         MemberStatus @default(active)
+  // Drives per-seat billing: count active billable seats per org.
+  isBillableSeat Boolean      @default(true)
+  createdAt      DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, organizationId])
-  @@index([organizationId])
+  @@index([organizationId, role, status])
   @@map("org_members")
 }
 
 // ─── Auth.js (NextAuth) models ───────────────────────────────────────────────
-
-model User {
-  id            String      @id @default(cuid())
-  name          String?
-  email         String?     @unique
-  emailVerified DateTime?
-  image         String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  memberships   OrgMember[]
-
-  @@map("users")
-}
 
 model Account {
   id                String  @id @default(cuid())
@@ -84,7 +130,7 @@ model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
   userId       String
-  expires      DateTime
+  expires      DateTime @db.Timestamptz(6)
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -94,7 +140,7 @@ model Session {
 model VerificationToken {
   identifier String
   token      String   @unique
-  expires    DateTime
+  expires    DateTime @db.Timestamptz(6)
 
   @@unique([identifier, token])
   @@map("verification_tokens")
@@ -103,13 +149,18 @@ model VerificationToken {
 // ─── Email + OTP (one-time codes) ────────────────────────────────────────────
 
 model VerificationCode {
-  id        String   @id @default(cuid())
-  email     String
-  code      String
-  expiresAt DateTime
-  consumed  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  email        String
+  // SHA-256 hash of the 6-digit code — the plaintext is never stored.
+  codeHash     String
+  expiresAt    DateTime @db.Timestamptz(6)
+  consumed     Boolean  @default(false)
+  // Verify attempts against this code; locked once it exceeds the cap.
+  attemptCount Int      @default(0)
+  // Issuing client IP, for per-IP issuance rate limiting.
+  requestIp    String?
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
 
-  @@index([email])
+  @@index([email, createdAt])
   @@map("verification_codes")
 }

@@ -12,6 +12,9 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "node --env-file=.env.local node_modules/.bin/prisma migrate dev",
+    "prisma:seed": "node --env-file=.env.local node_modules/.bin/tsx prisma/seed.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -38,7 +41,9 @@
     "eslint-config-next": "16.2.9",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
+    "tsx": "^4.22.4",
     "typescript": "^5",
+    "vitest": "^4.1.9",
     "wrangler": "^4.103.0"
   }
 }
