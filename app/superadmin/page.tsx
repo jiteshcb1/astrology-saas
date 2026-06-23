@@ -26,8 +26,16 @@ export default async function SuperadminHome() {
           and{" "}
           <Link className="text-terra hover:underline" href="/superadmin/flags">
             Feature flags
+          </Link>
+          ,{" "}
+          <Link className="text-terra hover:underline" href="/superadmin/oversight">
+            Oversight
           </Link>{" "}
-          are live. Oversight & catalogs arrive in SP-1.7.
+          and{" "}
+          <Link className="text-terra hover:underline" href="/superadmin/catalogs">
+            Catalogs
+          </Link>{" "}
+          are live. SP-1 is complete.
         </p>
       </Card>
     </main>

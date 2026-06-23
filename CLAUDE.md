@@ -123,6 +123,9 @@ do NOT create all tables at once.
 - **To add a tenant-scoped model:** add its delegate key to `config/tenant-models.json`, add a
   scoped wrapper in `scope()` (`lib/tenant-db.ts`), and extend the `TenantModelKey` union. Then any
   bare `prisma.<newModel>` immediately fails lint/build.
+- **Super-admin oversight** is the ONE sanctioned cross-tenant path: `lib/oversight.ts` (lint-exempt)
+  reads tenant models across all orgs **read-only** and writes an `oversight.view` audit entry per
+  read. Never add writes to tenant models there — mutations always go through `tenantDb`/`tenantTransaction`.
 - Postgres RLS remains deferred (defense-in-depth, later); this app-layer guard is the Phase-1
   enforcement. `organizations`/`users` are not org-scoped here (tenant root / global).
 

@@ -29,8 +29,9 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    // The sanctioned data-access layer + tests may use the raw client.
-    files: ["lib/tenant-db.ts", "lib/db.ts", "tests/**"],
+    // The sanctioned data-access layer + the read-only oversight bypass + tests may use the raw
+    // client. lib/oversight.ts is the ONLY cross-tenant read path (super-admin oversight, audit-logged).
+    files: ["lib/tenant-db.ts", "lib/oversight.ts", "lib/db.ts", "tests/**"],
     rules: {
       "no-restricted-properties": "off",
     },

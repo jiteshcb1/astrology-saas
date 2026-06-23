@@ -308,3 +308,30 @@ model BillingEvent {
 
   @@map("billing_events")
 }
+
+// ─── Catalogs (global config-as-data) ────────────────────────────────────────
+// Platform-level suggestions consumed by the consultant app (SP-2): theme colors, fonts,
+// calendar providers. Super-admin managed, read by all consultants → global, NOT tenant-scoped.
+// `value` holds type-specifics: {hex} for colors, {script, fontFamily} for fonts, {} for providers.
+
+enum CatalogType {
+  theme_color
+  font
+  calendar_provider
+}
+
+model CatalogItem {
+  id        String      @id @default(cuid())
+  type      CatalogType
+  key       String
+  label     String
+  value     Json        @default("{}")
+  isActive  Boolean     @default(true)
+  sortOrder Int         @default(0)
+  createdAt DateTime    @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime    @updatedAt @db.Timestamptz(6)
+
+  @@unique([type, key])
+  @@index([type, isActive])
+  @@map("catalog_items")
+}
