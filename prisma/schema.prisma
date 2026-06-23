@@ -78,10 +78,11 @@ model Organization {
   createdAt   DateTime    @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime    @updatedAt @db.Timestamptz(6)
 
-  owner        User?         @relation("OrgOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
-  members      OrgMember[]
-  subscription Subscription?
-  receipts     Receipt[]
+  owner             User?              @relation("OrgOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  members           OrgMember[]
+  subscription      Subscription?
+  receipts          Receipt[]
+  consultantProfile ConsultantProfile?
 
   @@map("organizations")
 }
@@ -307,6 +308,31 @@ model BillingEvent {
   createdAt      DateTime @default(now()) @db.Timestamptz(6)
 
   @@map("billing_events")
+}
+
+// ─── Consultant profile (SP-2) — tenant-scoped (1:1 org) ─────────────────────
+// Public bio data + onboarding state. Registered in config/tenant-models.json.
+
+model ConsultantProfile {
+  id                      String    @id @default(cuid())
+  organizationId          String    @unique
+  displayName             String?
+  businessType            String?
+  timezone                String    @default("Asia/Kolkata")
+  bio                     String?
+  experience              String?
+  specialities            String[]
+  socialLinks             Json      @default("{}")
+  gstNumber               String?
+  gstLegalName            String?
+  complaintsContactNumber String?
+  onboardedAt             DateTime? @db.Timestamptz(6)
+  createdAt               DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime  @updatedAt @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("consultant_profiles")
 }
 
 // ─── Catalogs (global config-as-data) ────────────────────────────────────────

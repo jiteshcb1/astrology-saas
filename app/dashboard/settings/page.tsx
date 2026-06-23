@@ -1,0 +1,43 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { requireRole } from "@/lib/rbac";
+import { getProfile } from "@/lib/consultant-profile";
+import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/superadmin/PageHeader";
+
+export default async function SettingsPage() {
+  const { session, role } = await requireRole("access:dashboard");
+  const orgId = session.user.orgId;
+  const profile = orgId ? await getProfile(orgId) : null;
+  if (role === "consultant" && (!orgId || !profile?.onboardedAt)) redirect("/onboarding");
+
+  return (
+    <>
+      <PageHeader title="Settings" subtitle="Manage your profile, branding and payments" />
+      <div className="mx-auto w-full max-w-4xl px-6 py-6">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Link href="/dashboard/settings/profile">
+            <Card className="h-full transition hover:border-marigold">
+              <h2 className="font-display text-lg text-ink">Profile</h2>
+              <p className="mt-1 text-sm text-muted">Bio, specialities, social links, GST &amp; contact.</p>
+            </Card>
+          </Link>
+          <Card className="h-full opacity-70">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg text-ink">Branding</h2>
+              <span className="rounded-full bg-line px-2 py-0.5 text-xs text-muted">Soon</span>
+            </div>
+            <p className="mt-1 text-sm text-muted">Logo, theme colour, font &amp; default language.</p>
+          </Card>
+          <Card className="h-full opacity-70">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg text-ink">Payments</h2>
+              <span className="rounded-full bg-line px-2 py-0.5 text-xs text-muted">Soon</span>
+            </div>
+            <p className="mt-1 text-sm text-muted">UPI QR or your own gateway keys.</p>
+          </Card>
+        </div>
+      </div>
+    </>
+  );
+}

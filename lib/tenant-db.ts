@@ -10,7 +10,7 @@ import tenantModels from "@/config/tenant-models.json";
 type Db = PrismaClient | Prisma.TransactionClient;
 
 // Keep in sync with config/tenant-models.json (which is the runtime source of truth).
-export type TenantModelKey = "orgMember" | "receipt";
+export type TenantModelKey = "orgMember" | "receipt" | "consultantProfile";
 
 const TENANT_MODELS: ReadonlySet<string> = new Set(tenantModels as string[]);
 
@@ -58,6 +58,24 @@ function scope(orgId: string, db: Db) {
           ...args,
           data: { ...args.data, organizationId: orgId },
         }),
+    },
+    consultantProfile: {
+      findFirst: (args?: Prisma.ConsultantProfileFindFirstArgs) =>
+        db.consultantProfile.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      count: (args?: Prisma.ConsultantProfileCountArgs) =>
+        db.consultantProfile.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      create: (
+        args: { data: Omit<Prisma.ConsultantProfileUncheckedCreateInput, "organizationId"> } & Pick<
+          Prisma.ConsultantProfileCreateArgs,
+          "select" | "include"
+        >,
+      ) =>
+        db.consultantProfile.create({
+          ...args,
+          data: { ...args.data, organizationId: orgId },
+        }),
+      updateMany: (args: Prisma.ConsultantProfileUpdateManyArgs) =>
+        db.consultantProfile.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
     },
   };
 }

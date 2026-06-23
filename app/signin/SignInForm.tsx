@@ -47,46 +47,56 @@ export function SignInForm() {
   }
 
   return (
-    <div className="space-y-4">
-      <Button
-        type="button"
-        variant="ghost"
-        className="w-full"
-        onClick={() => signIn("google", { callbackUrl: "/post-auth" })}
-      >
-        Continue with Google
-      </Button>
-
-      <div className="flex items-center gap-3 text-xs text-sand/40">
-        <span className="h-px flex-1 bg-line-dark" /> or <span className="h-px flex-1 bg-line-dark" />
+    <div>
+      <div className="mb-6">
+        <h2 className="font-display text-2xl text-ink">{step === "email" ? "Sign in" : "Check your email"}</h2>
+        <p className="mt-1 text-sm text-muted">
+          {step === "email"
+            ? "Continue with Google, or get a one-time code by email."
+            : `Enter the 6-digit code sent to ${email}.`}
+        </p>
       </div>
 
       {step === "email" ? (
-        <form onSubmit={onRequest} className="space-y-4">
-          <Input
-            tone="dark"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            label="Email address"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Sending…" : "Send code"}
+        <div className="space-y-4">
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full"
+            onClick={() => signIn("google", { callbackUrl: "/post-auth" })}
+          >
+            Continue with Google
           </Button>
-        </form>
+
+          <div className="flex items-center gap-3 text-xs text-muted">
+            <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
+          </div>
+
+          <form onSubmit={onRequest} className="space-y-4">
+            <Input
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              label="Email address"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Sending…" : "Send code"}
+            </Button>
+          </form>
+        </div>
       ) : (
         <form onSubmit={onVerify} className="space-y-4">
           <Input
-            tone="dark"
             inputMode="numeric"
             autoComplete="one-time-code"
             maxLength={6}
-            label={`Enter the 6-digit code sent to ${email}`}
+            label="6-digit code"
             placeholder="123456"
+            className="text-center text-lg tracking-[0.4em]"
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
             required
@@ -96,7 +106,7 @@ export function SignInForm() {
           </Button>
           <button
             type="button"
-            className="w-full text-sm text-sand/60 hover:text-sand"
+            className="w-full text-sm text-muted transition hover:text-terra"
             onClick={() => {
               setStep("email");
               setCode("");
@@ -108,9 +118,13 @@ export function SignInForm() {
         </form>
       )}
 
-      {message && <p className="text-sm text-green">{message}</p>}
-      {devCode && <p className="text-xs text-marigold-soft">[dev] code: {devCode}</p>}
-      {error && <p className="text-sm text-terra">{error}</p>}
+      {message && <p className="mt-4 text-sm text-green">{message}</p>}
+      {devCode && (
+        <p className="mt-2 rounded-control bg-sand-2/60 px-3 py-2 text-xs text-muted">
+          Dev code: <span className="font-medium text-ink">{devCode}</span>
+        </p>
+      )}
+      {error && <p className="mt-4 text-sm text-terra">{error}</p>}
     </div>
   );
 }
