@@ -238,3 +238,28 @@ model Subscription {
   @@index([status])
   @@map("subscriptions")
 }
+
+// ─── Feature flags (config-as-data) ──────────────────────────────────────────
+// Platform-level (super-admin managed). Resolver precedence: org > plan > global > false.
+// scopeId: null for global, planId for plan, orgId for org. NOT registered in tenantDb (no
+// tenant-actor write path; the resolver reads via explicit scope/scopeId filters).
+
+enum FlagScope {
+  global
+  plan
+  org
+}
+
+model FeatureFlag {
+  id        String    @id @default(cuid())
+  key       String
+  scope     FlagScope
+  scopeId   String?
+  enabled   Boolean   @default(false)
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+
+  @@unique([key, scope, scopeId])
+  @@index([scope, scopeId])
+  @@map("feature_flags")
+}
