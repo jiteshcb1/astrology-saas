@@ -64,6 +64,8 @@ export default async function ConsultantDetailPage({
               {formatMoney(computeEffectivePrice(sub.plan, sub.seatCount), sub.plan.currency)}
             </span>{" "}
             / {sub.plan.billingInterval}
+            {sub.currentPeriodEnd ? ` · renews ${sub.currentPeriodEnd.toLocaleDateString("en-IN")}` : ""}
+            {sub.suspendedForNonpayment ? " · suspended for non-payment" : ""}
           </p>
         ) : (
           <p className="mb-3 text-sm text-muted">No plan assigned yet.</p>

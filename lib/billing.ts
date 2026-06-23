@@ -2,6 +2,7 @@ import type { SubscriptionPlan } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { tenantTransaction } from "@/lib/tenant-db";
 import { writeAuditLog } from "@/lib/audit";
+import { getBillingGateway } from "@/lib/gateway";
 
 // Billing math + Super Admin plan/subscription cores. All money is integer paise; the payable
 // amount is always computed (never stored) so there is one source of truth. Cores are free of
@@ -165,11 +166,33 @@ export async function assignPlanCore(
   if (!plan.isActive) return { ok: false, error: "Cannot assign an inactive plan." };
 
   const effectivePrice = computeEffectivePrice(plan, seatCount);
+
+  // Create the gateway subscription BEFORE the DB transaction (no external call while a tx is open).
+  // Reuse the existing gateway ref if the org already has one.
+  const existing = await prisma.subscription.findUnique({
+    where: { orgId },
+    select: { gatewaySubscriptionRef: true, currentPeriodEnd: true },
+  });
+  let gatewaySubscriptionRef = existing?.gatewaySubscriptionRef ?? null;
+  let currentPeriodEnd = existing?.currentPeriodEnd ?? null;
+  if (!gatewaySubscriptionRef) {
+    const created = await getBillingGateway().createSubscription({
+      orgId,
+      planId,
+      seatCount,
+      amount: effectivePrice,
+      currency: plan.currency,
+      interval: plan.billingInterval,
+    });
+    gatewaySubscriptionRef = created.gatewaySubscriptionRef;
+    currentPeriodEnd = created.currentPeriodEnd;
+  }
+
   await tenantTransaction(async ({ db }) => {
     await db.subscription.upsert({
       where: { orgId },
-      create: { orgId, planId, seatCount, status: "active" },
-      update: { planId, seatCount, status: "active" },
+      create: { orgId, planId, seatCount, status: "active", gatewaySubscriptionRef, currentPeriodEnd },
+      update: { planId, seatCount, status: "active", gatewaySubscriptionRef, currentPeriodEnd },
     });
     await writeAuditLog(
       {
@@ -178,7 +201,7 @@ export async function assignPlanCore(
         resourceType: "subscription",
         resourceId: orgId,
         orgId,
-        metadata: { planId, seatCount, effectivePrice },
+        metadata: { planId, seatCount, effectivePrice, gatewaySubscriptionRef },
       },
       db,
     );

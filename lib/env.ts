@@ -26,6 +26,13 @@ export const env = {
 
   // Crypto
   ENCRYPTION_MASTER_KEY: process.env.ENCRYPTION_MASTER_KEY ?? "",
+
+  // Billing (our subscription revenue). Note: the mock gateway reads BILLING_WEBHOOK_SECRET from
+  // process.env at call time (not this snapshot) so rotation/tests work without re-import.
+  BILLING_WEBHOOK_SECRET: process.env.BILLING_WEBHOOK_SECRET ?? "",
+  BILLING_CRON_SECRET: process.env.BILLING_CRON_SECRET ?? "",
+  PLATFORM_GST_NUMBER: process.env.PLATFORM_GST_NUMBER ?? "",
+  PLATFORM_LEGAL_NAME: process.env.PLATFORM_LEGAL_NAME ?? "Astro Consultancy",
 } as const;
 
 export const isDev = process.env.NODE_ENV !== "production";

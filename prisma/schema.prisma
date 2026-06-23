@@ -81,6 +81,7 @@ model Organization {
   owner        User?         @relation("OrgOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
   members      OrgMember[]
   subscription Subscription?
+  receipts     Receipt[]
 
   @@map("organizations")
 }
@@ -226,8 +227,12 @@ model Subscription {
   planId                 String
   seatCount              Int                @default(1)
   status                 SubscriptionStatus @default(active)
-  currentPeriodEnd       DateTime?          @db.Timestamptz(6) // set by SP-1.6 gateway
-  gatewaySubscriptionRef String? // set by SP-1.6
+  currentPeriodEnd       DateTime?          @db.Timestamptz(6) // set by the gateway on charge
+  gatewaySubscriptionRef String? // gateway's subscription id
+  pastDueSince           DateTime?          @db.Timestamptz(6) // set on payment failure; grace clock
+  // True only when WE suspended the org for non-payment — so recovery never un-suspends a
+  // manually suspended org. Distinguishes billing suspension from a super-admin manual suspend.
+  suspendedForNonpayment Boolean            @default(false)
   createdAt              DateTime           @default(now()) @db.Timestamptz(6)
   updatedAt              DateTime           @updatedAt @db.Timestamptz(6)
 
@@ -262,4 +267,44 @@ model FeatureFlag {
   @@unique([key, scope, scopeId])
   @@index([scope, scopeId])
   @@map("feature_flags")
+}
+
+// ─── Billing receipts + webhook ledger ───────────────────────────────────────
+// `receipts` is TENANT-SCOPED (read by the Accounts role in later phases) → registered in
+// config/tenant-models.json + lib/tenant-db.ts. `billing_events` is the platform-level webhook
+// dedup ledger (no tenant-actor path) → NOT registered, like subscriptions/feature_flags.
+// All money is integer paise + explicit currency.
+
+enum ReceiptType {
+  consultation
+  subscription
+}
+
+model Receipt {
+  id            String      @id @default(cuid())
+  organizationId String
+  type          ReceiptType
+  bookingId     String? // consultation receipts (SP-4); null for subscription
+  issuedTo      String
+  gstNumberUsed String?
+  amount        Int // paise
+  currency      String      @default("INR")
+  pdfUrl        String?
+  issuedAt      DateTime    @default(now()) @db.Timestamptz(6)
+  createdAt     DateTime    @default(now()) @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, type])
+  @@map("receipts")
+}
+
+model BillingEvent {
+  id             String   @id @default(cuid())
+  gatewayEventId String   @unique // dedup: a replay collides here and the apply tx rolls back
+  type           String
+  payload        Json?
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+
+  @@map("billing_events")
 }

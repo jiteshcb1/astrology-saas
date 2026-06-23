@@ -10,7 +10,7 @@ import tenantModels from "@/config/tenant-models.json";
 type Db = PrismaClient | Prisma.TransactionClient;
 
 // Keep in sync with config/tenant-models.json (which is the runtime source of truth).
-export type TenantModelKey = "orgMember";
+export type TenantModelKey = "orgMember" | "receipt";
 
 const TENANT_MODELS: ReadonlySet<string> = new Set(tenantModels as string[]);
 
@@ -40,6 +40,24 @@ function scope(orgId: string, db: Db) {
         db.orgMember.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
       deleteMany: (args?: Prisma.OrgMemberDeleteManyArgs) =>
         db.orgMember.deleteMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+    },
+    receipt: {
+      findMany: (args?: Prisma.ReceiptFindManyArgs) =>
+        db.receipt.findMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      findFirst: (args?: Prisma.ReceiptFindFirstArgs) =>
+        db.receipt.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      count: (args?: Prisma.ReceiptCountArgs) =>
+        db.receipt.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      create: (
+        args: { data: Omit<Prisma.ReceiptUncheckedCreateInput, "organizationId"> } & Pick<
+          Prisma.ReceiptCreateArgs,
+          "select" | "include"
+        >,
+      ) =>
+        db.receipt.create({
+          ...args,
+          data: { ...args.data, organizationId: orgId },
+        }),
     },
   };
 }

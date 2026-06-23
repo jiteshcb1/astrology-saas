@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { tenantTransaction } from "@/lib/tenant-db";
+import { type NonTenantClient, tenantTransaction } from "@/lib/tenant-db";
 import { writeAuditLog } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
 import { normalizeEmail } from "@/lib/otp";
@@ -127,22 +127,36 @@ export async function updateConsultantCore(
   return { ok: true };
 }
 
+// The single org-status mutation, usable inside any existing transaction. Reused by the Super
+// Admin suspend/reactivate action AND the billing engine (dunning/recovery) — there is no parallel
+// suspension path. actorUserId may be null for system (billing/cron) actions.
+export async function applyOrgStatus(
+  db: NonTenantClient,
+  orgId: string,
+  status: "active" | "suspended",
+  actorUserId: string | null,
+  opts?: { reason?: string },
+): Promise<void> {
+  await db.organization.update({ where: { id: orgId }, data: { status } });
+  await writeAuditLog(
+    {
+      actorUserId,
+      action: status === "suspended" ? "org.suspend" : "org.reactivate",
+      resourceType: "organization",
+      resourceId: orgId,
+      orgId,
+      metadata: opts?.reason ? { reason: opts.reason } : undefined,
+    },
+    db,
+  );
+}
+
 export async function setOrgStatusCore(
   orgId: string,
   status: "active" | "suspended",
   actorUserId: string,
 ): Promise<void> {
   await tenantTransaction(async ({ db }) => {
-    await db.organization.update({ where: { id: orgId }, data: { status } });
-    await writeAuditLog(
-      {
-        actorUserId,
-        action: status === "suspended" ? "org.suspend" : "org.reactivate",
-        resourceType: "organization",
-        resourceId: orgId,
-        orgId,
-      },
-      db,
-    );
+    await applyOrgStatus(db, orgId, status, actorUserId);
   });
 }
