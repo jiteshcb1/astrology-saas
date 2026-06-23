@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
 import { getBranding } from "@/lib/branding";
+import { getPaymentMethod } from "@/lib/payments";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -33,6 +34,7 @@ export default async function DashboardHome() {
   const profile = orgId ? await getProfile(orgId) : null;
   if (role === "consultant" && (!orgId || !profile?.onboardedAt)) redirect("/onboarding");
   const branding = orgId ? await getBranding(orgId) : null;
+  const paymentMethod = orgId ? await getPaymentMethod(orgId) : null;
 
   const profileComplete = Boolean(profile?.bio && profile.bio.trim());
   const checklist: ChecklistItem[] = [
@@ -40,7 +42,7 @@ export default async function DashboardHome() {
     { label: "Complete your public profile", done: profileComplete, href: "/dashboard/settings/profile", cta: "Edit" },
     { label: "Connect Google Calendar", done: false, soon: true },
     { label: "Brand your booking page", done: Boolean(branding?.themeColor), href: "/dashboard/settings/branding", cta: "Set up" },
-    { label: "Set up payments", done: false, soon: true },
+    { label: "Set up payments", done: Boolean(paymentMethod), href: "/dashboard/settings/payments", cta: "Set up" },
     { label: "Create your first package", done: false, soon: true },
   ];
 

@@ -28,13 +28,12 @@ export default async function SettingsPage() {
               <p className="mt-1 text-sm text-muted">Logo, theme colour, font &amp; default language.</p>
             </Card>
           </Link>
-          <Card className="h-full opacity-70">
-            <div className="flex items-center justify-between">
+          <Link href="/dashboard/settings/payments">
+            <Card className="h-full transition hover:border-marigold">
               <h2 className="font-display text-lg text-ink">Payments</h2>
-              <span className="rounded-full bg-line px-2 py-0.5 text-xs text-muted">Soon</span>
-            </div>
-            <p className="mt-1 text-sm text-muted">UPI QR or your own gateway keys.</p>
-          </Card>
+              <p className="mt-1 text-sm text-muted">UPI QR or your own gateway keys.</p>
+            </Card>
+          </Link>
         </div>
       </div>
     </>

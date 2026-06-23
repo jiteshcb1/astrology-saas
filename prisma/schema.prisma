@@ -84,6 +84,7 @@ model Organization {
   receipts          Receipt[]
   consultantProfile ConsultantProfile?
   branding          OrgBranding?
+  paymentMethod     PaymentMethod?
 
   @@map("organizations")
 }
@@ -354,6 +355,34 @@ model OrgBranding {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("org_branding")
+}
+
+// ─── Payment methods (SP-2.4) — tenant-scoped (1:1 org) ──────────────────────
+// How the consultant collects money from seekers. The platform NEVER touches funds. Two modes:
+// UPI QR (VPA + uploaded QR image) or BYO gateway (Razorpay manual keys). Gateway secrets are
+// envelope-encrypted (lib/crypto.ts) — plaintext is never stored, returned, or logged. connectionType
+// + oauthTokenEnc are reserved so OAuth slots in later with no schema break. Registered in
+// config/tenant-models.json.
+
+model PaymentMethod {
+  id                  String   @id @default(cuid())
+  organizationId      String   @unique
+  mode                String // "upi_qr" | "gateway"
+  upiVpa              String?
+  qrImageKey          String? // R2 object key
+  gatewayProvider     String? // "razorpay" (cashfree/phonepe later)
+  connectionType      String   @default("manual_keys") // reserve "oauth"
+  gatewayKeyIdEnc     String? // envelope-encrypted
+  gatewayKeySecretEnc String? // envelope-encrypted
+  gatewayKeyIdLast4   String? // non-secret masked hint for UI
+  oauthTokenEnc       String? // reserved (null) — future OAuth
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime @updatedAt @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("payment_methods")
 }
 
 // ─── Catalogs (global config-as-data) ────────────────────────────────────────

@@ -10,7 +10,12 @@ import tenantModels from "@/config/tenant-models.json";
 type Db = PrismaClient | Prisma.TransactionClient;
 
 // Keep in sync with config/tenant-models.json (which is the runtime source of truth).
-export type TenantModelKey = "orgMember" | "receipt" | "consultantProfile" | "orgBranding";
+export type TenantModelKey =
+  | "orgMember"
+  | "receipt"
+  | "consultantProfile"
+  | "orgBranding"
+  | "paymentMethod";
 
 const TENANT_MODELS: ReadonlySet<string> = new Set(tenantModels as string[]);
 
@@ -94,6 +99,24 @@ function scope(orgId: string, db: Db) {
         }),
       updateMany: (args: Prisma.OrgBrandingUpdateManyArgs) =>
         db.orgBranding.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
+    },
+    paymentMethod: {
+      findFirst: (args?: Prisma.PaymentMethodFindFirstArgs) =>
+        db.paymentMethod.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      count: (args?: Prisma.PaymentMethodCountArgs) =>
+        db.paymentMethod.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      create: (
+        args: { data: Omit<Prisma.PaymentMethodUncheckedCreateInput, "organizationId"> } & Pick<
+          Prisma.PaymentMethodCreateArgs,
+          "select" | "include"
+        >,
+      ) =>
+        db.paymentMethod.create({
+          ...args,
+          data: { ...args.data, organizationId: orgId },
+        }),
+      updateMany: (args: Prisma.PaymentMethodUpdateManyArgs) =>
+        db.paymentMethod.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
     },
   };
 }
