@@ -31,7 +31,7 @@ export function PlanForm({
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-3">
       {planId && <input type="hidden" name="planId" value={planId} />}
       <Input name="name" label="Plan name" defaultValue={defaults?.name} placeholder="Pro" required />
       <div className="grid grid-cols-2 gap-4">

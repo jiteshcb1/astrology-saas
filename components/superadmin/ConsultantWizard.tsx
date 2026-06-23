@@ -64,44 +64,44 @@ export function ConsultantWizard({
   const summary = selectedPlan ? buildCheckoutSummary(selectedPlan, additionalSeats) : null;
 
   return (
-    <form action={formAction}>
-      <ol className="mb-6 flex items-center gap-3 text-sm">
-        <StepDot n={1} label="Details" active={step === 1} done={step > 1} />
-        <span className="h-px w-6 bg-line" />
-        <StepDot n={2} label="Plan & seats" active={step === 2} done={false} />
-      </ol>
+    <form action={formAction} className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="rounded-card border border-line bg-white p-6">
+        <ol className="mb-6 flex items-center gap-3 text-sm">
+          <StepDot n={1} label="Details" active={step === 1} done={step > 1} />
+          <span className="h-px w-6 bg-line" />
+          <StepDot n={2} label="Plan & seats" active={step === 2} done={false} />
+        </ol>
 
-      {/* Step 1 — Details (kept mounted so its inputs always submit) */}
-      <div className={step === 1 ? "space-y-4" : "hidden"}>
-        <Input
-          name="orgName"
-          label="Organization name"
-          placeholder="Jyoti Astrology"
-          value={orgName}
-          onChange={(e) => setOrgName(e.target.value)}
-          required
-        />
-        <SlugField bookingBase={bookingBase} checkAvailability={checkAvailability} onValidityChange={setSlugReady} />
-        <Input name="ownerName" label="Owner name" placeholder="Pandit Ravi Sharma" />
-        <Input
-          name="ownerEmail"
-          type="email"
-          label="Owner email"
-          placeholder="owner@example.com"
-          value={ownerEmail}
-          onChange={(e) => setOwnerEmail(e.target.value)}
-          required
-        />
-        <div className="flex justify-end">
-          <Button type="button" disabled={!step1Valid} onClick={() => setStep(2)}>
-            Next
-          </Button>
+        {/* Step 1 — Details (kept mounted so its inputs always submit) */}
+        <div className={step === 1 ? "space-y-3" : "hidden"}>
+          <Input
+            name="orgName"
+            label="Organization name"
+            placeholder="Jyoti Astrology"
+            value={orgName}
+            onChange={(e) => setOrgName(e.target.value)}
+            required
+          />
+          <SlugField bookingBase={bookingBase} checkAvailability={checkAvailability} onValidityChange={setSlugReady} />
+          <Input name="ownerName" label="Owner name" placeholder="Pandit Ravi Sharma" />
+          <Input
+            name="ownerEmail"
+            type="email"
+            label="Owner email"
+            placeholder="owner@example.com"
+            value={ownerEmail}
+            onChange={(e) => setOwnerEmail(e.target.value)}
+            required
+          />
+          <div className="flex justify-end pt-1">
+            <Button type="button" disabled={!step1Valid} onClick={() => setStep(2)}>
+              Next
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Step 2 — Plan & seats */}
-      <div className={step === 2 ? "grid gap-6 md:grid-cols-2" : "hidden"}>
-        <div className="space-y-4">
+        {/* Step 2 — Plan & seats */}
+        <div className={step === 2 ? "space-y-3" : "hidden"}>
           <Select name="planId" label="Plan" value={planId} onChange={(e) => setPlanId(e.target.value)}>
             <option value="">No plan (assign later)</option>
             {plans.map((p) => (
@@ -121,7 +121,7 @@ export function ConsultantWizard({
           />
           <p className="text-xs text-muted">Seats beyond the {selectedPlan?.includedSeats ?? "—"} included in the plan.</p>
           {state.error && <p className="text-sm text-terra">{state.error}</p>}
-          <div className="flex justify-between">
+          <div className="flex justify-between pt-1">
             <Button type="button" variant="ghost" onClick={() => setStep(1)}>
               Back
             </Button>
@@ -130,10 +130,11 @@ export function ConsultantWizard({
             </Button>
           </div>
         </div>
-        <div>
-          <CheckoutSummary summary={summary} />
-        </div>
       </div>
+
+      <aside className="lg:sticky lg:top-6">
+        <CheckoutSummary summary={summary} />
+      </aside>
     </form>
   );
 }

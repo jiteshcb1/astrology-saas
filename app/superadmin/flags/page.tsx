@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { PageHeader } from "@/components/superadmin/PageHeader";
 import { deleteFlagAction, toggleFlagAction } from "./actions";
 
@@ -17,10 +18,8 @@ export default async function FlagsPage() {
   ]);
   const planName = new Map(plans.map((p) => [p.id, p.name]));
   const orgName = new Map(orgs.map((o) => [o.id, o.name]));
-
   const target = (scope: string, scopeId: string | null) => {
-    if (scope === "global") return "—";
-    if (!scopeId) return "—";
+    if (scope === "global" || !scopeId) return "—";
     return (scope === "plan" ? planName.get(scopeId) : orgName.get(scopeId)) ?? scopeId;
   };
 
@@ -31,7 +30,7 @@ export default async function FlagsPage() {
           <Button>New flag</Button>
         </Link>
       </PageHeader>
-      <div className="mx-auto w-full max-w-5xl px-6 py-8 md:px-8">
+      <div className="mx-auto w-full max-w-6xl px-6 py-6">
         <p className="mb-4 text-sm text-muted">Resolution precedence: org &gt; plan &gt; global &gt; off.</p>
         {flags.length === 0 ? (
           <div className="rounded-card border border-line bg-white">
@@ -40,32 +39,26 @@ export default async function FlagsPage() {
         ) : (
           <div className="overflow-hidden rounded-card border border-line bg-white">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-line text-muted">
+              <thead className="border-b border-line bg-sand-2/40 text-xs uppercase tracking-wide text-muted">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Key</th>
-                  <th className="px-4 py-3 font-medium">Scope</th>
-                  <th className="px-4 py-3 font-medium">Target</th>
-                  <th className="px-4 py-3 font-medium">State</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
+                  <th className="px-4 py-2.5 font-medium">Key</th>
+                  <th className="px-4 py-2.5 font-medium">Scope</th>
+                  <th className="px-4 py-2.5 font-medium">Target</th>
+                  <th className="px-4 py-2.5 font-medium">State</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {flags.map((flag) => (
-                  <tr key={flag.id} className="border-b border-line last:border-0">
+                  <tr key={flag.id} className="border-b border-line transition last:border-0 hover:bg-sand-2/30">
                     <td className="px-4 py-3 font-medium text-ink">{flag.key}</td>
                     <td className="px-4 py-3 text-muted">{flag.scope}</td>
                     <td className="px-4 py-3 text-muted">{target(flag.scope, flag.scopeId)}</td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs ${
-                          flag.enabled ? "bg-green/15 text-green" : "bg-terra/15 text-terra"
-                        }`}
-                      >
-                        {flag.enabled ? "enabled" : "disabled"}
-                      </span>
+                      <StatusChip label={flag.enabled ? "enabled" : "disabled"} tone={flag.enabled ? "success" : "neutral"} />
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-end gap-2">
                         <form action={toggleFlagAction}>
                           <input type="hidden" name="id" value={flag.id} />
                           <input type="hidden" name="enabled" value={flag.enabled ? "false" : "true"} />

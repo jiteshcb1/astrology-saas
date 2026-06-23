@@ -3,11 +3,11 @@ import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
+import { StatusChip, orgStatusTone, subStatusTone } from "@/components/ui/StatusChip";
 import { PageHeader } from "@/components/superadmin/PageHeader";
-import { deleteConsultantAction } from "./actions";
+import { deleteConsultantAction, setOrgStatusAction } from "./actions";
 
 export default async function ConsultantsPage() {
-  // Super admin is cross-tenant by design; organizations is the tenant root (not org-scoped).
   const orgs = await prisma.organization.findMany({
     orderBy: { createdAt: "desc" },
     include: {
@@ -23,7 +23,7 @@ export default async function ConsultantsPage() {
           <Button>New consultant</Button>
         </Link>
       </PageHeader>
-      <div className="mx-auto w-full max-w-5xl px-6 py-8 md:px-8">
+      <div className="mx-auto w-full max-w-6xl px-6 py-6">
         {orgs.length === 0 ? (
           <div className="rounded-card border border-line bg-white">
             <EmptyState
@@ -34,53 +34,63 @@ export default async function ConsultantsPage() {
         ) : (
           <div className="overflow-hidden rounded-card border border-line bg-white">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-line text-muted">
+              <thead className="border-b border-line bg-sand-2/40 text-xs uppercase tracking-wide text-muted">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Organization</th>
-                  <th className="px-4 py-3 font-medium">Slug</th>
-                  <th className="px-4 py-3 font-medium">Owner</th>
-                  <th className="px-4 py-3 font-medium">Plan</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
+                  <th className="px-4 py-2.5 font-medium">Organization</th>
+                  <th className="px-4 py-2.5 font-medium">Owner</th>
+                  <th className="px-4 py-2.5 font-medium">Plan</th>
+                  <th className="px-4 py-2.5 font-medium">Status</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {orgs.map((org) => (
-                  <tr key={org.id} className="border-b border-line last:border-0">
-                    <td className="px-4 py-3">
-                      <Link className="font-medium text-ink hover:text-terra" href={`/superadmin/consultants/${org.id}`}>
-                        {org.name}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-muted">/{org.slug}</td>
-                    <td className="px-4 py-3 text-muted">{org.owner?.email ?? "—"}</td>
-                    <td className="px-4 py-3 text-muted">
-                      {org.subscription ? `${org.subscription.plan.name} (${org.subscription.status})` : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs ${
-                          org.status === "active" ? "bg-green/15 text-green" : "bg-terra/15 text-terra"
-                        }`}
-                      >
-                        {org.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/superadmin/consultants/${org.id}`}
-                          className="rounded-control border border-line px-3 py-2 text-sm text-ink transition hover:border-marigold"
-                        >
-                          Edit
+                {orgs.map((org) => {
+                  const suspended = org.status === "suspended";
+                  return (
+                    <tr key={org.id} className="border-b border-line transition last:border-0 hover:bg-sand-2/30">
+                      <td className="px-4 py-3">
+                        <Link className="font-medium text-ink hover:text-terra" href={`/superadmin/consultants/${org.id}`}>
+                          {org.name}
                         </Link>
-                        <ConfirmDeleteButton action={deleteConsultantAction}>
-                          <input type="hidden" name="orgId" value={org.id} />
-                        </ConfirmDeleteButton>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        <div className="text-xs text-muted">/{org.slug}</div>
+                      </td>
+                      <td className="px-4 py-3 text-muted">{org.owner?.email ?? "—"}</td>
+                      <td className="px-4 py-3">
+                        {org.subscription ? (
+                          <span className="inline-flex items-center gap-2">
+                            <span className="text-ink">{org.subscription.plan.name}</span>
+                            <StatusChip label={org.subscription.status.replace("_", " ")} tone={subStatusTone(org.subscription.status)} />
+                          </span>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusChip label={org.status} tone={orgStatusTone(org.status)} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-2">
+                          <form action={setOrgStatusAction}>
+                            <input type="hidden" name="orgId" value={org.id} />
+                            <input type="hidden" name="status" value={suspended ? "active" : "suspended"} />
+                            <Button type="submit" variant="ghost">
+                              {suspended ? "Reactivate" : "Suspend"}
+                            </Button>
+                          </form>
+                          <Link
+                            href={`/superadmin/consultants/${org.id}`}
+                            className="rounded-control border border-line px-3 py-2 text-sm text-ink transition hover:border-marigold"
+                          >
+                            Edit
+                          </Link>
+                          <ConfirmDeleteButton action={deleteConsultantAction}>
+                            <input type="hidden" name="orgId" value={org.id} />
+                          </ConfirmDeleteButton>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

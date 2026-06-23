@@ -1,15 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ReadOnlyField } from "@/components/ui/ReadOnlyField";
+import { StatusChip, orgStatusTone, subStatusTone } from "@/components/ui/StatusChip";
 import { PageHeader } from "@/components/superadmin/PageHeader";
-import { computeEffectivePrice, formatMoney } from "@/lib/billing";
-import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
 import type { WizardPlan } from "@/components/superadmin/ConsultantWizard";
+import { computeEffectivePrice, formatMoney } from "@/lib/billing";
 import { ConsultantEditForm } from "../ConsultantEditForm";
 import { AssignPlanForm } from "../AssignPlanForm";
-import { deleteConsultantAction, setOrgStatusAction } from "../actions";
 
 export default async function ConsultantDetailPage({
   params,
@@ -45,7 +44,6 @@ export default async function ConsultantDetailPage({
   ]);
   if (!org) notFound();
 
-  const suspended = org.status === "suspended";
   const sub = org.subscription;
   const activePlanOptions: WizardPlan[] = activePlans.map((p) => ({
     ...p,
@@ -55,47 +53,48 @@ export default async function ConsultantDetailPage({
 
   return (
     <>
-      <PageHeader title={org.name} />
-      <div className="mx-auto w-full max-w-xl px-6 py-8 md:px-8">
-        <div className="mb-4">
-          <Link href="/superadmin/consultants" className="text-sm text-muted hover:text-terra">
-            ← Consultants
-          </Link>
-          <p className="mt-1 text-sm text-muted">
-            /{org.slug} · owner {org.owner?.email ?? "—"} · status {org.status}
-          </p>
-        </div>
+      <PageHeader title={org.name}>
+        <StatusChip label={org.status} tone={orgStatusTone(org.status)} />
+      </PageHeader>
+      <div className="mx-auto w-full max-w-3xl px-6 py-6">
+        <Link href="/superadmin/consultants" className="text-sm text-muted hover:text-terra">
+          ← Consultants
+        </Link>
 
         {error && (
-          <div className="mb-5 rounded-control border border-terra/40 bg-terra/10 px-4 py-3 text-sm text-terra">
+          <div className="mt-4 rounded-control border border-terra/40 bg-terra/10 px-4 py-3 text-sm text-terra">
             {error}
           </div>
         )}
 
-        <Card className="mb-5">
+        <Card className="mt-4">
           <h2 className="mb-3 font-display text-lg text-ink">Details</h2>
-          <p className="mb-3 text-sm text-muted">
-            Slug <code className="text-ink">/{org.slug}</code> is fixed for the life of the org
-            (immutable public URL in Phase 1).
-          </p>
-          <ConsultantEditForm orgId={org.id} name={org.name} />
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <ReadOnlyField label="Booking URL">/{org.slug}</ReadOnlyField>
+              <ReadOnlyField label="Owner">{org.owner?.email ?? "—"}</ReadOnlyField>
+            </div>
+            <ConsultantEditForm orgId={org.id} name={org.name} />
+          </div>
         </Card>
 
-        <Card className="mb-5">
-          <h2 className="mb-1 font-display text-lg text-ink">Plan &amp; billing</h2>
+        <Card className="mt-4">
+          <h2 className="mb-3 font-display text-lg text-ink">Plan &amp; billing</h2>
           {sub ? (
-            <p className="mb-3 text-sm text-muted">
-              Current: <span className="text-ink">{sub.plan.name}</span> · {sub.seatCount} seat
-              {sub.seatCount === 1 ? "" : "s"} · status {sub.status} ·{" "}
-              <span className="text-ink">
-                {formatMoney(computeEffectivePrice(sub.plan, sub.seatCount), sub.plan.currency)}
-              </span>{" "}
-              / {sub.plan.billingInterval}
-              {sub.currentPeriodEnd ? ` · renews ${sub.currentPeriodEnd.toLocaleDateString("en-IN")}` : ""}
-              {sub.suspendedForNonpayment ? " · suspended for non-payment" : ""}
-            </p>
+            <div className="mb-4 grid gap-3 sm:grid-cols-2">
+              <ReadOnlyField label="Current plan">
+                <span className="inline-flex items-center gap-2">
+                  {sub.plan.name}
+                  <StatusChip label={sub.status.replace("_", " ")} tone={subStatusTone(sub.status)} />
+                </span>
+              </ReadOnlyField>
+              <ReadOnlyField label="Charge">
+                {formatMoney(computeEffectivePrice(sub.plan, sub.seatCount), sub.plan.currency)} / {sub.plan.billingInterval}
+                {sub.currentPeriodEnd ? ` · renews ${sub.currentPeriodEnd.toLocaleDateString("en-IN")}` : ""}
+              </ReadOnlyField>
+            </div>
           ) : (
-            <p className="mb-3 text-sm text-muted">No plan assigned yet.</p>
+            <p className="mb-4 text-sm text-muted">No plan assigned yet.</p>
           )}
           <AssignPlanForm
             orgId={org.id}
@@ -103,33 +102,6 @@ export default async function ConsultantDetailPage({
             currentPlanId={sub?.planId}
             currentAdditionalSeats={currentAdditionalSeats}
           />
-        </Card>
-
-        <Card>
-          <h2 className="mb-1 font-display text-lg text-ink">{suspended ? "Reactivate" : "Suspend"}</h2>
-          <p className="mb-3 text-sm text-muted">
-            {suspended
-              ? "Reactivating brings the public booking page back online."
-              : "Suspending takes the public booking page offline (404)."}
-          </p>
-          <form action={setOrgStatusAction}>
-            <input type="hidden" name="orgId" value={org.id} />
-            <input type="hidden" name="status" value={suspended ? "active" : "suspended"} />
-            <Button type="submit" variant={suspended ? "primary" : "ghost"}>
-              {suspended ? "Reactivate" : "Suspend"}
-            </Button>
-          </form>
-        </Card>
-
-        <Card className="mt-5 border-terra/40">
-          <h2 className="mb-1 font-display text-lg text-ink">Delete consultant</h2>
-          <p className="mb-3 text-sm text-muted">
-            Permanently removes this org, its members, and subscription. Blocked if there is billing
-            history (receipts) — suspend instead to preserve financial records.
-          </p>
-          <ConfirmDeleteButton action={deleteConsultantAction} label="Delete consultant">
-            <input type="hidden" name="orgId" value={org.id} />
-          </ConfirmDeleteButton>
         </Card>
       </div>
     </>

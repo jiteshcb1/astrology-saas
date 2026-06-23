@@ -50,12 +50,12 @@ export default async function SuperadminDashboard() {
   return (
     <>
       <PageHeader title="Dashboard" />
-      <div className="mx-auto w-full max-w-6xl px-6 py-8 md:px-8">
+      <div className="mx-auto w-full max-w-6xl px-6 py-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard label="Consultants" value={String(metrics.totalConsultants)} />
-          <MetricCard label="Active subscriptions" value={String(metrics.activeSubscriptions)} />
+          <MetricCard label="Consultants" value={String(metrics.totalConsultants)} hint="Total organizations" filled />
+          <MetricCard label="Active subscriptions" value={String(metrics.activeSubscriptions)} hint="Currently billing" />
           <MetricCard label="MRR" value={rupees(metrics.mrrPaise)} hint="Monthly, normalized" />
-          <MetricCard label="Suspended" value={String(metrics.suspendedOrgs)} />
+          <MetricCard label="Suspended" value={String(metrics.suspendedOrgs)} hint="Offline booking pages" />
         </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-2">

@@ -40,7 +40,7 @@ export function FlagForm({
   const [scope, setScope] = useState(defaults?.scope ?? "global");
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-3">
       {flagId && <input type="hidden" name="id" value={flagId} />}
       <Input name="key" label="Flag key" placeholder="round_robin" defaultValue={defaults?.key} required />
       <Select name="scope" label="Scope" value={scope} onChange={(e) => setScope(e.target.value)}>

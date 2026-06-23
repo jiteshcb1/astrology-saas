@@ -162,3 +162,33 @@ The full planning artifacts live in `docs/`. Consult the relevant one BEFORE imp
 - Keep the app **deployable and green** after each sub-phase (build + lint pass; stubs safe with empty env).
 - Grow the **Prisma schema incrementally** toward `docs/4`, only adding what each sub-phase needs.
 - Local dev runs on **port 3001**. Hosting target is Cloudflare via OpenNext. DB is Neon (Postgres) via Prisma.
+
+<!-- ───────────────────────────────────────────────────────────────────────── -->
+
+## Build status & conventions (keep this current as phases land)
+
+### Done so far — Phase 1, Sub-phase SP-1 COMPLETE (SP-1.1 → SP-1.8), all committed & green
+- **SP-1.1** Core tenancy data model: `User`(global `UserRole`), `Organization`, `OrgMember`(`MemberRole`/`status`/`isBillableSeat`), enums, super-admin seed (`prisma/seed.ts`). All `DateTime` are `@db.Timestamptz(6)`; PKs are `cuid()`.
+- **SP-1.2** Auth + RBAC: Google + email-OTP (hardened — crypto codes, SHA-256 `codeHash`, attempt/rate limits in `lib/otp.ts`); session `role`/`orgId` claims; central authz in **`lib/rbac.ts`** (`can()`, `requireRole()`, `roleHome()`) — authorization is decided against the **live DB role**, not the JWT claim. Route guards are server-side (no Node middleware). Minimal design-system slice + `/signin`.
+- **SP-1.3** Super Admin consultant (org) CRUD; **tenant-isolation foundation** (`lib/tenant-db.ts`, `config/tenant-models.json`, lint guard); `audit_logs` + `writeAuditLog` (`lib/audit.ts`); `lib/slug.ts`; suspend/reactivate via `organizations.status`.
+- **SP-1.4** Plans + per-seat model + subscriptions scaffolding (money = integer paise + `currency`, never float).
+- **SP-1.5** Feature flags (`lib/flags.ts`), precedence **org > plan > global > false**; `useFeature` hook (`components/FeatureProvider.tsx`).
+- **SP-1.6** Our subscription billing behind a **mock gateway** (`lib/gateway.ts` + `lib/gateway-mock.ts`); idempotent + signature-verified webhook (`app/api/webhooks/billing`), dunning→suspend & recovery→reactivate via the SAME `applyOrgStatus` path; `receipts` (registered tenant model) + stub PDF (`lib/pdf.ts`); `billing_events` dedup ledger. Engine in `lib/billing-engine.ts`.
+- **SP-1.7** Super Admin oversight (read-only, audit-logged via **`lib/oversight.ts`** — the one sanctioned cross-tenant read path) + global catalogs (`lib/catalog.ts`, `getActiveCatalog` is the in-monolith "internal API" SP-2 consumes; seeded defaults).
+- **SP-1.8** Super Admin UX pass: persistent app shell, real dashboard, consultant **wizard**, checkout summary, edit/delete with guards, plus a visual-polish pass (chips, read-only fields, denser tables, sticky checkout).
+
+### Tenant-scoped models registered (in `config/tenant-models.json`): `orgMember`, `receipt`. Platform-level (NOT registered, accessed by super-admin/platform): `organization` (tenant root), `subscription`, `subscriptionPlan`, `feature_flags`, `billing_events`, `catalog_items`, `audit_logs`.
+
+### `lib/` map (reuse these — don't re-implement)
+- `db.ts` Prisma singleton · `tenant-db.ts` `tenantDb(orgId)` / `tenantTransaction()` · `oversight.ts` cross-tenant read · `rbac.ts` authz · `audit.ts` `writeAuditLog` · `otp.ts` · `slug.ts` (incl. `evaluateSlugInput` for the live field) · `money.ts` **pure** money (`computeEffectivePrice`/`formatMoney`/`parseFeatures` — client-safe) · `billing.ts` plan/subscription cores (re-exports money) · `checkout.ts` `totalSeatCount`/`buildCheckoutSummary` · `billing-engine.ts` webhooks/dunning · `gateway.ts`/`gateway-mock.ts` · `flags.ts` · `catalog.ts` · `consultants.ts` (org CRUD + `applyOrgStatus`) · `admin-dashboard.ts` · `pdf.ts` (stub) · `email.ts`/`storage.ts`/`env.ts` (stubs/config).
+
+### UI conventions (Super Admin; reuse for consultant/team UIs in later phases)
+- **Design tokens** in `app/globals.css` (`night`/`marigold`/`sand`/`terra`/`ink`/`green`, `rounded-control`/`rounded-card`); fonts Fraunces(display)/Inter(sans)/Marcellus(logo) in `app/layout.tsx`.
+- **`components/ui/`**: `Button` (primary/ghost), `Input`, `Select`, `Card`, `EmptyState`, `StatusChip` (tones success/danger/neutral/warning + `orgStatusTone`/`subStatusTone`), `ReadOnlyField`, `ConfirmDeleteButton` (two-click danger).
+- **`components/superadmin/`**: `SuperadminSidebar` + `SignOutButton` (the shell, in `app/superadmin/layout.tsx`), `PageHeader` (sticky title + action slot — every page uses it), `MetricCard`, `SignupTrendChart`, `SlugField` (live validate + availability), `ConsultantWizard`, `CheckoutSummary`.
+- **Page pattern:** `<PageHeader title actions/>` + a content container (`mx-auto w-full max-w-6xl px-6 py-6` for lists/dashboard, `max-w-xl` for forms). **Tables:** bordered card, `bg-sand-2/40` uppercase header, hairline `border-line` row dividers, `hover:bg-sand-2/30`, status as `StatusChip`, **row actions on the right** (status-toggle + Edit link + `ConfirmDeleteButton`). Detail pages are **edit-only** (status/delete live in the list rows). Read-only data uses `ReadOnlyField`, not loose grey text.
+- **Mutations**: server actions re-check `requireRole(...)`, go through `tenantTransaction` + `writeAuditLog`, and are thin wrappers over testable cores in `lib/`. Cores never use `"use server"`/redirect. Tests are DB-gated (`describe.skip` without `DATABASE_URL`); pure logic is always-on.
+- **Money in UI**: rupees via `formatMoney(paise)`; MRR/derived display math lives in `lib/admin-dashboard.ts` (display-only, separate from billing).
+
+### Deferred / known TODOs to honor in later phases
+- Real Razorpay/Stripe SDK behind `BillingGateway`; real webhook signature scheme in `verifyWebhook`; Cloudflare Cron **schedule** for `runGraceSweep()` (`/api/cron/billing-dunning` route + secret exist); reconciliation cron; real `@react-pdf/renderer` in `lib/pdf.ts` (reused by SP-4 receipts + SP-6 export); `buildCheckoutSummary` reused in the SP-4 invite email; `seatCount` auto-sync to active billable members (SP-5); RLS as defense-in-depth; bookings/seekers oversight (SP-4/SP-6).

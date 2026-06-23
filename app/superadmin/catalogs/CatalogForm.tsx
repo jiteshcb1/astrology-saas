@@ -33,7 +33,7 @@ export function CatalogForm({
   const [type, setType] = useState(defaults?.type ?? "theme_color");
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-3">
       {id && <input type="hidden" name="id" value={id} />}
       <Select name="type" label="Type" value={type} onChange={(e) => setType(e.target.value)}>
         <option value="theme_color">Theme color</option>
