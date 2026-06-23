@@ -83,6 +83,7 @@ model Organization {
   subscription      Subscription?
   receipts          Receipt[]
   consultantProfile ConsultantProfile?
+  branding          OrgBranding?
 
   @@map("organizations")
 }
@@ -333,6 +334,26 @@ model ConsultantProfile {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("consultant_profiles")
+}
+
+// ─── Consultant branding (SP-2.3) — tenant-scoped (1:1 org) ──────────────────
+// Public booking-page personalization. themeColor/fontKey are constrained to the active
+// theme_color/font catalogs at write time; logoKey is an R2 object key (resolved to a signed
+// URL on read — storing a URL would rot). Registered in config/tenant-models.json.
+
+model OrgBranding {
+  id             String   @id @default(cuid())
+  organizationId String   @unique
+  logoKey        String?
+  themeColor     String?
+  fontKey        String?
+  defaultLocale  String   @default("en")
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("org_branding")
 }
 
 // ─── Catalogs (global config-as-data) ────────────────────────────────────────

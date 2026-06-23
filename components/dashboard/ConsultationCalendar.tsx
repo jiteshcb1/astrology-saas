@@ -78,15 +78,21 @@ export function ConsultationCalendar() {
             </button>
           </div>
 
-          <div className="grid grid-cols-7 border-b border-line pb-2 text-center text-xs uppercase tracking-wide text-muted">
+          <div
+            className="border-b border-line pb-2 text-center text-xs uppercase tracking-wide text-muted"
+            style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}
+          >
             {WEEKDAYS.map((w) => (
               <div key={w}>{w}</div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7">
+          <div
+            className="border-l border-t border-line"
+            style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}
+          >
             {cells.map((day, i) => {
-              if (day === null) return <div key={`b${i}`} className="min-h-[78px] border-b border-r border-line first:border-l" />;
+              if (day === null) return <div key={`b${i}`} className="min-h-[78px] border-b border-r border-line" />;
               const isToday = isCurrentMonth && day === today.getDate();
               const isSelected = day === selectedDay;
               const events = eventsByDay[day] ?? [];
@@ -95,7 +101,7 @@ export function ConsultationCalendar() {
                   type="button"
                   key={day}
                   onClick={() => setSelectedDay(day)}
-                  className={`min-h-[78px] border-b border-r border-line p-1.5 text-left align-top transition hover:bg-sand-2/30 [&:nth-child(7n+1)]:border-l ${
+                  className={`min-h-[78px] min-w-0 overflow-hidden border-b border-r border-line p-1.5 text-left align-top transition hover:bg-sand-2/30 ${
                     isSelected ? "bg-sand-2/40" : ""
                   }`}
                 >

@@ -22,13 +22,12 @@ export default async function SettingsPage() {
               <p className="mt-1 text-sm text-muted">Bio, specialities, social links, GST &amp; contact.</p>
             </Card>
           </Link>
-          <Card className="h-full opacity-70">
-            <div className="flex items-center justify-between">
+          <Link href="/dashboard/settings/branding">
+            <Card className="h-full transition hover:border-marigold">
               <h2 className="font-display text-lg text-ink">Branding</h2>
-              <span className="rounded-full bg-line px-2 py-0.5 text-xs text-muted">Soon</span>
-            </div>
-            <p className="mt-1 text-sm text-muted">Logo, theme colour, font &amp; default language.</p>
-          </Card>
+              <p className="mt-1 text-sm text-muted">Logo, theme colour, font &amp; default language.</p>
+            </Card>
+          </Link>
           <Card className="h-full opacity-70">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-lg text-ink">Payments</h2>

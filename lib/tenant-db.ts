@@ -10,7 +10,7 @@ import tenantModels from "@/config/tenant-models.json";
 type Db = PrismaClient | Prisma.TransactionClient;
 
 // Keep in sync with config/tenant-models.json (which is the runtime source of truth).
-export type TenantModelKey = "orgMember" | "receipt" | "consultantProfile";
+export type TenantModelKey = "orgMember" | "receipt" | "consultantProfile" | "orgBranding";
 
 const TENANT_MODELS: ReadonlySet<string> = new Set(tenantModels as string[]);
 
@@ -76,6 +76,24 @@ function scope(orgId: string, db: Db) {
         }),
       updateMany: (args: Prisma.ConsultantProfileUpdateManyArgs) =>
         db.consultantProfile.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
+    },
+    orgBranding: {
+      findFirst: (args?: Prisma.OrgBrandingFindFirstArgs) =>
+        db.orgBranding.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      count: (args?: Prisma.OrgBrandingCountArgs) =>
+        db.orgBranding.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      create: (
+        args: { data: Omit<Prisma.OrgBrandingUncheckedCreateInput, "organizationId"> } & Pick<
+          Prisma.OrgBrandingCreateArgs,
+          "select" | "include"
+        >,
+      ) =>
+        db.orgBranding.create({
+          ...args,
+          data: { ...args.data, organizationId: orgId },
+        }),
+      updateMany: (args: Prisma.OrgBrandingUpdateManyArgs) =>
+        db.orgBranding.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
     },
   };
 }
