@@ -1,51 +1,14 @@
-import type { SubscriptionPlan } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { tenantTransaction } from "@/lib/tenant-db";
 import { writeAuditLog } from "@/lib/audit";
 import { getBillingGateway } from "@/lib/gateway";
+import { computeEffectivePrice } from "@/lib/money";
+import { totalSeatCount } from "@/lib/checkout";
 
-// Billing math + Super Admin plan/subscription cores. All money is integer paise; the payable
-// amount is always computed (never stored) so there is one source of truth. Cores are free of
-// "use server"/redirect so they're unit-testable; server actions are thin wrappers.
-
-// ── Pure helpers ──────────────────────────────────────────────────────────────
-
-export function computeEffectivePrice(
-  plan: Pick<SubscriptionPlan, "price" | "includedSeats" | "perSeatPrice">,
-  seatCount: number,
-): number {
-  const extraSeats = Math.max(0, Math.trunc(seatCount) - plan.includedSeats);
-  return plan.price + extraSeats * plan.perSeatPrice;
-}
-
-export function formatMoney(paise: number, currency = "INR"): string {
-  const major = paise / 100;
-  const amount = major.toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return currency === "INR" ? `₹${amount}` : `${currency} ${amount}`;
-}
-
-export function parseFeatures(raw: string): Record<string, boolean> {
-  const trimmed = (raw ?? "").trim();
-  if (!trimmed) return {};
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(trimmed);
-  } catch {
-    throw new Error("Features must be valid JSON.");
-  }
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new Error("Features must be a JSON object of key → true/false.");
-  }
-  const out: Record<string, boolean> = {};
-  for (const [key, value] of Object.entries(parsed)) {
-    if (typeof value !== "boolean") throw new Error(`Feature "${key}" must be true or false.`);
-    out[key] = value;
-  }
-  return out;
-}
+// Super Admin plan/subscription cores. The pure money helpers now live in lib/money.ts (client-safe)
+// and are re-exported here so existing imports keep working. Cores are free of "use server"/redirect
+// so they're unit-testable; server actions are thin wrappers.
+export { computeEffectivePrice, formatMoney, parseFeatures } from "@/lib/money";
 
 // ── Cores ─────────────────────────────────────────────────────────────────────
 
@@ -150,6 +113,49 @@ export async function setPlanActiveCore(
       db,
     );
   });
+}
+
+// Delete a plan — BLOCKED if any subscription references it, or any plan-scoped feature flag points
+// at it (no FK, would orphan). Clear message in either case.
+export async function deletePlanCore(
+  planId: string,
+  actorUserId: string,
+): Promise<BillingMutationResult> {
+  const subCount = await prisma.subscription.count({ where: { planId } });
+  if (subCount > 0) {
+    return {
+      ok: false,
+      error: `This plan is assigned to ${subCount} consultant(s). Reassign them before deleting.`,
+    };
+  }
+  const flagCount = await prisma.featureFlag.count({ where: { scope: "plan", scopeId: planId } });
+  if (flagCount > 0) {
+    return {
+      ok: false,
+      error: `This plan has ${flagCount} plan-scoped feature flag(s). Remove them before deleting.`,
+    };
+  }
+  await tenantTransaction(async ({ db }) => {
+    await db.subscriptionPlan.delete({ where: { id: planId } });
+    await writeAuditLog(
+      { actorUserId, action: "plan.delete", resourceType: "subscription_plan", resourceId: planId },
+      db,
+    );
+  });
+  return { ok: true };
+}
+
+// Assign by ADDITIONAL seats (the operator-facing field). Maps to the TOTAL seat count
+// (includedSeats + additionalSeats) that assignPlanCore / computeEffectivePrice expect.
+export async function assignPlanByAdditionalSeatsCore(
+  orgId: string,
+  planId: string,
+  additionalSeats: number,
+  actorUserId: string,
+): Promise<BillingMutationResult> {
+  const plan = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
+  if (!plan) return { ok: false, error: "Plan not found." };
+  return assignPlanCore(orgId, planId, totalSeatCount(plan.includedSeats, additionalSeats), actorUserId);
 }
 
 export async function assignPlanCore(

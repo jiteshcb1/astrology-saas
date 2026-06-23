@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/rbac";
 import {
   createPlanCore,
+  deletePlanCore,
   parseFeatures,
   type PlanFormState,
   type PlanInput,
@@ -74,6 +75,17 @@ export async function updatePlanAction(
   revalidatePath(`/superadmin/plans/${planId}`);
   revalidatePath("/superadmin/plans");
   return {};
+}
+
+export async function deletePlanAction(formData: FormData): Promise<void> {
+  const { session } = await requireRole("access:superadmin");
+  const id = String(formData.get("id") ?? "");
+  const result = await deletePlanCore(id, session.user.id);
+  revalidatePath("/superadmin/plans");
+  if (!result.ok) {
+    redirect(`/superadmin/plans/${id}?error=${encodeURIComponent(result.error)}`);
+  }
+  redirect("/superadmin/plans");
 }
 
 export async function setPlanActiveAction(formData: FormData): Promise<void> {

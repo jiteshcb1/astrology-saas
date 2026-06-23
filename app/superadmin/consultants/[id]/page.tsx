@@ -3,17 +3,23 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/superadmin/PageHeader";
 import { computeEffectivePrice, formatMoney } from "@/lib/billing";
+import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
+import type { WizardPlan } from "@/components/superadmin/ConsultantWizard";
 import { ConsultantEditForm } from "../ConsultantEditForm";
 import { AssignPlanForm } from "../AssignPlanForm";
-import { setOrgStatusAction } from "../actions";
+import { deleteConsultantAction, setOrgStatusAction } from "../actions";
 
 export default async function ConsultantDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { id } = await params;
+  const { error } = await searchParams;
   const [org, activePlans] = await Promise.all([
     prisma.organization.findUnique({
       where: { id },
@@ -25,76 +31,107 @@ export default async function ConsultantDetailPage({
     prisma.subscriptionPlan.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },
-      select: { id: true, name: true },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        currency: true,
+        billingInterval: true,
+        includedSeats: true,
+        perSeatPrice: true,
+        features: true,
+      },
     }),
   ]);
   if (!org) notFound();
 
   const suspended = org.status === "suspended";
   const sub = org.subscription;
+  const activePlanOptions: WizardPlan[] = activePlans.map((p) => ({
+    ...p,
+    features: (p.features ?? {}) as Record<string, boolean>,
+  }));
+  const currentAdditionalSeats = sub ? Math.max(0, sub.seatCount - sub.plan.includedSeats) : 0;
 
   return (
-    <main className="mx-auto w-full max-w-xl flex-1 px-6 py-12">
-      <div className="mb-6">
-        <Link href="/superadmin/consultants" className="text-sm text-muted hover:text-terra">
-          ← Consultants
-        </Link>
-        <h1 className="mt-2 font-display text-2xl text-ink">{org.name}</h1>
-        <p className="text-sm text-muted">
-          /{org.slug} · owner {org.owner?.email ?? "—"} · status {org.status}
-        </p>
-      </div>
-
-      <Card className="mb-5">
-        <h2 className="mb-3 font-display text-lg text-ink">Details</h2>
-        <p className="mb-3 text-sm text-muted">
-          Slug <code className="text-ink">/{org.slug}</code> is fixed for the life of the org
-          (immutable public URL in Phase 1).
-        </p>
-        <ConsultantEditForm orgId={org.id} name={org.name} />
-      </Card>
-
-      <Card className="mb-5">
-        <h2 className="mb-1 font-display text-lg text-ink">Plan &amp; billing</h2>
-        {sub ? (
-          <p className="mb-3 text-sm text-muted">
-            Current: <span className="text-ink">{sub.plan.name}</span> · {sub.seatCount} seat
-            {sub.seatCount === 1 ? "" : "s"} · status {sub.status} ·{" "}
-            <span className="text-ink">
-              {formatMoney(computeEffectivePrice(sub.plan, sub.seatCount), sub.plan.currency)}
-            </span>{" "}
-            / {sub.plan.billingInterval}
-            {sub.currentPeriodEnd ? ` · renews ${sub.currentPeriodEnd.toLocaleDateString("en-IN")}` : ""}
-            {sub.suspendedForNonpayment ? " · suspended for non-payment" : ""}
+    <>
+      <PageHeader title={org.name} />
+      <div className="mx-auto w-full max-w-xl px-6 py-8 md:px-8">
+        <div className="mb-4">
+          <Link href="/superadmin/consultants" className="text-sm text-muted hover:text-terra">
+            ← Consultants
+          </Link>
+          <p className="mt-1 text-sm text-muted">
+            /{org.slug} · owner {org.owner?.email ?? "—"} · status {org.status}
           </p>
-        ) : (
-          <p className="mb-3 text-sm text-muted">No plan assigned yet.</p>
-        )}
-        <AssignPlanForm
-          orgId={org.id}
-          plans={activePlans}
-          currentPlanId={sub?.planId}
-          currentSeatCount={sub?.seatCount}
-        />
-      </Card>
+        </div>
 
-      <Card>
-        <h2 className="mb-1 font-display text-lg text-ink">
-          {suspended ? "Reactivate" : "Suspend"}
-        </h2>
-        <p className="mb-3 text-sm text-muted">
-          {suspended
-            ? "Reactivating brings the public booking page back online."
-            : "Suspending takes the public booking page offline (404)."}
-        </p>
-        <form action={setOrgStatusAction}>
-          <input type="hidden" name="orgId" value={org.id} />
-          <input type="hidden" name="status" value={suspended ? "active" : "suspended"} />
-          <Button type="submit" variant={suspended ? "primary" : "ghost"}>
-            {suspended ? "Reactivate" : "Suspend"}
-          </Button>
-        </form>
-      </Card>
-    </main>
+        {error && (
+          <div className="mb-5 rounded-control border border-terra/40 bg-terra/10 px-4 py-3 text-sm text-terra">
+            {error}
+          </div>
+        )}
+
+        <Card className="mb-5">
+          <h2 className="mb-3 font-display text-lg text-ink">Details</h2>
+          <p className="mb-3 text-sm text-muted">
+            Slug <code className="text-ink">/{org.slug}</code> is fixed for the life of the org
+            (immutable public URL in Phase 1).
+          </p>
+          <ConsultantEditForm orgId={org.id} name={org.name} />
+        </Card>
+
+        <Card className="mb-5">
+          <h2 className="mb-1 font-display text-lg text-ink">Plan &amp; billing</h2>
+          {sub ? (
+            <p className="mb-3 text-sm text-muted">
+              Current: <span className="text-ink">{sub.plan.name}</span> · {sub.seatCount} seat
+              {sub.seatCount === 1 ? "" : "s"} · status {sub.status} ·{" "}
+              <span className="text-ink">
+                {formatMoney(computeEffectivePrice(sub.plan, sub.seatCount), sub.plan.currency)}
+              </span>{" "}
+              / {sub.plan.billingInterval}
+              {sub.currentPeriodEnd ? ` · renews ${sub.currentPeriodEnd.toLocaleDateString("en-IN")}` : ""}
+              {sub.suspendedForNonpayment ? " · suspended for non-payment" : ""}
+            </p>
+          ) : (
+            <p className="mb-3 text-sm text-muted">No plan assigned yet.</p>
+          )}
+          <AssignPlanForm
+            orgId={org.id}
+            plans={activePlanOptions}
+            currentPlanId={sub?.planId}
+            currentAdditionalSeats={currentAdditionalSeats}
+          />
+        </Card>
+
+        <Card>
+          <h2 className="mb-1 font-display text-lg text-ink">{suspended ? "Reactivate" : "Suspend"}</h2>
+          <p className="mb-3 text-sm text-muted">
+            {suspended
+              ? "Reactivating brings the public booking page back online."
+              : "Suspending takes the public booking page offline (404)."}
+          </p>
+          <form action={setOrgStatusAction}>
+            <input type="hidden" name="orgId" value={org.id} />
+            <input type="hidden" name="status" value={suspended ? "active" : "suspended"} />
+            <Button type="submit" variant={suspended ? "primary" : "ghost"}>
+              {suspended ? "Reactivate" : "Suspend"}
+            </Button>
+          </form>
+        </Card>
+
+        <Card className="mt-5 border-terra/40">
+          <h2 className="mb-1 font-display text-lg text-ink">Delete consultant</h2>
+          <p className="mb-3 text-sm text-muted">
+            Permanently removes this org, its members, and subscription. Blocked if there is billing
+            history (receipts) — suspend instead to preserve financial records.
+          </p>
+          <ConfirmDeleteButton action={deleteConsultantAction} label="Delete consultant">
+            <input type="hidden" name="orgId" value={org.id} />
+          </ConfirmDeleteButton>
+        </Card>
+      </div>
+    </>
   );
 }

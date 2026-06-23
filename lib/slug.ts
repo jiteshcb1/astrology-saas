@@ -37,6 +37,46 @@ export function normalizeSlug(input: string): string {
   return input.trim().toLowerCase();
 }
 
+// Real-time, typing-tolerant evaluation for the slug input field. Gives leading-hyphen and
+// min-length their own messages, and tolerates a trailing hyphen mid-typing (trimmed on blur).
+// Pure → unit-tested. `display` is what to show in the field; `canonical` is what to submit/check.
+export interface SlugInputEval {
+  display: string;
+  canonical: string;
+  status: "empty" | "error" | "ok";
+  message?: string; // blocking error
+  note?: string; // non-blocking info (e.g. a hyphen was trimmed)
+}
+
+export function evaluateSlugInput(raw: string, opts: { typing?: boolean } = {}): SlugInputEval {
+  const typing = opts.typing ?? false;
+  const lowered = (raw ?? "").toLowerCase();
+  const hadLeadingHyphen = /^-/.test(lowered);
+  const display = lowered.replace(/^-+/, ""); // leading hyphens are never valid → trim live
+  const hadTrailingHyphen = /-$/.test(display);
+  const canonical = display.replace(/-+$/, "");
+  const note = hadLeadingHyphen ? "Slugs can't start with a hyphen — removed it." : undefined;
+
+  if (display.length === 0) return { display, canonical, status: "empty", note };
+  if (/[^a-z0-9-]/.test(display))
+    return { display, canonical, status: "error", message: "Use only lowercase letters, numbers, and hyphens.", note };
+  if (display.includes("--"))
+    return { display, canonical, status: "error", message: "Slug can't contain consecutive hyphens.", note };
+  // A trailing hyphen is fine mid-typing (e.g. "jyoti-" on the way to "jyoti-astro"); trimmed on blur.
+  if (hadTrailingHyphen && typing) return { display, canonical, status: "empty", note };
+  if (canonical.length < 3)
+    return { display, canonical, status: "error", message: "Slug must be at least 3 characters.", note };
+  if (RESERVED_SLUGS.has(canonical))
+    return { display, canonical, status: "error", message: "That slug is reserved.", note };
+
+  return {
+    display,
+    canonical,
+    status: "ok",
+    note: hadTrailingHyphen && !typing ? "Removed trailing hyphen." : note,
+  };
+}
+
 export function validateSlug(input: string): SlugValidation {
   const slug = normalizeSlug(input);
   if (!SLUG_RE.test(slug)) {

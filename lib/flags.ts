@@ -1,7 +1,11 @@
-import type { FlagScope } from "@prisma/client";
+import { type FlagScope, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { tenantTransaction } from "@/lib/tenant-db";
 import { writeAuditLog } from "@/lib/audit";
+
+function isUniqueViolation(e: unknown): boolean {
+  return e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002";
+}
 
 // Feature flags (config-as-data). Resolution precedence: org > plan > global > false.
 // Platform-level (super-admin managed); the resolver reads via explicit scope/scopeId filters.
@@ -129,6 +133,48 @@ export async function setFlagCore(input: SetFlagInput, actorUserId: string): Pro
     );
   });
   return { ok: true };
+}
+
+// Edit an existing flag by id (key/scope/target/enabled). Used by the flag edit page.
+export async function updateFlagCore(
+  id: string,
+  input: SetFlagInput,
+  actorUserId: string,
+): Promise<FlagResult> {
+  const key = input.key.trim().toLowerCase();
+  if (!FLAG_KEY_RE.test(key)) {
+    return {
+      ok: false,
+      error: "Key must be 3–50 chars: lowercase letters, digits, '.', '_' or '-', not starting/ending with a separator.",
+    };
+  }
+  const resolved = await resolveScopeId(input.scope, input.scopeId);
+  if (!resolved.ok) return resolved;
+  const scopeId = resolved.value ?? null;
+
+  try {
+    await tenantTransaction(async ({ db }) => {
+      await db.featureFlag.update({
+        where: { id },
+        data: { key, scope: input.scope, scopeId, enabled: input.enabled },
+      });
+      await writeAuditLog(
+        {
+          actorUserId,
+          action: "flag.update",
+          resourceType: "feature_flag",
+          resourceId: id,
+          orgId: input.scope === "org" ? scopeId : null,
+          metadata: { key, scope: input.scope, scopeId, enabled: input.enabled },
+        },
+        db,
+      );
+    });
+    return { ok: true };
+  } catch (e) {
+    if (isUniqueViolation(e)) return { ok: false, error: "A flag with that key + scope already exists." };
+    throw e;
+  }
 }
 
 export async function setFlagEnabledCore(

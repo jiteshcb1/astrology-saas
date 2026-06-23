@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/superadmin/PageHeader";
 import { CatalogForm } from "../CatalogForm";
 import { updateCatalogAction } from "../actions";
 
@@ -22,19 +23,21 @@ export default async function CatalogItemDetailPage({ params }: { params: Promis
   };
 
   return (
-    <main className="mx-auto w-full max-w-xl flex-1 px-6 py-12">
-      <div className="mb-6">
-        <Link href="/superadmin/catalogs" className="text-sm text-muted hover:text-terra">
-          ← Catalogs
-        </Link>
-        <h1 className="mt-2 font-display text-2xl text-ink">{item.label}</h1>
-        <p className="text-sm text-muted">
-          {item.type} · {item.key}
-        </p>
+    <>
+      <PageHeader title={item.label} />
+      <div className="mx-auto w-full max-w-xl px-6 py-8 md:px-8">
+        <div className="mb-4">
+          <Link href="/superadmin/catalogs" className="text-sm text-muted hover:text-terra">
+            ← Catalogs
+          </Link>
+          <p className="mt-1 text-sm text-muted">
+            {item.type} · {item.key}
+          </p>
+        </div>
+        <Card>
+          <CatalogForm action={updateCatalogAction} id={item.id} defaults={defaults} submitLabel="Save" />
+        </Card>
       </div>
-      <Card>
-        <CatalogForm action={updateCatalogAction} id={item.id} defaults={defaults} submitLabel="Save" />
-      </Card>
-    </main>
+    </>
   );
 }

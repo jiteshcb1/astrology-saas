@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { type NonTenantClient, tenantTransaction } from "@/lib/tenant-db";
+import { type NonTenantClient, tenantDb, tenantTransaction } from "@/lib/tenant-db";
 import { writeAuditLog } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
 import { normalizeEmail } from "@/lib/otp";
@@ -23,6 +23,41 @@ export interface CreateConsultantInput {
 
 export type CreateConsultantResult = { ok: true; orgId: string } | { ok: false; error: string };
 export type MutationResult = { ok: true } | { ok: false; error: string };
+
+// Delete an org — BLOCKED if it has billing history (receipts), to honor the "financial records are
+// never hard-deleted" rule. Cascades members + (uncharged) subscription otherwise.
+export async function deleteConsultantCore(
+  orgId: string,
+  actorUserId: string,
+): Promise<MutationResult> {
+  const receiptCount = await tenantDb(orgId).receipt.count();
+  if (receiptCount > 0) {
+    return {
+      ok: false,
+      error:
+        "This consultant has billing history (receipts). Suspend instead of deleting to preserve financial records.",
+    };
+  }
+  await tenantTransaction(async ({ db }) => {
+    await db.organization.delete({ where: { id: orgId } });
+    await writeAuditLog(
+      { actorUserId, action: "org.delete", resourceType: "organization", resourceId: orgId, orgId },
+      db,
+    );
+  });
+  return { ok: true };
+}
+
+// Read-only slug availability for the New Consultant field (format + reserved + uniqueness).
+// Reuses validateSlug; the real uniqueness backstop stays in createConsultantCore.
+export async function slugAvailabilityCore(
+  slug: string,
+): Promise<{ available: boolean; reason?: string }> {
+  const check = validateSlug(slug);
+  if (!check.ok) return { available: false, reason: check.error };
+  const existing = await prisma.organization.findUnique({ where: { slug: normalizeSlug(slug) } });
+  return existing ? { available: false, reason: "taken" } : { available: true };
+}
 
 export async function createConsultantCore(
   input: CreateConsultantInput,
