@@ -45,7 +45,8 @@ export const HOLD_MINUTES = 10;
 
 // Booking statuses, grouped for the hold lifecycle. LIVE = permanently blocks the slot; HOLD = blocks
 // only while the hold window is open (holdExpiresAt > now), otherwise it's an expired hold (frees lazily).
-const LIVE_STATUSES = new Set(["confirmed", "confirming"]);
+// pending_verification (UPI proof submitted, awaiting consultant) holds the slot like a confirmed booking.
+const LIVE_STATUSES = new Set(["confirmed", "confirming", "pending_verification"]);
 const HOLD_STATUSES = new Set(["held", "pending_payment"]);
 type BookingState = { status: string; holdExpiresAt: Date | null };
 // The generic tenant facade doesn't narrow `include`, so type slot+booking payloads explicitly.

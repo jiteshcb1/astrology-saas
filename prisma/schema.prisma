@@ -379,6 +379,7 @@ model PaymentMethod {
   gatewayKeyIdEnc     String? // envelope-encrypted
   gatewayKeySecretEnc String? // envelope-encrypted
   gatewayKeyIdLast4   String? // non-secret masked hint for UI
+  gatewayWebhookSecretEnc String? // envelope-encrypted Razorpay webhook secret (SP-4.3, optional)
   oauthTokenEnc       String? // reserved (null) — future OAuth
   isActive            Boolean  @default(true)
   createdAt           DateTime @default(now()) @db.Timestamptz(6)
@@ -497,9 +498,10 @@ model PackageQuestion {
   @@map("package_questions")
 }
 
-// status lifecycle: held → pending_payment (details captured) → confirming (payment in-flight, SP-4.3)
-// → confirmed; or expired / cancelled. holdExpiresAt drives the hold window; the sweep + lazy expiry
-// free held/pending_payment rows past it. Seeker contact lives here (public bookings have no user).
+// status lifecycle: held → pending_payment (details captured) → [gateway] confirmed / [UPI]
+// pending_verification → confirmed (consultant) | cancelled; or expired (sweep) / payment_failed.
+// holdExpiresAt drives the hold window; the sweep + lazy expiry free held/pending_payment rows past it.
+// pending_verification/confirmed/confirming are LIVE (block the slot) — see lib/scheduling.ts.
 model Booking {
   id               String    @id @default(cuid())
   organizationId   String
@@ -523,6 +525,7 @@ model Booking {
   seeker       User?        @relation("SeekerBookings", fields: [seekerUserId], references: [id], onDelete: SetNull)
   package      Package      @relation(fields: [packageId], references: [id], onDelete: Cascade)
   slot         BookingSlot?
+  payment      Payment?
 
   @@index([organizationId, status])
   @@map("bookings")
@@ -546,6 +549,43 @@ model BookingSlot {
 
   @@index([hostMemberId])
   @@map("booking_slots")
+}
+
+// Per-booking payment record (SP-4.3). Tenant-scoped (registered). The platform never touches funds:
+// gateway = an order on the CONSULTANT's own Razorpay keys; upi_qr = the consultant's own VPA. amount in
+// paise. gatewayPaymentRef @unique guards duplicate gateway confirms (nullable → many UPI rows allowed).
+model Payment {
+  id               String   @id @default(cuid())
+  organizationId   String
+  bookingId        String   @unique
+  mode             String // upi_qr | gateway
+  amount           Int // paise
+  currency         String   @default("INR")
+  status           String   @default("initiated") // initiated | pending_verification | success | failed | refunded
+  proofImageKey    String? // R2 object key (UPI proof screenshot/PDF)
+  utrReference     String? // seeker-entered UPI transaction reference
+  gatewayOrderId   String?
+  gatewayPaymentRef String?  @unique
+  verifiedByUserId String? // consultant/team member who confirmed a UPI proof
+  createdAt        DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @db.Timestamptz(6)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@map("payments")
+}
+
+// Webhook dedup ledger (platform-level, mirrors BillingEvent). A replayed gateway webhook collides on
+// gatewayEventId @unique → P2002 → the transaction rolls back → no double-confirm / double-receipt.
+model PaymentEvent {
+  id             String   @id @default(cuid())
+  gatewayEventId String   @unique
+  type           String
+  payload        Json?
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+
+  @@map("payment_events")
 }
 
 // ─── Catalogs (global config-as-data) ────────────────────────────────────────

@@ -141,6 +141,16 @@ function GatewayPanel({ current }: { current: SafePaymentView | null }) {
             autoComplete="off"
             required
           />
+          <Input
+            name="webhookSecret"
+            label="Webhook secret (optional)"
+            type="password"
+            placeholder="From your Razorpay webhook settings"
+            autoComplete="off"
+          />
+          <p className="text-xs text-muted">
+            Optional — adds an automatic payment-confirmation backup. Bookings already confirm instantly at checkout.
+          </p>
           {state.error && <p className="text-sm text-terra">{state.error}</p>}
           {state.ok && <p className="text-sm text-green">Keys saved securely.</p>}
           <div className="flex items-center gap-2">

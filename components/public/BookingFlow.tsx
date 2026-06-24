@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { DatePicker } from "@/components/ui/DatePicker";
+import { PaymentStep, type PaidOutcome } from "@/components/public/PaymentStep";
 import { readableTextOn } from "@/lib/branding";
 import { validateIntake, validateSeeker } from "@/lib/booking-validate";
 import type { HeldBookingView, ConfirmResult } from "@/lib/booking";
+import type { PaymentContext, CreateOrderCoreResult, ConfirmPayResult } from "@/lib/payment";
 
 const DEFAULT_THEME = "#e8a33d";
 
@@ -16,17 +18,44 @@ function fmtDate(iso: string, tz: string): string {
 function fmtTime(iso: string, tz: string): string {
   return new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }).format(new Date(iso));
 }
+function icsStamp(iso: string): string {
+  return new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+function googleCalUrl(data: HeldBookingView): string {
+  const text = encodeURIComponent(`${data.package.title} with ${data.consultant.displayName}`);
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${icsStamp(data.startISO)}/${icsStamp(data.endISO)}`;
+}
+function icsHref(data: HeldBookingView): string {
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT", `DTSTART:${icsStamp(data.startISO)}`, `DTEND:${icsStamp(data.endISO)}`, `SUMMARY:${data.package.title} with ${data.consultant.displayName}`, "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+  return `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
+}
 
-type Mode = "form" | "confirmed" | "expired";
+type Mode = "form" | "pay" | "awaiting" | "success" | "expired";
+
+function modeForStatus(status: string, hasExpiry: boolean): Mode {
+  if (status === "confirmed") return "success";
+  if (status === "pending_verification") return "awaiting";
+  if (status === "pending_payment") return "pay";
+  if (status === "expired" || status === "cancelled" || status === "payment_failed" || !hasExpiry) return "expired";
+  return "form";
+}
 
 export function BookingFlow({
   data,
   confirm,
   rehold,
+  paymentContext,
+  createGatewayOrder,
+  confirmGatewayPayment,
+  submitUpiProof,
 }: {
   data: HeldBookingView;
   confirm: (details: { name: string; email: string; phone: string }, answers: Record<string, string>) => Promise<ConfirmResult>;
   rehold: () => Promise<{ ok: boolean; bookingId?: string; reason?: string }>;
+  paymentContext: PaymentContext | null;
+  createGatewayOrder: () => Promise<CreateOrderCoreResult>;
+  confirmGatewayPayment: (proof: { orderId: string; paymentId: string; signature: string }) => Promise<ConfirmPayResult>;
+  submitUpiProof: (formData: FormData) => Promise<{ ok: boolean; reason?: string; error?: string }>;
 }) {
   const router = useRouter();
   const accent = data.consultant.themeColor || DEFAULT_THEME;
@@ -38,10 +67,7 @@ export function BookingFlow({
     if (!data.holdExpiresAtISO) return 0;
     return Math.max(0, Math.round((new Date(data.holdExpiresAtISO).getTime() - Date.now()) / 1000));
   }
-  const alreadyDone = Boolean(data.seeker.name) && (data.status === "pending_payment" || data.status === "confirmed");
-  const initiallyExpired = data.status === "expired" || data.status === "cancelled" || !data.holdExpiresAtISO;
-
-  const [mode, setMode] = useState<Mode>(alreadyDone ? "confirmed" : initiallyExpired ? "expired" : "form");
+  const [mode, setMode] = useState<Mode>(modeForStatus(data.status, Boolean(data.holdExpiresAtISO)));
   const [name, setName] = useState(data.seeker.name);
   const [email, setEmail] = useState(data.seeker.email);
   const [phone, setPhone] = useState(data.seeker.phone || "+91 ");
@@ -53,7 +79,7 @@ export function BookingFlow({
   const [summaryOpen, setSummaryOpen] = useState(false);
 
   useEffect(() => {
-    if (mode !== "form") return;
+    if (mode !== "form" && mode !== "pay") return; // hold is live through details + payment
     const tick = () => {
       const s = secsLeft();
       setRemaining(s);
@@ -86,7 +112,7 @@ export function BookingFlow({
     setFormError(null);
     const res = await confirm(details, answers);
     setSubmitting(false);
-    if (res.ok) return setMode("confirmed");
+    if (res.ok) return setMode("pay");
     if (res.reason === "validation") return setErrors(res.errors);
     if (res.reason === "expired") return setMode("expired");
     setFormError("Something went wrong — your slot is still held, please try again.");
@@ -149,7 +175,7 @@ export function BookingFlow({
         <div className="mx-auto max-w-4xl">
           <a href={`/${data.slug}`} className="text-sm opacity-90 hover:opacity-100">← {data.consultant.displayName}</a>
           <h1 className="mt-1 font-display text-2xl">
-            {mode === "confirmed" ? "Booking confirmed" : mode === "expired" ? "Hold expired" : "Complete your booking"}
+            {mode === "success" ? "Booking confirmed" : mode === "awaiting" ? "Almost there" : mode === "expired" ? "Hold expired" : mode === "pay" ? "Complete payment" : "Complete your booking"}
           </h1>
         </div>
       </header>
@@ -223,22 +249,76 @@ export function BookingFlow({
             </>
           )}
 
-          {mode === "confirmed" && (
+          {mode === "pay" && (
+            <>
+              <div className="mb-5 flex items-center gap-3 rounded-card border border-line bg-white px-4 py-3">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-sand-2 text-marigold">⏳</span>
+                <p className="text-sm text-ink">
+                  {remaining > 0 ? (
+                    <>Your slot is held for <strong className="tabular-nums">{mm}:{ss}</strong> — complete payment to confirm.</>
+                  ) : (
+                    <>Your slot is held — complete payment to confirm.</>
+                  )}
+                </p>
+              </div>
+              {paymentContext ? (
+                <PaymentStep
+                  data={data}
+                  context={paymentContext}
+                  accent={accent}
+                  onAccent={onAccent}
+                  createGatewayOrder={createGatewayOrder}
+                  confirmGatewayPayment={confirmGatewayPayment}
+                  submitUpiProof={submitUpiProof}
+                  onPaid={(outcome: PaidOutcome) => setMode(outcome === "confirmed" ? "success" : "awaiting")}
+                  onExpired={() => setMode("expired")}
+                />
+              ) : (
+                <p className="rounded-card border border-line bg-white p-6 text-center text-sm text-muted">Payment isn&apos;t available right now. Please try again shortly.</p>
+              )}
+            </>
+          )}
+
+          {mode === "awaiting" && (
+            <div className="rounded-card border border-line bg-white p-6 text-center sm:p-8">
+              <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-sand-2 text-marigold">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round" /><circle cx="12" cy="12" r="9" /></svg>
+              </div>
+              <h2 className="font-display text-2xl text-ink">Proof received</h2>
+              <p className="mx-auto mt-1 max-w-sm text-sm text-muted">
+                {data.consultant.displayName} will verify your payment and confirm your booking. You&apos;ll get a confirmation email at <strong className="text-ink">{data.seeker.email}</strong>.
+              </p>
+              <div className="mx-auto mt-5 max-w-xs space-y-1.5 rounded-card bg-sand-2/40 px-5 py-4 text-sm">
+                <p className="font-medium text-ink">{data.package.title} · {data.package.durationLabel}</p>
+                <p className="text-ink">{fmtDate(data.startISO, tz)} · {fmtTime(data.startISO, tz)}</p>
+                <p className="text-muted">with {data.consultant.displayName}</p>
+              </div>
+              <ol className="mx-auto mt-5 max-w-xs list-decimal space-y-1 pl-5 text-left text-sm text-muted">
+                <li>The consultant reviews your payment proof.</li>
+                <li>You get a confirmation email with the call link.</li>
+                <li>Join at your booked time.</li>
+              </ol>
+            </div>
+          )}
+
+          {mode === "success" && (
             <div className="rounded-card border border-line bg-white p-6 text-center sm:p-8">
               <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full" style={{ backgroundColor: accent, color: onAccent }}>
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
-              <h2 className="font-display text-2xl text-ink">You&apos;re booked!</h2>
-              <p className="mt-1 text-sm text-muted">We&apos;ve saved your details for the session below.</p>
+              <h2 className="font-display text-2xl text-ink">Booking confirmed!</h2>
+              <p className="mt-1 text-sm text-muted">A confirmation email is on its way to <strong className="text-ink">{data.seeker.email}</strong>.</p>
               <div className="mx-auto mt-5 max-w-xs space-y-1.5 rounded-card bg-sand-2/40 px-5 py-4 text-sm">
                 <p className="font-medium text-ink">{data.package.title} · {data.package.durationLabel}</p>
                 <p className="text-ink">{fmtDate(data.startISO, tz)}</p>
                 <p className="text-ink">{fmtTime(data.startISO, tz)} <span className="text-muted">({tz})</span></p>
                 <p className="text-muted">with {data.consultant.displayName}</p>
+                {paymentContext && <p className="text-ink">Paid {paymentContext.priceLabel}</p>}
               </div>
-              <p className="mt-5 rounded-control bg-marigold/10 px-4 py-3 text-sm text-ink">
-                <strong>Payment next.</strong> Online payment is coming soon — the consultant will reach out to confirm your spot.
-              </p>
+              <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
+                <a href={googleCalUrl(data)} target="_blank" rel="noreferrer" className="rounded-control border border-line px-4 py-2 text-sm text-ink transition hover:border-marigold">Add to Google Calendar</a>
+                <a href={icsHref(data)} download={`${data.package.title}.ics`} className="rounded-control border border-line px-4 py-2 text-sm text-ink transition hover:border-marigold">Download .ics</a>
+              </div>
             </div>
           )}
 

@@ -101,7 +101,7 @@ export async function saveUpiCore(
 
 export async function saveGatewayCore(
   orgId: string,
-  input: { keyId: string; keySecret: string },
+  input: { keyId: string; keySecret: string; webhookSecret?: string },
   actorUserId: string,
 ): Promise<PaymentResult> {
   if (!input.keyId.trim() || !input.keySecret.trim()) {
@@ -120,6 +120,8 @@ export async function saveGatewayCore(
     gatewayKeyIdLast4: keyId.slice(-4),
     isActive: true,
   };
+  // Optional Razorpay webhook secret (enables the idempotent webhook backup path; encrypted at rest).
+  if (input.webhookSecret?.trim()) data.gatewayWebhookSecretEnc = encryptSecret(input.webhookSecret.trim());
   await upsert(orgId, data, actorUserId, "gateway");
   return { ok: true };
 }

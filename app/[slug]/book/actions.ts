@@ -3,6 +3,16 @@
 import { getActiveOrgBySlug } from "@/lib/public-page";
 import { reserveSlot } from "@/lib/scheduling";
 import { confirmBookingDetailsCore, type ConfirmResult, type SeekerDetails } from "@/lib/booking";
+import {
+  createGatewayOrderCore,
+  confirmGatewayPaymentCore,
+  submitUpiProofCore,
+  validateProofFile,
+  type CreateOrderCoreResult,
+  type ConfirmPayResult,
+  type ProofResult,
+} from "@/lib/payment";
+import { putObject } from "@/lib/storage";
 
 // All public (unauthenticated). Each action re-resolves the ACTIVE org by slug and scopes every
 // read/write to that orgId — a suspended org or wrong slug can't create or mutate bookings.
@@ -48,4 +58,45 @@ export async function confirmBookingAction(
   const org = await getActiveOrgBySlug(slug);
   if (!org) return { ok: false, reason: "not_found" };
   return confirmBookingDetailsCore(org.orgId, bookingId, details, answers);
+}
+
+// ── Payment (SP-4.3) — all public, slug-scoped. Secrets decrypt only inside the cores, server-side. ──
+
+export async function createGatewayOrderAction(slug: string, bookingId: string): Promise<CreateOrderCoreResult> {
+  const org = await getActiveOrgBySlug(slug);
+  if (!org) return { ok: false, error: "This page is unavailable." };
+  return createGatewayOrderCore(org.orgId, bookingId);
+}
+
+export async function confirmGatewayPaymentAction(
+  slug: string,
+  bookingId: string,
+  proof: { orderId: string; paymentId: string; signature: string },
+): Promise<ConfirmPayResult> {
+  const org = await getActiveOrgBySlug(slug);
+  if (!org) return { ok: false, reason: "not_found" };
+  return confirmGatewayPaymentCore(org.orgId, bookingId, proof);
+}
+
+// Upload the UPI proof to R2 (server-validates type+size), then record it → pending_verification.
+export async function submitUpiProofAction(
+  slug: string,
+  bookingId: string,
+  formData: FormData,
+): Promise<ProofResult | { ok: false; reason: "invalid"; error: string }> {
+  const org = await getActiveOrgBySlug(slug);
+  if (!org) return { ok: false, reason: "not_found" };
+
+  const file = formData.get("proof");
+  if (!(file instanceof File)) return { ok: false, reason: "invalid", error: "Please attach your payment proof." };
+  const check = validateProofFile(file.type, file.size);
+  if (!check.ok) return { ok: false, reason: "invalid", error: check.error! };
+
+  const ext = file.type === "application/pdf" ? "pdf" : (file.type.split("/")[1] || "png");
+  const key = `payments/${org.orgId}/proofs/${bookingId}-${Date.now()}.${ext}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  await putObject({ key, body: bytes, contentType: file.type });
+
+  const utr = String(formData.get("utr") ?? "").trim() || undefined;
+  return submitUpiProofCore(org.orgId, bookingId, { proofImageKey: key, utrReference: utr });
 }

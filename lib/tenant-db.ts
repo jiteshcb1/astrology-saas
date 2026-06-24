@@ -22,7 +22,8 @@ export type TenantModelKey =
   | "package"
   | "packageQuestion"
   | "booking"
-  | "bookingSlot";
+  | "bookingSlot"
+  | "payment";
 
 const TENANT_MODELS: ReadonlySet<string> = new Set(tenantModels as string[]);
 
@@ -224,6 +225,22 @@ function scope(orgId: string, db: Db) {
       ) => db.bookingSlot.create({ ...args, data: { ...args.data, organizationId: orgId } }),
       updateMany: (args: Prisma.BookingSlotUpdateManyArgs) =>
         db.bookingSlot.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
+    },
+    payment: {
+      findMany: (args?: Prisma.PaymentFindManyArgs) =>
+        db.payment.findMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      findFirst: (args?: Prisma.PaymentFindFirstArgs) =>
+        db.payment.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      count: (args?: Prisma.PaymentCountArgs) =>
+        db.payment.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      create: (
+        args: { data: Omit<Prisma.PaymentUncheckedCreateInput, "organizationId"> } & Pick<
+          Prisma.PaymentCreateArgs,
+          "select" | "include"
+        >,
+      ) => db.payment.create({ ...args, data: { ...args.data, organizationId: orgId } }),
+      updateMany: (args: Prisma.PaymentUpdateManyArgs) =>
+        db.payment.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
     },
   };
 }

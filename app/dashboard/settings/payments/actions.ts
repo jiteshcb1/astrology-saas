@@ -43,7 +43,11 @@ export async function saveGatewayAction(_prev: PaymentFormState, formData: FormD
 
   const result = await saveGatewayCore(
     orgId,
-    { keyId: String(formData.get("keyId") ?? ""), keySecret: String(formData.get("keySecret") ?? "") },
+    {
+      keyId: String(formData.get("keyId") ?? ""),
+      keySecret: String(formData.get("keySecret") ?? ""),
+      webhookSecret: String(formData.get("webhookSecret") ?? ""),
+    },
     session.user.id,
   );
   if (!result.ok) return { error: result.error };
