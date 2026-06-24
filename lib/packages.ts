@@ -1,6 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { tenantDb, tenantTransaction } from "@/lib/tenant-db";
 import { writeAuditLog } from "@/lib/audit";
+import { type QuestionInput, sanitizeQuestions } from "@/lib/booking-validate";
+
+export { QUESTION_FIELD_TYPES, QUESTION_REQUIREMENTS, QUESTION_TYPE_LABELS, sanitizeQuestions } from "@/lib/booking-validate";
+export type { QuestionFieldType, QuestionRequirement, QuestionInput } from "@/lib/booking-validate";
 
 // Packages = bookable event types (SP-3). Per-package price (paise) + limits (buffers, min-notice,
 // slot interval, frequency caps). Slug unique per org. Cores are testable; mutations go through
@@ -144,6 +148,44 @@ export async function savePackageCore(
     }
     throw e;
   }
+}
+
+// ─── Intake questions (package_questions, SP-4.2) ────────────────────────────
+// Shapes + sanitizer live in lib/booking-validate (client-safe so the builder can import them).
+export async function getPackageQuestions(orgId: string, packageId: string) {
+  return tenantDb(orgId).packageQuestion.findMany({
+    where: { packageId },
+    orderBy: { sortOrder: "asc" },
+  });
+}
+
+// Replace-wholesale: clear this package's questions and re-create from the sanitized list (sortOrder = index).
+export async function saveQuestionsCore(
+  orgId: string,
+  packageId: string,
+  raw: QuestionInput[],
+  actorUserId: string,
+): Promise<void> {
+  const questions = sanitizeQuestions(raw);
+  await tenantTransaction(async ({ db, tenant }) => {
+    await tenant(orgId).packageQuestion.deleteMany({ where: { packageId } });
+    if (questions.length > 0) {
+      await tenant(orgId).packageQuestion.createMany({
+        data: questions.map((q, i) => ({
+          packageId,
+          label: q.label,
+          fieldType: q.fieldType,
+          requirement: q.requirement,
+          options: q.options as Prisma.InputJsonValue,
+          sortOrder: i,
+        })),
+      });
+    }
+    await writeAuditLog(
+      { actorUserId, action: "package.questions", resourceType: "package", resourceId: packageId, orgId, metadata: { count: questions.length } },
+      db,
+    );
+  });
 }
 
 export async function setPackageActiveCore(

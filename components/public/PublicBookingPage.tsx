@@ -1,9 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { readableTextOn } from "@/lib/branding";
 import { dateToISO, formatTime } from "@/lib/datetime";
 import { utcToZonedParts } from "@/lib/timezone";
+import { Button } from "@/components/ui/Button";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { PackageCard } from "@/components/public/PackageCard";
 import type { PublicPackageView } from "@/lib/public-page";
@@ -48,16 +50,22 @@ export function PublicBookingPage({
   branding,
   packages,
   orgName,
+  slug,
   timezone = "Asia/Kolkata",
   getSlots,
+  onContinue,
 }: {
   profile: PublicProfile;
   branding: PublicBranding;
   packages: PublicPackageView[];
   orgName?: string;
+  slug?: string;
   timezone?: string;
   getSlots?: (packageId: string, durationMin: number, fromISO: string, toISO: string) => Promise<string[]>;
+  /** Real route only: hold the selected slot. Returns the new booking id to navigate to. */
+  onContinue?: (packageId: string, durationMin: number, startISO: string) => Promise<{ ok: boolean; bookingId?: string; reason?: string }>;
 }) {
+  const router = useRouter();
   const accent = branding.themeColor || DEFAULT_THEME;
   const onAccent = readableTextOn(accent);
   const name = profile.displayName || "Your name";
@@ -71,7 +79,25 @@ export function PublicBookingPage({
   const [slots, setSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [holding, setHolding] = useState(false);
+  const [slotError, setSlotError] = useState<string | null>(null);
   const reqRef = useRef(0);
+
+  async function continueToBook() {
+    if (!selectedPkg || !selectedSlot || !onContinue) return;
+    setHolding(true);
+    setSlotError(null);
+    const res = await onContinue(selectedPkg.id, duration, selectedSlot);
+    setHolding(false);
+    if (res.ok && res.bookingId && slug) {
+      router.push(`/${slug}/book/${res.bookingId}`);
+    } else if (res.reason === "slot_taken") {
+      setSlotError("Someone just booked this time — please choose another.");
+      void loadSlots(selectedPkg.id, duration, date);
+    } else {
+      setSlotError("Couldn't hold this slot. Please try again.");
+    }
+  }
 
   const selectedPkg = packages.find((p) => p.id === selectedId) ?? null;
 
@@ -228,6 +254,22 @@ export function PublicBookingPage({
                 <p className="mt-2 text-xs text-muted">Times in {tz}</p>
               </div>
             </div>
+
+            {/* Continue CTA — real route only */}
+            {onContinue && (
+              <div className="mt-5 border-t border-line pt-4">
+                {slotError && <p className="mb-2 text-sm text-terra">{slotError}</p>}
+                <Button
+                  type="button"
+                  disabled={!selectedSlot || holding}
+                  onClick={continueToBook}
+                  className="w-full"
+                  style={selectedSlot && !holding ? { backgroundColor: accent, color: onAccent } : undefined}
+                >
+                  {holding ? "Holding…" : selectedSlot ? `Continue · ${slotLabel(selectedSlot, tz)}` : "Select a time to continue"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

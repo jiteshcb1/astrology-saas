@@ -3,6 +3,7 @@ import { getActiveOrgBySlug } from "@/lib/public-page";
 import { PublicBookingPage } from "@/components/public/PublicBookingPage";
 import { PublicOffline } from "@/components/public/PublicOffline";
 import { getPublicSlotsAction } from "./actions";
+import { holdSlotAction } from "./book/actions";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -17,10 +18,14 @@ export default async function PublicBookingRoute({ params }: { params: Promise<{
   const data = await getActiveOrgBySlug(slug);
   if (!data) return <PublicOffline />;
 
-  // Inline server action bound to this slug — the client calls it with (packageId, duration, from, to).
+  // Inline server actions bound to this slug — the client calls them with the runtime args.
   async function getSlots(packageId: string, durationMin: number, fromISO: string, toISO: string) {
     "use server";
     return getPublicSlotsAction(slug, packageId, durationMin, fromISO, toISO);
+  }
+  async function onContinue(packageId: string, durationMin: number, startISO: string) {
+    "use server";
+    return holdSlotAction(slug, packageId, durationMin, startISO);
   }
 
   return (
@@ -29,8 +34,10 @@ export default async function PublicBookingRoute({ params }: { params: Promise<{
       branding={data.branding}
       packages={data.packages}
       orgName={data.orgName}
+      slug={slug}
       timezone={data.timezone}
       getSlots={getSlots}
+      onContinue={onContinue}
     />
   );
 }

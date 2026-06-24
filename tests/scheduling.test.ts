@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "../lib/db";
-import { getAvailableSlots, reserveSlot } from "../lib/scheduling";
+import { claimHoldForPayment, expireHoldsCore, getAvailableSlots, reserveSlot } from "../lib/scheduling";
 
 // The engine's hard guarantees need a real Postgres (the GiST exclusion constraint). DB-gated.
 const hasDb = Boolean(process.env.DATABASE_URL);
@@ -42,7 +42,7 @@ d("scheduling engine (SP-3)", () => {
 
   afterAll(async () => {
     await prisma.organization.deleteMany({ where: { slug: { startsWith: PREFIX } } }); // cascades all
-    await prisma.auditLog.deleteMany({ where: { action: "booking.create", orgId } });
+    await prisma.auditLog.deleteMany({ where: { action: { in: ["booking.create", "booking.hold"] }, orgId } });
     await prisma.$disconnect();
   });
 
@@ -100,6 +100,49 @@ d("scheduling engine (SP-3)", () => {
     const slots = await getAvailableSlots(orgId, { packageId: pkg.id, hostMemberId: "host-N", fromISO: "2026-07-01", toISO: "2026-07-01", now });
     expect(slots.every((s) => s.getTime() >= new Date("2026-07-01T05:30:00Z").getTime())).toBe(true);
     expect(slots[0].toISOString()).toBe("2026-07-01T05:30:00.000Z");
+  });
+
+  // ─── SP-4.2 hold / expiry / anti-race ──────────────────────────────────────
+  it("HOLD EXPIRY: an expired hold no longer blocks — slot is free again and re-holdable (lazy)", async () => {
+    const start = new Date("2026-07-01T04:30:00Z"); // 10:00 IST, inside the window
+    // now=PAST → holdExpiresAt = PAST + 10min, i.e. long expired relative to 2026-07-02.
+    const r1 = await reserveSlot({ orgId, packageId: pkgId, hostMemberId: "host-EXP", startsAt: start, durationMin: 30, now: PAST });
+    expect(r1.ok).toBe(true);
+
+    // `later` is after the hold's PAST+10min expiry but before the slot date (so minNotice keeps 07-01 slots).
+    const later = new Date("2026-06-15T00:00:00Z");
+    const slots = await getAvailableSlots(orgId, { packageId: pkgId, hostMemberId: "host-EXP", fromISO: "2026-07-01", toISO: "2026-07-01", now: later });
+    expect(slots.map((s) => s.toISOString())).toContain("2026-07-01T04:30:00.000Z"); // expired hold doesn't block
+
+    const r2 = await reserveSlot({ orgId, packageId: pkgId, hostMemberId: "host-EXP", startsAt: start, durationMin: 30, now: later });
+    expect(r2.ok).toBe(true); // lazy expiry freed the stale hold, fresh hold takes it
+    if (r1.ok) {
+      const old = await prisma.booking.findUnique({ where: { id: r1.bookingId } });
+      expect(old?.status).toBe("expired");
+    }
+  });
+
+  it("ANTI-RACE: claim (payment) and sweep (expiry) are mutually exclusive on the same hold", async () => {
+    const T0 = new Date("2026-07-01T08:00:00Z");
+    const mid = new Date("2026-07-01T08:05:00Z"); // before holdExpiresAt (T0+10)
+    const late = new Date("2026-07-01T08:30:00Z"); // after holdExpiresAt
+
+    // Case A — hold still valid: claim wins, sweep skips it.
+    const a = await reserveSlot({ orgId, packageId: pkgId, hostMemberId: "host-ARA", startsAt: new Date("2026-07-01T09:00:00Z"), durationMin: 30, now: T0 });
+    expect(a.ok).toBe(true);
+    if (!a.ok) return;
+    const [claimA] = await Promise.all([claimHoldForPayment(orgId, a.bookingId, mid), expireHoldsCore(mid, orgId)]);
+    expect(claimA.ok).toBe(true);
+    expect((await prisma.booking.findUnique({ where: { id: a.bookingId } }))?.status).toBe("confirming");
+
+    // Case B — hold lapsed: sweep wins, claim fails safely (don't charge).
+    const b = await reserveSlot({ orgId, packageId: pkgId, hostMemberId: "host-ARB", startsAt: new Date("2026-07-01T09:30:00Z"), durationMin: 30, now: T0 });
+    expect(b.ok).toBe(true);
+    if (!b.ok) return;
+    const [claimB] = await Promise.all([claimHoldForPayment(orgId, b.bookingId, late), expireHoldsCore(late, orgId)]);
+    expect(claimB.ok).toBe(false);
+    const bookingB = await prisma.booking.findUnique({ where: { id: b.bookingId } });
+    expect(bookingB?.status).toBe("expired");
   });
 
   it("respects a per-day frequency cap", async () => {

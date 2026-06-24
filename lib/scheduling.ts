@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db";
 import { tenantDb, tenantTransaction } from "@/lib/tenant-db";
 import { writeAuditLog } from "@/lib/audit";
 import { computeFreeIntervals, type OverrideInput, type RuleInput, type ScheduleWithRules } from "@/lib/availability";
@@ -36,6 +38,28 @@ function isExclusionViolation(e: unknown): boolean {
     msg.includes("23P01") ||
     msg.toLowerCase().includes("exclusion constraint")
   );
+}
+
+// How long a slot is held while the seeker fills details + pays (SP-4.2/4.3).
+export const HOLD_MINUTES = 10;
+
+// Booking statuses, grouped for the hold lifecycle. LIVE = permanently blocks the slot; HOLD = blocks
+// only while the hold window is open (holdExpiresAt > now), otherwise it's an expired hold (frees lazily).
+const LIVE_STATUSES = new Set(["confirmed", "confirming"]);
+const HOLD_STATUSES = new Set(["held", "pending_payment"]);
+type BookingState = { status: string; holdExpiresAt: Date | null };
+// The generic tenant facade doesn't narrow `include`, so type slot+booking payloads explicitly.
+type SlotWithBooking = Prisma.BookingSlotGetPayload<{ include: { booking: { select: { status: true; holdExpiresAt: true } } } }>;
+
+function isBlocking(b: BookingState | null | undefined, now: Date): boolean {
+  if (!b) return true; // a slot with no readable booking is treated as blocking (safe default)
+  if (LIVE_STATUSES.has(b.status)) return true;
+  if (HOLD_STATUSES.has(b.status)) return b.holdExpiresAt != null && b.holdExpiresAt.getTime() > now.getTime();
+  return false; // expired / cancelled / unknown → does not block
+}
+function isExpiredHold(b: BookingState | null | undefined, now: Date): boolean {
+  if (!b) return false;
+  return HOLD_STATUSES.has(b.status) && (b.holdExpiresAt == null || b.holdExpiresAt.getTime() <= now.getTime());
 }
 
 async function loadScheduleFor(orgId: string, scheduleId?: string | null): Promise<ScheduleWithRules | null> {
@@ -90,10 +114,14 @@ export async function getAvailableSlots(
   });
   if (intervals.length === 0) return [];
 
-  // Existing reservations for this host (active only) — the busy set.
-  const busy = await tenantDb(orgId).bookingSlot.findMany({
+  // Existing reservations for this host (active only) — the busy set. Expired-but-unswept holds are
+  // joined and filtered out so they neither block slots nor count toward frequency caps.
+  const nowForBusy = params.now ?? new Date();
+  const busyRows = (await tenantDb(orgId).bookingSlot.findMany({
     where: { hostMemberId: params.hostMemberId, active: true },
-  });
+    include: { booking: { select: { status: true, holdExpiresAt: true } } },
+  })) as SlotWithBooking[];
+  const busy = busyRows.filter((s) => isBlocking(s.booking, nowForBusy));
   // Booked counts per period (for frequency caps), keyed in the schedule's timezone.
   const freq = (pkg.freqLimit ?? {}) as FreqLimit;
   const perDay = new Map<string, number>();
@@ -141,31 +169,109 @@ export async function reserveSlot(params: ReserveParams): Promise<ReserveResult>
     return { ok: false, reason: "too_soon" };
   }
   const endsAt = addMinutes(startsAt, duration);
+  const holdExpiresAt = new Date(now.getTime() + HOLD_MINUTES * 60_000);
 
-  try {
-    return await tenantTransaction(async ({ db, tenant }) => {
+  // Atomic hold: the GiST exclusion constraint rejects this insert (23P01) if it overlaps an active
+  // slot for the same host — even under concurrency. No app-level "check then insert".
+  const insertHold = () =>
+    tenantTransaction(async ({ db, tenant }) => {
       const booking = await tenant(orgId).booking.create({
         data: {
           packageId,
           assignedMemberId: hostMemberId,
           seekerUserId: params.seekerUserId ?? null,
           durationMin: duration,
-          status: "pending_payment",
+          status: "held",
+          holdExpiresAt,
         },
       });
-      // The GiST exclusion constraint rejects this insert (23P01) if it overlaps an active slot
-      // for the same host — atomically, even under concurrency. No app-level check needed.
       const slot = await tenant(orgId).bookingSlot.create({
         data: { bookingId: booking.id, hostMemberId, startsAt, endsAt, active: true },
       });
       await writeAuditLog(
-        { actorUserId: params.seekerUserId ?? null, action: "booking.create", resourceType: "booking", resourceId: booking.id, orgId },
+        { actorUserId: params.seekerUserId ?? null, action: "booking.hold", resourceType: "booking", resourceId: booking.id, orgId },
         db,
       );
       return { ok: true as const, bookingId: booking.id, slotId: slot.id };
     });
+
+  try {
+    return await insertHold();
   } catch (e) {
-    if (isExclusionViolation(e)) return { ok: false, reason: "slot_taken" };
-    throw e;
+    if (!isExclusionViolation(e)) throw e;
+    // Lazy expiry: if the only thing in the way is an EXPIRED hold, free it and retry once.
+    const freed = await freeExpiredOverlaps(orgId, hostMemberId, startsAt, endsAt, now);
+    if (!freed) return { ok: false, reason: "slot_taken" };
+    try {
+      return await insertHold();
+    } catch (e2) {
+      if (isExclusionViolation(e2)) return { ok: false, reason: "slot_taken" };
+      throw e2;
+    }
   }
+}
+
+// Deactivate any overlapping EXPIRED holds for this host so a fresh hold can take the slot. Returns
+// false (don't retry) if a LIVE booking blocks the window or there's nothing expired to free.
+async function freeExpiredOverlaps(
+  orgId: string,
+  hostMemberId: string,
+  startsAt: Date,
+  endsAt: Date,
+  now: Date,
+): Promise<boolean> {
+  const overlaps = (await tenantDb(orgId).bookingSlot.findMany({
+    where: { hostMemberId, active: true, startsAt: { lt: endsAt }, endsAt: { gt: startsAt } },
+    include: { booking: { select: { status: true, holdExpiresAt: true } } },
+  })) as SlotWithBooking[];
+  if (overlaps.some((s) => isBlocking(s.booking, now))) return false; // a real/live booking holds it
+  const expired = overlaps.filter((s) => isExpiredHold(s.booking, now));
+  if (expired.length === 0) return false;
+  await tenantTransaction(async ({ tenant }) => {
+    await tenant(orgId).bookingSlot.updateMany({ where: { id: { in: expired.map((s) => s.id) } }, data: { active: false } });
+    await tenant(orgId).booking.updateMany({
+      where: { id: { in: expired.map((s) => s.bookingId) }, status: { in: ["held", "pending_payment"] } },
+      data: { status: "expired" },
+    });
+  });
+  return true;
+}
+
+// Sweep (cron housekeeping): expire unpaid holds whose window has lapsed, freeing their slots. Skips
+// "confirming"/"confirmed", so a mid-payment hold is never freed. Per-org scoped (no bare tenant access).
+export async function expireHoldsCore(now: Date = new Date(), onlyOrgId?: string): Promise<{ expired: number }> {
+  const orgs = onlyOrgId ? [{ id: onlyOrgId }] : await prisma.organization.findMany({ select: { id: true } });
+  let expired = 0;
+  for (const { id: orgId } of orgs) {
+    const stale = await tenantDb(orgId).booking.findMany({
+      where: { status: { in: ["held", "pending_payment"] }, holdExpiresAt: { lt: now } },
+      select: { id: true },
+    });
+    if (stale.length === 0) continue;
+    const ids = stale.map((b) => b.id);
+    await tenantTransaction(async ({ tenant }) => {
+      await tenant(orgId).bookingSlot.updateMany({ where: { bookingId: { in: ids }, active: true }, data: { active: false } });
+      await tenant(orgId).booking.updateMany({
+        where: { id: { in: ids }, status: { in: ["held", "pending_payment"] } },
+        data: { status: "expired" },
+      });
+    });
+    expired += ids.length;
+  }
+  return { expired };
+}
+
+// Compare-and-swap claim used by SP-4.3 payment confirmation. Transitions a still-valid hold to
+// "confirming" atomically; returns ok:false if the hold already expired/was swept (don't charge).
+// Mutually exclusive with expireHoldsCore via the conditional WHERE on status (row-level lock serializes).
+export async function claimHoldForPayment(
+  orgId: string,
+  bookingId: string,
+  now: Date = new Date(),
+): Promise<{ ok: boolean }> {
+  const res = await tenantDb(orgId).booking.updateMany({
+    where: { id: bookingId, status: { in: ["held", "pending_payment"] }, holdExpiresAt: { gt: now } },
+    data: { status: "confirming" },
+  });
+  return { ok: res.count === 1 };
 }

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireRole } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
-import { getPackage } from "@/lib/packages";
+import { getPackage, getPackageQuestions } from "@/lib/packages";
+import type { QuestionInput } from "@/lib/booking-validate";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { getBranding } from "@/lib/branding";
@@ -18,6 +19,14 @@ export default async function EditPackagePage({ params }: { params: Promise<{ id
 
   const pkg = orgId ? await getPackage(orgId, id) : null;
   if (!pkg) notFound();
+
+  const questionRows = await getPackageQuestions(orgId!, pkg.id);
+  const questions: QuestionInput[] = questionRows.map((q) => ({
+    label: q.label,
+    fieldType: q.fieldType as QuestionInput["fieldType"],
+    requirement: q.requirement as QuestionInput["requirement"],
+    options: (q.options as string[]) ?? [],
+  }));
 
   const [org, branding] = await Promise.all([
     prisma.organization.findUnique({ where: { id: orgId! }, select: { slug: true } }),
@@ -42,6 +51,7 @@ export default async function EditPackagePage({ params }: { params: Promise<{ id
     per_day: freq.per_day != null ? String(freq.per_day) : "",
     per_week: freq.per_week != null ? String(freq.per_week) : "",
     per_month: freq.per_month != null ? String(freq.per_month) : "",
+    questions,
   };
 
   return (

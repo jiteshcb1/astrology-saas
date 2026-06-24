@@ -20,6 +20,7 @@ export type TenantModelKey =
   | "availabilityRule"
   | "availabilityOverride"
   | "package"
+  | "packageQuestion"
   | "booking"
   | "bookingSlot";
 
@@ -183,6 +184,14 @@ function scope(orgId: string, db: Db) {
         db.package.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
       deleteMany: (args?: Prisma.PackageDeleteManyArgs) =>
         db.package.deleteMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+    },
+    packageQuestion: {
+      findMany: (args?: Prisma.PackageQuestionFindManyArgs) =>
+        db.packageQuestion.findMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      createMany: (args: { data: Omit<Prisma.PackageQuestionUncheckedCreateInput, "organizationId">[] }) =>
+        db.packageQuestion.createMany({ data: args.data.map((q) => ({ ...q, organizationId: orgId })) }),
+      deleteMany: (args?: Prisma.PackageQuestionDeleteManyArgs) =>
+        db.packageQuestion.deleteMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
     },
     booking: {
       findMany: (args?: Prisma.BookingFindManyArgs) =>

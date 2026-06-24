@@ -9,6 +9,8 @@ import {
   isPackageSlugAvailable,
   type PackageFormState,
   parseDurations,
+  type QuestionInput,
+  saveQuestionsCore,
   savePackageCore,
   setPackageActiveCore,
 } from "@/lib/packages";
@@ -16,6 +18,16 @@ import {
 function num(v: FormDataEntryValue | null, fallback = 0): number {
   const n = parseInt(String(v ?? ""), 10);
   return Number.isFinite(n) ? n : fallback;
+}
+
+// Parse the questions hidden field (JSON serialized by QuestionsBuilder). Tolerant of bad input.
+function parseQuestions(v: FormDataEntryValue | null): QuestionInput[] {
+  try {
+    const arr = JSON.parse(String(v ?? "[]"));
+    return Array.isArray(arr) ? (arr as QuestionInput[]) : [];
+  } catch {
+    return [];
+  }
 }
 
 export async function savePackageAction(_prev: PackageFormState, formData: FormData): Promise<PackageFormState> {
@@ -50,6 +62,7 @@ export async function savePackageAction(_prev: PackageFormState, formData: FormD
     id,
   );
   if (!result.ok) return { error: result.error };
+  await saveQuestionsCore(orgId, result.id, parseQuestions(formData.get("questions")), session.user.id);
   revalidatePath("/dashboard/packages");
   revalidatePath("/dashboard");
   redirect("/dashboard/packages");

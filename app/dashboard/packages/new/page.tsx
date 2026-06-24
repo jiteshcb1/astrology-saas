@@ -35,6 +35,7 @@ export default async function NewPackagePage() {
     per_day: "",
     per_week: "",
     per_month: "",
+    questions: [],
   };
 
   return (

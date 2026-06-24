@@ -470,20 +470,48 @@ model Package {
   organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   schedule     AvailabilitySchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
   bookings     Booking[]
+  questions    PackageQuestion[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
   @@map("packages")
 }
 
+// Per-package intake questions shown on the public booking form (SP-4.2). Tenant-scoped; registered in
+// config/tenant-models.json. fieldType ∈ short_text|long_text|select|date|email|phone; requirement ∈
+// required|optional|hidden; options (Json string[]) used by select.
+model PackageQuestion {
+  id             String   @id @default(cuid())
+  organizationId String
+  packageId      String
+  label          String
+  fieldType      String   @default("short_text")
+  requirement    String   @default("optional")
+  options        Json     @default("[]")
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+
+  package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@index([packageId])
+  @@map("package_questions")
+}
+
+// status lifecycle: held → pending_payment (details captured) → confirming (payment in-flight, SP-4.3)
+// → confirmed; or expired / cancelled. holdExpiresAt drives the hold window; the sweep + lazy expiry
+// free held/pending_payment rows past it. Seeker contact lives here (public bookings have no user).
 model Booking {
   id               String    @id @default(cuid())
   organizationId   String
-  seekerUserId     String? // null until SP-4 seeker flow
+  seekerUserId     String? // null for public (unauthenticated) bookings
+  seekerName       String?
+  seekerEmail      String?
+  seekerPhone      String?
   packageId        String
   assignedMemberId String? // round-robin host (SP-5); single-host for now
   durationMin      Int
-  status           String    @default("pending_payment")
+  status           String    @default("held")
+  holdExpiresAt    DateTime? @db.Timestamptz(6)
   answers          Json      @default("{}")
   tosAcceptedAt    DateTime? @db.Timestamptz(6)
   rescheduleCount  Int       @default(0)

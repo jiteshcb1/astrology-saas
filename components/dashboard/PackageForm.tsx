@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { SlugField } from "@/components/ui/SlugField";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
+import { QuestionsBuilder } from "@/components/dashboard/QuestionsBuilder";
 import { PackageCard } from "@/components/public/PackageCard";
 import { formatMoney } from "@/lib/money";
 import { DURATION_OPTIONS, type PackageFormState } from "@/lib/packages";
+import type { QuestionInput } from "@/lib/booking-validate";
 import { checkPackageSlugAction, savePackageAction } from "@/app/dashboard/packages/actions";
 
 export interface PackageFormDefaults {
@@ -28,6 +30,7 @@ export interface PackageFormDefaults {
   per_day: string;
   per_week: string;
   per_month: string;
+  questions: QuestionInput[];
 }
 
 export function PackageForm({
@@ -51,6 +54,7 @@ export function PackageForm({
   );
   const [defaultDuration, setDefaultDuration] = useState(defaults.defaultDurationMin);
   const [priceRupees, setPriceRupees] = useState(defaults.priceRupees);
+  const [questions, setQuestions] = useState<QuestionInput[]>(defaults.questions);
 
   // What the server actually receives. When the seeker can't choose, the only duration is the default.
   const effectiveDurations = allowChoose ? [...durations].sort((a, b) => a - b) : [defaultDuration];
@@ -76,6 +80,7 @@ export function PackageForm({
         <input key={d} type="hidden" name="durations" value={d} />
       ))}
       <input type="hidden" name="defaultDurationMin" value={defaultDuration} />
+      <input type="hidden" name="questions" value={JSON.stringify(questions)} />
 
       <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         {/* ── Form ── */}
@@ -175,6 +180,12 @@ export function PackageForm({
               <Input name="per_week" type="number" min="0" label="Max per week (optional)" defaultValue={defaults.per_week} />
               <Input name="per_month" type="number" min="0" label="Max per month (optional)" defaultValue={defaults.per_month} />
             </div>
+          </Card>
+
+          <Card>
+            <h2 className="mb-1 font-display text-lg text-ink">Booking questions</h2>
+            <p className="mb-3 text-sm text-muted">Asked on the booking form before a seeker confirms. Hidden questions aren&apos;t shown.</p>
+            <QuestionsBuilder value={questions} onChange={setQuestions} />
           </Card>
 
           {state.error && <p className="text-sm text-terra">{state.error}</p>}
