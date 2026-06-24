@@ -74,6 +74,21 @@ export async function getPackage(orgId: string, id: string) {
   return tenantDb(orgId).package.findFirst({ where: { id } });
 }
 
+// True when no OTHER package in this org already uses the slug (per-org uniqueness; excludeId skips
+// the package being edited). Mirrors the DB unique index (organizationId, slug).
+export async function isPackageSlugAvailable(
+  orgId: string,
+  slugRaw: string,
+  excludeId?: string,
+): Promise<boolean> {
+  const slug = slugify(slugRaw);
+  if (!slug) return false;
+  const count = await tenantDb(orgId).package.count({
+    where: { slug, ...(excludeId ? { NOT: { id: excludeId } } : {}) },
+  });
+  return count === 0;
+}
+
 export async function savePackageCore(
   orgId: string,
   input: PackageInput,

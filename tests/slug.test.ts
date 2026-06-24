@@ -55,9 +55,18 @@ describe("evaluateSlugInput (real-time field UX)", () => {
     expect(blurred.note).toMatch(/trailing hyphen/i);
   });
 
-  it("flags consecutive hyphens, bad chars, and reserved with specific messages", () => {
-    expect(evaluateSlugInput("a--b").message).toMatch(/consecutive/i);
-    expect(evaluateSlugInput("a b").message).toMatch(/lowercase letters, numbers/i);
+  it("converts spaces and symbols to hyphens as you type (no error)", () => {
+    const spaced = evaluateSlugInput("jyoti astro");
+    expect(spaced.canonical).toBe("jyoti-astro");
+    expect(spaced.status).toBe("ok");
+    expect(spaced.note).toMatch(/become hyphens/i);
+
+    // Consecutive hyphens / symbol runs collapse to a single hyphen.
+    expect(evaluateSlugInput("a--b").canonical).toBe("a-b");
+    expect(evaluateSlugInput("a & b!").canonical).toBe("a-b");
+  });
+
+  it("still flags reserved slugs", () => {
     expect(evaluateSlugInput("admin").message).toMatch(/reserved/i);
   });
 

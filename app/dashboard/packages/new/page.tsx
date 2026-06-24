@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
+import { prisma } from "@/lib/db";
+import { env } from "@/lib/env";
 import { PageHeader } from "@/components/superadmin/PageHeader";
 import { PackageForm } from "@/components/dashboard/PackageForm";
 
@@ -10,6 +12,9 @@ export default async function NewPackagePage() {
   const orgId = session.user.orgId;
   const profile = orgId ? await getProfile(orgId) : null;
   if (role === "consultant" && (!orgId || !profile?.onboardedAt)) redirect("/onboarding");
+
+  const org = orgId ? await prisma.organization.findUnique({ where: { id: orgId }, select: { slug: true } }) : null;
+  const bookingBase = `${env.AUTH_URL.replace(/\/$/, "")}/${org?.slug ?? ""}`;
 
   const defaults = {
     title: "",
@@ -34,7 +39,7 @@ export default async function NewPackagePage() {
       <div className="mx-auto w-full max-w-2xl px-6 py-6">
         <Link href="/dashboard/packages" className="text-sm text-muted hover:text-terra">← Packages</Link>
         <div className="mt-4">
-          <PackageForm defaults={defaults} />
+          <PackageForm defaults={defaults} bookingBase={bookingBase} />
         </div>
       </div>
     </>

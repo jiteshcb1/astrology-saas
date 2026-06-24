@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "../lib/db";
-import { getPackage, listPackages, parseDurations, savePackageCore, validatePackageInput } from "../lib/packages";
+import { getPackage, isPackageSlugAvailable, listPackages, parseDurations, savePackageCore, validatePackageInput } from "../lib/packages";
 
 describe("packages (pure)", () => {
   it("parseDurations keeps valid options, dedupes, sorts", () => {
@@ -31,12 +31,16 @@ d("package cores (SP-3)", () => {
   const stamp = Date.now();
   let actorId = "";
   let orgId = "";
+  let org2Id = "";
+  let pkgId = "";
 
   beforeAll(async () => {
     const actor = await prisma.user.create({ data: { email: `${PREFIX}a-${stamp}@example.com`, role: "consultant" } });
     actorId = actor.id;
     const org = await prisma.organization.create({ data: { name: "Pkg Org", slug: `${PREFIX}org-${stamp}` } });
     orgId = org.id;
+    const org2 = await prisma.organization.create({ data: { name: "Pkg Org 2", slug: `${PREFIX}org2-${stamp}` } });
+    org2Id = org2.id;
   });
 
   afterAll(async () => {
@@ -57,6 +61,7 @@ d("package cores (SP-3)", () => {
     const res = await savePackageCore(orgId, base, actorId);
     expect(res.ok).toBe(true);
     if (!res.ok) return;
+    pkgId = res.id;
     const pkg = await getPackage(orgId, res.id);
     expect(pkg?.slug).toBe("kundali-reading");
     expect(pkg?.price).toBe(110000);
@@ -69,6 +74,18 @@ d("package cores (SP-3)", () => {
   it("rejects a duplicate slug for the same org", async () => {
     const res = await savePackageCore(orgId, { ...base, title: "Another" }, actorId);
     expect(res.ok).toBe(false);
+  });
+
+  it("isPackageSlugAvailable: taken within an org, free in another, and excludes self", async () => {
+    expect(await isPackageSlugAvailable(orgId, "Kundali Reading")).toBe(false); // already used here
+    expect(await isPackageSlugAvailable(orgId, "fresh-one")).toBe(true);
+    expect(await isPackageSlugAvailable(orgId, "")).toBe(false); // empty never available
+    // Editing the same package keeps its slug available (excludes itself).
+    expect(await isPackageSlugAvailable(orgId, "kundali-reading", pkgId)).toBe(true);
+    // A different consultant (org) may reuse the slug — uniqueness is per-org.
+    expect(await isPackageSlugAvailable(org2Id, "kundali-reading")).toBe(true);
+    const cross = await savePackageCore(org2Id, base, actorId);
+    expect(cross.ok).toBe(true);
   });
 
   it("lists packages for the org", async () => {

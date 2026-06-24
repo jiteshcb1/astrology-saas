@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { requireRole } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
 import { getPackage } from "@/lib/packages";
+import { prisma } from "@/lib/db";
+import { env } from "@/lib/env";
 import { PageHeader } from "@/components/superadmin/PageHeader";
 import { PackageForm } from "@/components/dashboard/PackageForm";
 
@@ -15,6 +17,9 @@ export default async function EditPackagePage({ params }: { params: Promise<{ id
 
   const pkg = orgId ? await getPackage(orgId, id) : null;
   if (!pkg) notFound();
+
+  const org = await prisma.organization.findUnique({ where: { id: orgId! }, select: { slug: true } });
+  const bookingBase = `${env.AUTH_URL.replace(/\/$/, "")}/${org?.slug ?? ""}`;
 
   const freq = (pkg.freqLimit ?? {}) as { per_day?: number; per_week?: number; per_month?: number };
   const defaults = {
@@ -41,7 +46,7 @@ export default async function EditPackagePage({ params }: { params: Promise<{ id
       <div className="mx-auto w-full max-w-2xl px-6 py-6">
         <Link href="/dashboard/packages" className="text-sm text-muted hover:text-terra">← Packages</Link>
         <div className="mt-4">
-          <PackageForm defaults={defaults} />
+          <PackageForm defaults={defaults} bookingBase={bookingBase} />
         </div>
       </div>
     </>

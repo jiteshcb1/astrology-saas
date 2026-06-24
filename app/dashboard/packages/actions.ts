@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/rbac";
 import {
   deletePackageCore,
   type FreqLimit,
+  isPackageSlugAvailable,
   type PackageFormState,
   parseDurations,
   savePackageCore,
@@ -52,6 +53,18 @@ export async function savePackageAction(_prev: PackageFormState, formData: FormD
   revalidatePath("/dashboard/packages");
   revalidatePath("/dashboard");
   redirect("/dashboard/packages");
+}
+
+// Live availability check for the slug field (per-org; excludes the package being edited).
+export async function checkPackageSlugAction(
+  slugRaw: string,
+  excludeId?: string,
+): Promise<{ available: boolean; reason?: string }> {
+  const { session } = await requireRole("access:dashboard");
+  const orgId = session.user.orgId;
+  if (!orgId) return { available: false, reason: "no-org" };
+  const available = await isPackageSlugAvailable(orgId, slugRaw, excludeId);
+  return { available, reason: available ? undefined : "taken" };
 }
 
 export async function setPackageActiveAction(formData: FormData): Promise<void> {

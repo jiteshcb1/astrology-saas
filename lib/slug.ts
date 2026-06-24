@@ -51,17 +51,21 @@ export interface SlugInputEval {
 export function evaluateSlugInput(raw: string, opts: { typing?: boolean } = {}): SlugInputEval {
   const typing = opts.typing ?? false;
   const lowered = (raw ?? "").toLowerCase();
-  const hadLeadingHyphen = /^-/.test(lowered);
-  const display = lowered.replace(/^-+/, ""); // leading hyphens are never valid → trim live
+  // Spaces and any other disallowed characters become hyphens as the user types (runs collapse to a
+  // single hyphen) — so the field always holds a valid slug shape instead of rejecting input.
+  const hadInvalidChars = /[^a-z0-9-]/.test(lowered);
+  const replaced = lowered.replace(/[^a-z0-9-]+/g, "-").replace(/-+/g, "-");
+  const hadLeadingHyphen = /^-/.test(replaced);
+  const display = replaced.replace(/^-+/, ""); // leading hyphens are never valid → trim live
   const hadTrailingHyphen = /-$/.test(display);
   const canonical = display.replace(/-+$/, "");
-  const note = hadLeadingHyphen ? "Slugs can't start with a hyphen — removed it." : undefined;
+  const note = hadInvalidChars
+    ? "Spaces and symbols become hyphens."
+    : hadLeadingHyphen
+      ? "Slugs can't start with a hyphen — removed it."
+      : undefined;
 
   if (display.length === 0) return { display, canonical, status: "empty", note };
-  if (/[^a-z0-9-]/.test(display))
-    return { display, canonical, status: "error", message: "Use only lowercase letters, numbers, and hyphens.", note };
-  if (display.includes("--"))
-    return { display, canonical, status: "error", message: "Slug can't contain consecutive hyphens.", note };
   // A trailing hyphen is fine mid-typing (e.g. "jyoti-" on the way to "jyoti-astro"); trimmed on blur.
   if (hadTrailingHyphen && typing) return { display, canonical, status: "empty", note };
   if (canonical.length < 3)

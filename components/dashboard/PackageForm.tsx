@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { SlugField } from "@/components/ui/SlugField";
 import { DURATION_OPTIONS, type PackageFormState } from "@/lib/packages";
-import { savePackageAction } from "@/app/dashboard/packages/actions";
+import { checkPackageSlugAction, savePackageAction } from "@/app/dashboard/packages/actions";
 
 export interface PackageFormDefaults {
   id?: string;
@@ -29,8 +30,9 @@ export interface PackageFormDefaults {
 const textareaClass =
   "w-full rounded-control border border-line bg-white px-4 py-2.5 text-sm text-ink outline-none transition focus:border-marigold";
 
-export function PackageForm({ defaults }: { defaults: PackageFormDefaults }) {
+export function PackageForm({ defaults, bookingBase }: { defaults: PackageFormDefaults; bookingBase: string }) {
   const [state, action, pending] = useActionState<PackageFormState, FormData>(savePackageAction, {});
+  const [slugReady, setSlugReady] = useState(false);
 
   return (
     <form action={action} className="space-y-5">
@@ -40,7 +42,15 @@ export function PackageForm({ defaults }: { defaults: PackageFormDefaults }) {
         <h2 className="mb-3 font-display text-lg text-ink">Details</h2>
         <div className="space-y-3">
           <Input name="title" label="Title" defaultValue={defaults.title} placeholder="Kundali Reading" required />
-          <Input name="slug" label="URL slug (optional)" defaultValue={defaults.slug} placeholder="auto from title (e.g. kundali-reading)" />
+          <SlugField
+            name="slug"
+            label="Booking link"
+            bookingBase={bookingBase}
+            initialValue={defaults.slug}
+            placeholder="kundali-reading"
+            checkAvailability={(slug) => checkPackageSlugAction(slug, defaults.id)}
+            onValidityChange={setSlugReady}
+          />
           <label className="block">
             <span className="mb-1.5 block text-sm text-muted">Description</span>
             <textarea name="description" rows={3} defaultValue={defaults.description} className={textareaClass} placeholder="What this session covers…" />
@@ -95,7 +105,7 @@ export function PackageForm({ defaults }: { defaults: PackageFormDefaults }) {
       </Card>
 
       {state.error && <p className="text-sm text-terra">{state.error}</p>}
-      <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save package"}</Button>
+      <Button type="submit" disabled={pending || !slugReady}>{pending ? "Saving…" : "Save package"}</Button>
     </form>
   );
 }
