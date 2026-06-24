@@ -15,7 +15,13 @@ export type TenantModelKey =
   | "receipt"
   | "consultantProfile"
   | "orgBranding"
-  | "paymentMethod";
+  | "paymentMethod"
+  | "availabilitySchedule"
+  | "availabilityRule"
+  | "availabilityOverride"
+  | "package"
+  | "booking"
+  | "bookingSlot";
 
 const TENANT_MODELS: ReadonlySet<string> = new Set(tenantModels as string[]);
 
@@ -117,6 +123,98 @@ function scope(orgId: string, db: Db) {
         }),
       updateMany: (args: Prisma.PaymentMethodUpdateManyArgs) =>
         db.paymentMethod.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
+    },
+    availabilitySchedule: {
+      findMany: (args?: Prisma.AvailabilityScheduleFindManyArgs) =>
+        db.availabilitySchedule.findMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      findFirst: (args?: Prisma.AvailabilityScheduleFindFirstArgs) =>
+        db.availabilitySchedule.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      count: (args?: Prisma.AvailabilityScheduleCountArgs) =>
+        db.availabilitySchedule.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      create: (
+        args: { data: Omit<Prisma.AvailabilityScheduleUncheckedCreateInput, "organizationId"> } & Pick<
+          Prisma.AvailabilityScheduleCreateArgs,
+          "select" | "include"
+        >,
+      ) => db.availabilitySchedule.create({ ...args, data: { ...args.data, organizationId: orgId } }),
+      updateMany: (args: Prisma.AvailabilityScheduleUpdateManyArgs) =>
+        db.availabilitySchedule.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
+      deleteMany: (args?: Prisma.AvailabilityScheduleDeleteManyArgs) =>
+        db.availabilitySchedule.deleteMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+    },
+    availabilityRule: {
+      findMany: (args?: Prisma.AvailabilityRuleFindManyArgs) =>
+        db.availabilityRule.findMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      createMany: (
+        args: { data: Omit<Prisma.AvailabilityRuleUncheckedCreateInput, "organizationId">[] },
+      ) =>
+        db.availabilityRule.createMany({
+          data: args.data.map((d) => ({ ...d, organizationId: orgId })),
+        }),
+      deleteMany: (args?: Prisma.AvailabilityRuleDeleteManyArgs) =>
+        db.availabilityRule.deleteMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+    },
+    availabilityOverride: {
+      findMany: (args?: Prisma.AvailabilityOverrideFindManyArgs) =>
+        db.availabilityOverride.findMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      createMany: (
+        args: { data: Omit<Prisma.AvailabilityOverrideUncheckedCreateInput, "organizationId">[] },
+      ) =>
+        db.availabilityOverride.createMany({
+          data: args.data.map((d) => ({ ...d, organizationId: orgId })),
+        }),
+      deleteMany: (args?: Prisma.AvailabilityOverrideDeleteManyArgs) =>
+        db.availabilityOverride.deleteMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+    },
+    package: {
+      findMany: (args?: Prisma.PackageFindManyArgs) =>
+        db.package.findMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      findFirst: (args?: Prisma.PackageFindFirstArgs) =>
+        db.package.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      count: (args?: Prisma.PackageCountArgs) =>
+        db.package.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      create: (
+        args: { data: Omit<Prisma.PackageUncheckedCreateInput, "organizationId"> } & Pick<
+          Prisma.PackageCreateArgs,
+          "select" | "include"
+        >,
+      ) => db.package.create({ ...args, data: { ...args.data, organizationId: orgId } }),
+      updateMany: (args: Prisma.PackageUpdateManyArgs) =>
+        db.package.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
+      deleteMany: (args?: Prisma.PackageDeleteManyArgs) =>
+        db.package.deleteMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+    },
+    booking: {
+      findMany: (args?: Prisma.BookingFindManyArgs) =>
+        db.booking.findMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      findFirst: (args?: Prisma.BookingFindFirstArgs) =>
+        db.booking.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      count: (args?: Prisma.BookingCountArgs) =>
+        db.booking.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      create: (
+        args: { data: Omit<Prisma.BookingUncheckedCreateInput, "organizationId"> } & Pick<
+          Prisma.BookingCreateArgs,
+          "select" | "include"
+        >,
+      ) => db.booking.create({ ...args, data: { ...args.data, organizationId: orgId } }),
+      updateMany: (args: Prisma.BookingUpdateManyArgs) =>
+        db.booking.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
+    },
+    bookingSlot: {
+      findMany: (args?: Prisma.BookingSlotFindManyArgs) =>
+        db.bookingSlot.findMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      findFirst: (args?: Prisma.BookingSlotFindFirstArgs) =>
+        db.bookingSlot.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      count: (args?: Prisma.BookingSlotCountArgs) =>
+        db.bookingSlot.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      create: (
+        args: { data: Omit<Prisma.BookingSlotUncheckedCreateInput, "organizationId"> } & Pick<
+          Prisma.BookingSlotCreateArgs,
+          "select" | "include"
+        >,
+      ) => db.bookingSlot.create({ ...args, data: { ...args.data, organizationId: orgId } }),
+      updateMany: (args: Prisma.BookingSlotUpdateManyArgs) =>
+        db.bookingSlot.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
     },
   };
 }

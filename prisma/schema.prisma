@@ -64,6 +64,7 @@ model User {
   sessions           Session[]
   memberships        OrgMember[]
   ownedOrganizations Organization[] @relation("OrgOwner")
+  bookingsAsSeeker   Booking[]      @relation("SeekerBookings")
 
   @@map("users")
 }
@@ -85,6 +86,9 @@ model Organization {
   consultantProfile ConsultantProfile?
   branding          OrgBranding?
   paymentMethod     PaymentMethod?
+  schedules         AvailabilitySchedule[]
+  packages          Package[]
+  bookings          Booking[]
 
   @@map("organizations")
 }
@@ -383,6 +387,137 @@ model PaymentMethod {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("payment_methods")
+}
+
+// ─── Scheduling engine (SP-3) — tenant-scoped ────────────────────────────────
+// Availability schedules + weekly rules + date overrides; packages (event types) with per-package
+// pricing + limits; bookings; and booking_slots which carries the HARD no-double-book invariant via a
+// GiST exclusion constraint (added in a manual migration — see the booking_engine migration). All
+// carry organizationId and are registered in config/tenant-models.json. Times are stored UTC
+// (Timestamptz); availability start/end are local "HH:mm" clock strings in the schedule's timezone.
+
+model AvailabilitySchedule {
+  id             String   @id @default(cuid())
+  organizationId String
+  ownerMemberId  String?
+  name           String
+  timezone       String   @default("Asia/Kolkata")
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @db.Timestamptz(6)
+
+  organization Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rules        AvailabilityRule[]
+  overrides    AvailabilityOverride[]
+  packages     Package[]
+
+  @@index([organizationId])
+  @@map("availability_schedules")
+}
+
+model AvailabilityRule {
+  id             String @id @default(cuid())
+  organizationId String
+  scheduleId     String
+  weekday        Int // 0=Sun … 6=Sat
+  startTime      String // "HH:mm" local clock time in the schedule's timezone
+  endTime        String
+
+  schedule AvailabilitySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@index([scheduleId])
+  @@map("availability_rules")
+}
+
+model AvailabilityOverride {
+  id             String   @id @default(cuid())
+  organizationId String
+  scheduleId     String
+  date           DateTime @db.Date
+  isUnavailable  Boolean  @default(true)
+  startTime      String? // custom hours when not unavailable
+  endTime        String?
+
+  schedule AvailabilitySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@index([scheduleId])
+  @@map("availability_overrides")
+}
+
+model Package {
+  id                      String   @id @default(cuid())
+  organizationId          String
+  title                   String
+  slug                    String
+  description             String?
+  allowedDurations        Int[] // minutes, e.g. [15,30,45,60]
+  defaultDurationMin      Int      @default(30)
+  allowBookerChooseDuration Boolean @default(false)
+  price                   Int      @default(0) // paise
+  currency                String   @default("INR")
+  locationType            String   @default("google_meet")
+  scheduleId              String?
+  bufferBeforeMin         Int      @default(0)
+  bufferAfterMin          Int      @default(0)
+  minNoticeMin            Int      @default(0)
+  slotIntervalMin         Int      @default(15)
+  freqLimit               Json     @default("{}") // { per_day?, per_week?, per_month? }
+  assignmentMode          String   @default("round_robin")
+  isActive                Boolean  @default(true)
+  createdAt               DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime @updatedAt @db.Timestamptz(6)
+
+  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  schedule     AvailabilitySchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  bookings     Booking[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("packages")
+}
+
+model Booking {
+  id               String    @id @default(cuid())
+  organizationId   String
+  seekerUserId     String? // null until SP-4 seeker flow
+  packageId        String
+  assignedMemberId String? // round-robin host (SP-5); single-host for now
+  durationMin      Int
+  status           String    @default("pending_payment")
+  answers          Json      @default("{}")
+  tosAcceptedAt    DateTime? @db.Timestamptz(6)
+  rescheduleCount  Int       @default(0)
+  meetLink         String?
+  createdAt        DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  seeker       User?        @relation("SeekerBookings", fields: [seekerUserId], references: [id], onDelete: SetNull)
+  package      Package      @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  slot         BookingSlot?
+
+  @@index([organizationId, status])
+  @@map("bookings")
+}
+
+// booking_slots carries the no-double-book invariant. startsAt/endsAt are Prisma-managed so the row is
+// inserted via the tenant facade; the EXCLUDE constraint (added in the booking_engine migration)
+// operates on the expression tstzrange(starts_at, ends_at, '[)') WHERE (active). active=false releases
+// a hold without losing history.
+model BookingSlot {
+  id             String   @id @default(cuid())
+  organizationId String
+  bookingId      String   @unique
+  hostMemberId   String
+  startsAt       DateTime @db.Timestamptz(6)
+  endsAt         DateTime @db.Timestamptz(6)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([hostMemberId])
+  @@map("booking_slots")
 }
 
 // ─── Catalogs (global config-as-data) ────────────────────────────────────────

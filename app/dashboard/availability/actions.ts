@@ -1,0 +1,32 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { requireRole } from "@/lib/rbac";
+import { type AvailabilityFormState, type OverrideInput, type RuleInput, saveAvailabilityCore } from "@/lib/availability";
+
+export async function saveAvailabilityAction(
+  _prev: AvailabilityFormState,
+  formData: FormData,
+): Promise<AvailabilityFormState> {
+  const { session } = await requireRole("access:dashboard");
+  const orgId = session.user.orgId;
+  if (!orgId) return { error: "No organization is linked to your account." };
+
+  let rules: RuleInput[];
+  let overrides: OverrideInput[];
+  try {
+    rules = JSON.parse(String(formData.get("rulesJson") ?? "[]"));
+    overrides = JSON.parse(String(formData.get("overridesJson") ?? "[]"));
+  } catch {
+    return { error: "Could not read the availability data." };
+  }
+
+  const result = await saveAvailabilityCore(
+    orgId,
+    { timezone: String(formData.get("timezone") ?? "Asia/Kolkata"), rules, overrides },
+    session.user.id,
+  );
+  if (!result.ok) return { error: result.error };
+  revalidatePath("/dashboard/availability");
+  return { ok: true };
+}

@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
 import { getBranding } from "@/lib/branding";
 import { getPaymentMethod } from "@/lib/payments";
+import { listPackages } from "@/lib/packages";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -35,6 +36,7 @@ export default async function DashboardHome() {
   if (role === "consultant" && (!orgId || !profile?.onboardedAt)) redirect("/onboarding");
   const branding = orgId ? await getBranding(orgId) : null;
   const paymentMethod = orgId ? await getPaymentMethod(orgId) : null;
+  const packageCount = orgId ? (await listPackages(orgId)).length : 0;
 
   const profileComplete = Boolean(profile?.bio && profile.bio.trim());
   const checklist: ChecklistItem[] = [
@@ -43,7 +45,7 @@ export default async function DashboardHome() {
     { label: "Connect Google Calendar", done: false, soon: true },
     { label: "Brand your booking page", done: Boolean(branding?.themeColor), href: "/dashboard/settings/branding", cta: "Set up" },
     { label: "Set up payments", done: Boolean(paymentMethod), href: "/dashboard/settings/payments", cta: "Set up" },
-    { label: "Create your first package", done: false, soon: true },
+    { label: "Create your first package", done: packageCount > 0, href: "/dashboard/packages/new", cta: "Create" },
   ];
 
   if (!isDashboardDemo()) {
