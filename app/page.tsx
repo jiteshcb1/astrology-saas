@@ -8,6 +8,7 @@ export default function Home() {
         Multi-tenant SaaS for astrology consultants — booking, scheduling &amp; payments.
         This is a scaffold; product features are not built yet.
       </p>
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /api/health is a JSON endpoint, not a page */}
       <a
         className="rounded-full border border-black/10 px-4 py-2 text-sm transition-colors hover:bg-black/[.05] dark:border-white/20 dark:hover:bg-white/[.06]"
         href="/api/health"

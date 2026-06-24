@@ -10,12 +10,14 @@ export function MultiSelect({
   options,
   defaultValue = [],
   placeholder = "Select…",
+  onChange,
 }: {
   name: string;
   label?: string;
   options: string[];
   defaultValue?: string[];
   placeholder?: string;
+  onChange?: (values: string[]) => void;
 }) {
   const [selected, setSelected] = useState<string[]>(defaultValue);
   const [open, setOpen] = useState(false);
@@ -29,9 +31,13 @@ export function MultiSelect({
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
+  const apply = (next: string[]) => {
+    setSelected(next);
+    onChange?.(next);
+  };
   const toggle = (opt: string) =>
-    setSelected((s) => (s.includes(opt) ? s.filter((x) => x !== opt) : [...s, opt]));
-  const remove = (opt: string) => setSelected((s) => s.filter((x) => x !== opt));
+    apply(selected.includes(opt) ? selected.filter((x) => x !== opt) : [...selected, opt]);
+  const remove = (opt: string) => apply(selected.filter((x) => x !== opt));
 
   return (
     <div ref={ref} className="relative">

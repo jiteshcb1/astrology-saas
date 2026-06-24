@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
+import { getBranding } from "@/lib/branding";
 import { PageHeader } from "@/components/superadmin/PageHeader";
 import { PackageForm } from "@/components/dashboard/PackageForm";
 
@@ -13,7 +14,10 @@ export default async function NewPackagePage() {
   const profile = orgId ? await getProfile(orgId) : null;
   if (role === "consultant" && (!orgId || !profile?.onboardedAt)) redirect("/onboarding");
 
-  const org = orgId ? await prisma.organization.findUnique({ where: { id: orgId }, select: { slug: true } }) : null;
+  const [org, branding] = await Promise.all([
+    orgId ? prisma.organization.findUnique({ where: { id: orgId }, select: { slug: true } }) : Promise.resolve(null),
+    orgId ? getBranding(orgId) : Promise.resolve(null),
+  ]);
   const bookingBase = `${env.AUTH_URL.replace(/\/$/, "")}/${org?.slug ?? ""}`;
 
   const defaults = {
@@ -36,10 +40,10 @@ export default async function NewPackagePage() {
   return (
     <>
       <PageHeader title="New package" subtitle="A bookable consultation type" />
-      <div className="mx-auto w-full max-w-2xl px-6 py-6">
+      <div className="mx-auto w-full max-w-6xl px-6 py-6">
         <Link href="/dashboard/packages" className="text-sm text-muted hover:text-terra">← Packages</Link>
         <div className="mt-4">
-          <PackageForm defaults={defaults} bookingBase={bookingBase} />
+          <PackageForm defaults={defaults} bookingBase={bookingBase} themeColor={branding?.themeColor} />
         </div>
       </div>
     </>
