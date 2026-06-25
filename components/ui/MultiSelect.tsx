@@ -9,6 +9,7 @@ export function MultiSelect({
   label,
   options,
   defaultValue = [],
+  value,
   placeholder = "Select…",
   onChange,
 }: {
@@ -16,10 +17,13 @@ export function MultiSelect({
   label?: string;
   options: string[];
   defaultValue?: string[];
+  /** Optional controlled value — when provided, the parent owns selection (back-compatible). */
+  value?: string[];
   placeholder?: string;
   onChange?: (values: string[]) => void;
 }) {
-  const [selected, setSelected] = useState<string[]>(defaultValue);
+  const [internal, setInternal] = useState<string[]>(defaultValue);
+  const selected = value ?? internal;
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -32,7 +36,7 @@ export function MultiSelect({
   }, []);
 
   const apply = (next: string[]) => {
-    setSelected(next);
+    if (value === undefined) setInternal(next); // uncontrolled mode keeps internal state
     onChange?.(next);
   };
   const toggle = (opt: string) =>

@@ -14,6 +14,14 @@ import {
   savePackageCore,
   setPackageActiveCore,
 } from "@/lib/packages";
+import { getBranding } from "@/lib/branding";
+import {
+  generatePackageContent,
+  generateIntakeQuestions,
+  isAiConfigured,
+  type GenResult,
+  type PackageGen,
+} from "@/lib/gemini";
 
 function num(v: FormDataEntryValue | null, fallback = 0): number {
   const n = parseInt(String(v ?? ""), 10);
@@ -135,4 +143,28 @@ export async function deletePackageAction(formData: FormData): Promise<void> {
   // Guard inside the core blocks deletion when bookings exist (it deactivates instead).
   await deletePackageCore(orgId, String(formData.get("id")), session.user.id);
   revalidatePath("/dashboard/packages");
+}
+
+// ── AI content (SP-4.6) — gated to the consultant; key + locale server-side; never throws. ──
+async function aiLocale(orgId: string): Promise<string> {
+  return (await getBranding(orgId))?.defaultLocale ?? "en";
+}
+
+export async function generatePackageContentAction(
+  answers: Record<string, unknown>,
+  ctx: { title?: string; durationLabel?: string },
+): Promise<GenResult<PackageGen>> {
+  const { session } = await requireRole("access:dashboard");
+  const orgId = session.user.orgId;
+  if (!orgId || !isAiConfigured()) return { ok: false };
+  return generatePackageContent(answers, ctx, await aiLocale(orgId));
+}
+
+export async function generateIntakeQuestionsAction(
+  ctx: { title?: string; description?: string },
+): Promise<GenResult<{ questions: QuestionInput[] }>> {
+  const { session } = await requireRole("access:dashboard");
+  const orgId = session.user.orgId;
+  if (!orgId || !isAiConfigured()) return { ok: false };
+  return generateIntakeQuestions(ctx, await aiLocale(orgId));
 }

@@ -140,19 +140,39 @@ export function PaymentStep({
     <div className="space-y-5">
       {/* Method selection (only when both are available) */}
       {hasUpi && hasGateway && !method && (
-        <div className="rounded-card border border-line bg-white p-5 sm:p-6">
-          <h2 className="font-display text-lg text-ink">Choose how to pay</h2>
-          <p className="mt-0.5 text-sm text-muted">Amount: <strong className="text-ink">{context.priceLabel}</strong></p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <button type="button" onClick={() => setMethod("gateway")} className="rounded-card border border-line p-4 text-left transition hover:border-marigold">
-              <p className="font-medium text-ink">Card / Netbanking / UPI</p>
-              <p className="mt-1 text-xs text-muted">Pay securely now — instant confirmation.</p>
-            </button>
-            <button type="button" onClick={() => setMethod("upi")} className="rounded-card border border-line p-4 text-left transition hover:border-marigold">
-              <p className="font-medium text-ink">UPI QR + proof</p>
-              <p className="mt-1 text-xs text-muted">Pay via any UPI app, then upload your screenshot.</p>
-            </button>
+        <div className="space-y-3">
+          <div className="flex items-baseline justify-between rounded-card border border-line bg-white px-5 py-3.5">
+            <span className="text-sm text-muted">Total</span>
+            <span className="font-display text-2xl text-ink">{context.priceLabel}</span>
           </div>
+
+          <button type="button" onClick={() => setMethod("upi")} style={{ borderLeftColor: accent }} className="flex min-h-[80px] w-full items-center gap-4 rounded-card border border-line border-l-4 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(20,18,43,0.08)]">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-control bg-sand-2/70">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-ink"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path d="M14 14h3v3M20 20v.01M17 20h.01M20 14h.01" strokeLinecap="round" /></svg>
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium text-ink">Pay via UPI</span>
+              <span className="block text-xs text-muted">Scan the QR or pay the UPI ID, then upload your screenshot.</span>
+              <span className="mt-1.5 flex flex-wrap gap-1">{["PhonePe", "GPay", "Paytm", "BHIM"].map((n) => <span key={n} className="rounded bg-sand-2 px-1.5 py-0.5 text-[10px] text-muted">{n}</span>)}</span>
+            </span>
+            <Chevron />
+          </button>
+
+          <button type="button" onClick={() => setMethod("gateway")} style={{ borderLeftColor: accent }} className="flex min-h-[80px] w-full items-center gap-4 rounded-card border border-line border-l-4 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(20,18,43,0.08)]">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-control bg-sand-2/70">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-ink"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg>
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium text-ink">Pay with Card or Netbanking</span>
+              <span className="block text-xs text-muted">Secure instant confirmation via Razorpay.</span>
+              <span className="mt-1.5 flex flex-wrap gap-1">{["VISA", "Mastercard", "RuPay"].map((n) => <span key={n} className="rounded bg-sand-2 px-1.5 py-0.5 text-[10px] text-muted">{n}</span>)}</span>
+            </span>
+            <span className="flex items-center gap-1.5"><Lock /><Chevron /></span>
+          </button>
+
+          <p className="px-1 text-xs text-muted">🔒 {context.priceLabel} goes directly to {context.consultantName}.</p>
+          <p className="px-1 text-xs text-muted">🔒 Payments are 100% secure &amp; encrypted.</p>
+          <WhatHappensNext consultantName={context.consultantName} />
         </div>
       )}
 
@@ -164,6 +184,7 @@ export function PaymentStep({
             {hasUpi && <button type="button" onClick={() => setMethod(null)} className="text-xs text-muted hover:text-ink">Change method</button>}
           </div>
           <p className="mt-1 text-sm text-muted">You&apos;ll pay securely on {order_name(context)}&apos;s payment window. Your slot stays held.</p>
+          <p className="mt-1.5 text-xs text-muted">🔒 {context.priceLabel} goes directly to {context.consultantName}.</p>
           {error && <p className="mt-3 rounded-control bg-terra/10 px-3 py-2 text-sm text-terra">{error}</p>}
           <Button type="button" onClick={onGatewayPay} disabled={busy} className="mt-4 w-full" style={{ backgroundColor: accent, color: onAccent }}>
             {busy ? (status ?? "Processing…") : `Pay ${context.priceLabel}`}
@@ -239,4 +260,35 @@ export function PaymentStep({
 
 function order_name(ctx: PaymentContext): string {
   return ctx.consultantName || "the consultant";
+}
+
+function Chevron() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-muted"><path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  );
+}
+function Lock() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="shrink-0 text-green"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></svg>
+  );
+}
+function WhatHappensNext({ consultantName }: { consultantName: string }) {
+  const rows = [
+    { icon: "📧", text: "A confirmation email once your payment is verified." },
+    { icon: "📅", text: "Add the session to your calendar." },
+    { icon: "💬", text: `${consultantName} will reach out before the session.` },
+  ];
+  return (
+    <div className="rounded-card border border-line bg-white p-5">
+      <p className="mb-3 text-sm font-medium text-ink">What happens next</p>
+      <ul className="space-y-2.5">
+        {rows.map((r) => (
+          <li key={r.text} className="flex items-start gap-3 text-sm text-muted">
+            <span className="shrink-0 text-base">{r.icon}</span>
+            <span>{r.text}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }

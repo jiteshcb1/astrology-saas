@@ -21,6 +21,12 @@ const LOCALE_OPTIONS = [
   { key: "hi", label: "हिंदी" },
   { key: "hinglish", label: "Hinglish" },
 ] as const;
+const BACKGROUND_OPTIONS = [
+  { key: "none", label: "None" },
+  { key: "stars", label: "Stars" },
+  { key: "zodiac", label: "Zodiac ring" },
+  { key: "stars_zodiac", label: "Stars + Zodiac" },
+] as const;
 
 export interface BrandingFormDefaults {
   displayName: string;
@@ -28,6 +34,7 @@ export interface BrandingFormDefaults {
   themeColor: string;
   fontKey: string;
   defaultLocale: string;
+  backgroundStyle: string;
 }
 
 function Monogram({ name, color }: { name: string; color: string }) {
@@ -59,6 +66,7 @@ export function BrandingForm({
   );
   const [fontKey, setFontKey] = useState(defaults.fontKey || fonts[0]?.key || "");
   const [locale, setLocale] = useState(defaults.defaultLocale || "en");
+  const [bgStyle, setBgStyle] = useState(defaults.backgroundStyle || "stars_zodiac");
   const [logoPreview, setLogoPreview] = useState<string | null>(defaults.logoUrl);
 
   const fontFamily = fonts.find((f) => f.key === fontKey)?.fontFamily ?? "Inter";
@@ -75,6 +83,7 @@ export function BrandingForm({
       <input type="hidden" name="themeColor" value={themeColor} />
       <input type="hidden" name="fontKey" value={fontKey} />
       <input type="hidden" name="defaultLocale" value={locale} />
+      <input type="hidden" name="backgroundStyle" value={bgStyle} />
 
       {/* Live preview */}
       <Card>
@@ -179,6 +188,30 @@ export function BrandingForm({
             })}
           </div>
         )}
+      </Card>
+
+      {/* Background style */}
+      <Card>
+        <h2 className="mb-1 font-display text-lg text-ink">Hero background</h2>
+        <p className="mb-3 text-sm text-muted">Celestial motion behind your profile hero. Subtle and respects reduced-motion settings.</p>
+        <div className="flex flex-wrap gap-2">
+          {BACKGROUND_OPTIONS.map((b) => {
+            const selected = b.key === bgStyle;
+            return (
+              <button
+                key={b.key}
+                type="button"
+                onClick={() => setBgStyle(b.key)}
+                className={`rounded-control border px-4 py-2 text-sm transition ${
+                  selected ? "border-marigold bg-marigold/10 text-ink" : "border-line text-muted hover:border-marigold"
+                }`}
+                aria-pressed={selected}
+              >
+                {b.label}
+              </button>
+            );
+          })}
+        </div>
       </Card>
 
       {/* Default language */}

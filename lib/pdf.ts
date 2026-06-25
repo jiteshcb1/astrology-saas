@@ -29,29 +29,6 @@ export async function renderSubscriptionReceiptPdf(
   return new TextEncoder().encode(lines.join("\n"));
 }
 
-export interface ConsultationReceiptData {
-  receiptNumber: string;
-  consultantName: string; // issued BY (the consultant org)
-  gstNumber: string; // consultant's GST (consultation → consultant GST)
-  seekerName: string;
-  packageTitle: string;
-  amount: number; // paise
-  currency: string;
-  startsAt: Date | null;
-  issuedAt: Date;
-}
-
-// STUB (SP-4.3): consultation receipt — consultant's GST, paid by the seeker. Real renderer drops in later.
-export async function renderConsultationReceiptPdf(data: ConsultationReceiptData): Promise<Uint8Array> {
-  const lines = [
-    `${data.consultantName} — Consultation Receipt (PLACEHOLDER PDF)`,
-    `Receipt: ${data.receiptNumber}`,
-    `Paid by: ${data.seekerName}`,
-    `Session: ${data.packageTitle}`,
-    `When: ${data.startsAt ? data.startsAt.toISOString() : "—"}`,
-    `GST: ${data.gstNumber || "—"}`,
-    `Amount: ${data.currency} ${(data.amount / 100).toFixed(2)}`,
-    `Issued at: ${data.issuedAt.toISOString()}`,
-  ];
-  return new TextEncoder().encode(lines.join("\n"));
-}
+// SP-4.4: consultation receipts are now a branded HTML page (Workers-safe) — see lib/receipt.ts +
+// app/[slug]/book/[bookingId]/receipt. No PDF renderer for consultations. The subscription PDF stub
+// above remains for platform billing receipts (SP-1.6).

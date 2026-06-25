@@ -1,22 +1,27 @@
 import { readableTextOn } from "@/lib/branding";
 
-// Shared styling for consultant-authored rich-text (Tiptap HTML), used by both the editor preview and
-// the public booking page so they render identically. Tailwind child selectors (no typography plugin).
-export const richTextClassName =
-  "text-sm leading-relaxed text-ink break-words [&_p]:my-1.5 [&_h2]:mt-3 [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-ink [&_h3]:mt-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-ink [&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_strong]:font-semibold [&_em]:italic [&_a]:text-terra [&_a]:underline [&_a]:break-all";
+const DEFAULT_THEME = "#e8a33d"; // marigold fallback
 
-const DEFAULT_THEME = "#e8a33d"; // marigold
-
-function isEmptyHtml(html: string): boolean {
-  return !html || html.replace(/<[^>]*>/g, "").trim().length === 0;
+// Strip consultant rich-text (Quill HTML) to a plain-text excerpt — cards show plain text only
+// (rich formatting lives in the About section). Decodes the few common entities Quill emits.
+function toPlainText(html: string): string {
+  return html
+    .replace(/<\s*(br|\/p|\/li|\/h[1-6])\s*>/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&quot;/gi, '"')
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
- * Seeker-facing package card — the single source of truth for how a package looks on the public
- * booking page (SP-4.1) and in the consultant's live editor preview. Presentational only.
- *
- * Props: title, durationLabel, priceLabel, descriptionHtml (consultant rich text), themeColor
- * (consultant brand accent; defaults to marigold), ctaLabel.
+ * Seeker-facing package card — single source of truth for the public profile (SP-4.5) and the
+ * consultant's live editor preview. Equal height (flex column, price+CTA pinned to the bottom),
+ * plain-text 3-line clamp. `themeColor` is the consultant PRIMARY (price text + Book button).
  */
 export function PackageCard({
   title,
@@ -34,13 +39,13 @@ export function PackageCard({
   descriptionHtml?: string;
   themeColor?: string | null;
   ctaLabel?: string;
-  /** When provided, the whole card is selectable (public booking flow). */
   selected?: boolean;
   onSelect?: () => void;
 }) {
-  const accent = themeColor || DEFAULT_THEME;
-  const onAccent = readableTextOn(accent);
+  const primary = themeColor || DEFAULT_THEME;
+  const onPrimary = readableTextOn(primary);
   const interactive = Boolean(onSelect);
+  const text = toPlainText(descriptionHtml);
 
   return (
     <div
@@ -48,32 +53,29 @@ export function PackageCard({
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
       onKeyDown={interactive ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect!(); } } : undefined}
-      style={selected ? { borderColor: accent, boxShadow: `0 0 0 2px ${accent}` } : undefined}
-      className={`rounded-card border bg-white p-6 shadow-[0_10px_30px_rgba(20,18,43,0.06)] transition ${
+      style={selected ? { borderColor: primary, boxShadow: `0 0 0 2px ${primary}` } : undefined}
+      className={`flex h-full flex-col rounded-card border bg-white p-6 shadow-[0_10px_30px_rgba(20,18,43,0.06)] transition ${
         selected ? "" : "border-line"
-      } ${interactive ? "cursor-pointer outline-none hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(20,18,43,0.1)] focus-visible:border-marigold" : ""}`}
+      } ${interactive ? "cursor-pointer outline-none hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(20,18,43,0.12)] focus-visible:border-marigold" : ""}`}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-sand-2/70 px-2.5 py-0.5 text-xs text-ink">{durationLabel}</span>
-        <span className="rounded-full bg-sand-2/70 px-2.5 py-0.5 text-xs text-ink">Google Meet</span>
-      </div>
+      <p className="text-xs uppercase tracking-wide text-muted">Video Meeting · {durationLabel}</p>
 
-      <h3 className="mt-3 break-words font-display text-xl text-ink">{title || "Your package name"}</h3>
+      <h3 className="mt-2 break-words font-display text-xl text-ink">{title || "Your package name"}</h3>
 
-      {!isEmptyHtml(descriptionHtml) ? (
-        <div className={`mt-2 ${richTextClassName}`} dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
-      ) : (
-        <p className="mt-2 text-sm text-muted">A short description of what this session covers will appear here.</p>
-      )}
+      <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted">
+        {text || "A short description of what this session covers will appear here."}
+      </p>
 
-      <div className="mt-5 flex items-center justify-between gap-3">
+      {/* Price bar — amount in ink (always readable); CTA = branded circular arrow */}
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4">
         <span className="font-display text-2xl text-ink">{priceLabel}</span>
-        <span
-          className="rounded-control px-5 py-2.5 text-sm font-semibold"
-          style={{ backgroundColor: accent, color: onAccent }}
-        >
-          {selected ? "Selected ✓" : ctaLabel}
-        </span>
+        {selected ? (
+          <span className="rounded-control px-4 py-2 text-sm font-semibold" style={{ backgroundColor: primary, color: onPrimary }}>Selected ✓</span>
+        ) : (
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full transition" style={{ backgroundColor: primary, color: onPrimary }} aria-label={ctaLabel}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </span>
+        )}
       </div>
     </div>
   );

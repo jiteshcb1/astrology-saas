@@ -14,6 +14,10 @@ export const env = {
 
   // Email (Resend)
   RESEND_API_KEY: process.env.RESEND_API_KEY ?? "",
+  EMAIL_FROM: process.env.EMAIL_FROM ?? "Astro Consultancy <bookings@mail.hifiai.in>",
+
+  // AI (Google Gemini / AI Studio) — optional; absent → AI buttons hidden
+  GOOGLE_AI_STUDIO_API_KEY: process.env.GOOGLE_AI_STUDIO_API_KEY ?? "",
 
   // Storage (Cloudflare R2, S3-compatible)
   R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID ?? "",

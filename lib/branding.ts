@@ -9,8 +9,31 @@ import { getActiveCatalog } from "@/lib/catalog";
 
 export const INK = "#14122b";
 export const IVORY = "#f6efe2";
+export const NIGHT = "#14122b"; // primary fallback (midnight indigo)
+export const MARIGOLD = "#e8a33d"; // secondary (constant)
 export const LOCALES = ["en", "hi", "hinglish"] as const;
 export type Locale = (typeof LOCALES)[number];
+export const BACKGROUND_STYLES = ["none", "stars", "zodiac", "stars_zodiac"] as const;
+export type BackgroundStyle = (typeof BACKGROUND_STYLES)[number];
+
+export interface Brand {
+  primary: string;
+  onPrimary: string;
+  secondary: string;
+  onSecondary: string;
+}
+
+// Resolve a consultant's brand colors. PRIMARY = themeColor || indigo; SECONDARY = marigold (constant).
+// Used across the public profile + booking + payment surfaces. Pure (client-safe).
+export function resolveBrand(themeColor?: string | null): Brand {
+  const primary = themeColor || NIGHT;
+  return {
+    primary,
+    onPrimary: readableTextOn(primary),
+    secondary: MARIGOLD,
+    onSecondary: readableTextOn(MARIGOLD),
+  };
+}
 
 // ── WCAG contrast (pure) ─────────────────────────────────────────────────────
 function srgbToLinear(c: number): number {
@@ -61,6 +84,7 @@ export interface BrandingInput {
   themeColor: string;
   fontKey: string;
   defaultLocale: string;
+  backgroundStyle: string;
 }
 
 export async function updateBrandingCore(
@@ -89,11 +113,15 @@ export async function updateBrandingCore(
   if (!(LOCALES as readonly string[]).includes(input.defaultLocale)) {
     return { ok: false, error: "Choose a valid default language." };
   }
+  const backgroundStyle = (BACKGROUND_STYLES as readonly string[]).includes(input.backgroundStyle)
+    ? input.backgroundStyle
+    : "stars_zodiac";
 
   const data: Record<string, unknown> = {
     themeColor,
     fontKey: input.fontKey,
     defaultLocale: input.defaultLocale,
+    backgroundStyle,
   };
   if (input.logoKey !== undefined) data.logoKey = input.logoKey;
 

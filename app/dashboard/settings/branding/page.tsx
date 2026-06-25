@@ -38,6 +38,7 @@ export default async function BrandingSettingsPage() {
     themeColor: branding?.themeColor ?? "",
     fontKey: branding?.fontKey ?? "",
     defaultLocale: branding?.defaultLocale ?? "en",
+    backgroundStyle: branding?.backgroundStyle ?? "stars_zodiac",
   };
 
   return (

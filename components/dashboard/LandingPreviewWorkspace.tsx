@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { MultiSelect } from "@/components/ui/MultiSelect";
-import { PublicBookingPage } from "@/components/public/PublicBookingPage";
+import { PublicProfile } from "@/components/public/PublicProfile";
 import { SPECIALITY_OPTIONS } from "@/lib/consultant-profile";
 import { formatMoney } from "@/lib/money";
 import { updateProfileAction } from "@/app/dashboard/settings/actions";
@@ -172,10 +172,17 @@ export function LandingPreviewWorkspace({
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-auto">
-          <PublicBookingPage
-            profile={{ displayName: prof.displayName, bio: prof.bio, specialities: prof.specialities }}
+          <PublicProfile
+            profile={{
+              displayName: prof.displayName,
+              bio: prof.bio,
+              experience: profile.experience,
+              specialities: prof.specialities,
+              socialLinks: { website: profile.website, instagram: profile.instagram, youtube: profile.youtube, x: profile.x },
+            }}
             branding={branding}
             packages={previewPackages}
+            confirmedCount={0}
           />
         </div>
       </section>

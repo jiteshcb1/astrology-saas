@@ -349,12 +349,13 @@ model ConsultantProfile {
 model OrgBranding {
   id             String   @id @default(cuid())
   organizationId String   @unique
-  logoKey        String?
-  themeColor     String?
-  fontKey        String?
-  defaultLocale  String   @default("en")
-  createdAt      DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt      DateTime @updatedAt @db.Timestamptz(6)
+  logoKey         String?
+  themeColor      String?
+  fontKey         String?
+  defaultLocale   String   @default("en")
+  backgroundStyle String   @default("stars_zodiac") // none | stars | zodiac | stars_zodiac (profile hero)
+  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 

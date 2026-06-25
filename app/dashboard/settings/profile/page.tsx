@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
+import { isAiConfigured } from "@/lib/gemini";
 import { PageHeader } from "@/components/superadmin/PageHeader";
 import { ProfileForm } from "@/components/dashboard/ProfileForm";
 
@@ -34,7 +35,7 @@ export default async function ProfileSettingsPage() {
           ← Settings
         </Link>
         <div className="mt-4">
-          <ProfileForm defaults={defaults} />
+          <ProfileForm defaults={defaults} aiEnabled={isAiConfigured()} />
         </div>
       </div>
     </>

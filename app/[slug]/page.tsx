@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getActiveOrgBySlug } from "@/lib/public-page";
-import { PublicBookingPage } from "@/components/public/PublicBookingPage";
+import { PublicProfile } from "@/components/public/PublicProfile";
 import { PublicOffline } from "@/components/public/PublicOffline";
 import { getPublicSlotsAction } from "./actions";
 import { holdSlotAction } from "./book/actions";
@@ -29,13 +29,14 @@ export default async function PublicBookingRoute({ params }: { params: Promise<{
   }
 
   return (
-    <PublicBookingPage
+    <PublicProfile
       profile={data.profile}
       branding={data.branding}
       packages={data.packages}
       orgName={data.orgName}
       slug={slug}
       timezone={data.timezone}
+      confirmedCount={data.confirmedCount}
       getSlots={getSlots}
       onContinue={onContinue}
     />

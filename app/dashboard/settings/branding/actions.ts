@@ -36,6 +36,7 @@ export async function saveBrandingAction(
       themeColor: String(formData.get("themeColor") ?? ""),
       fontKey: String(formData.get("fontKey") ?? ""),
       defaultLocale: String(formData.get("defaultLocale") ?? "en"),
+      backgroundStyle: String(formData.get("backgroundStyle") ?? "stars_zodiac"),
     },
     session.user.id,
   );

@@ -7,6 +7,7 @@ import type { QuestionInput } from "@/lib/booking-validate";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { getBranding } from "@/lib/branding";
+import { isAiConfigured } from "@/lib/gemini";
 import { PageHeader } from "@/components/superadmin/PageHeader";
 import { PackageForm } from "@/components/dashboard/PackageForm";
 
@@ -60,7 +61,7 @@ export default async function EditPackagePage({ params }: { params: Promise<{ id
       <div className="mx-auto w-full max-w-6xl px-6 py-6">
         <Link href="/dashboard/packages" className="text-sm text-muted hover:text-terra">← Packages</Link>
         <div className="mt-4">
-          <PackageForm defaults={defaults} bookingBase={bookingBase} themeColor={branding?.themeColor} />
+          <PackageForm defaults={defaults} bookingBase={bookingBase} themeColor={branding?.themeColor} aiEnabled={isAiConfigured()} />
         </div>
       </div>
     </>

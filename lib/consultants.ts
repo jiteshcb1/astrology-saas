@@ -1,10 +1,9 @@
 import { prisma } from "@/lib/db";
 import { type NonTenantClient, tenantDb, tenantTransaction } from "@/lib/tenant-db";
 import { writeAuditLog } from "@/lib/audit";
-import { sendEmail } from "@/lib/email";
+import { notifyConsultantWelcome } from "@/lib/notifications";
 import { normalizeEmail } from "@/lib/otp";
 import { normalizeSlug, validateSlug } from "@/lib/slug";
-import { env } from "@/lib/env";
 
 // Business logic for the Super Admin Consultants module. Kept free of "use server"/redirect so it
 // is unit-testable; the server actions in app/superadmin/consultants/actions.ts are thin wrappers
@@ -127,12 +126,8 @@ export async function createConsultantCore(
     return { ok: false, error: "Could not create consultant (slug or email conflict)." };
   }
 
-  // Invite email (stubbed by lib/email when RESEND_API_KEY is empty) — after commit.
-  await sendEmail({
-    to: ownerEmail,
-    subject: "You've been added to Astro Consultancy",
-    text: `An account was created for "${orgName}". Sign in at ${env.AUTH_URL}/signin to get started.`,
-  });
+  // Welcome email (consultant-branded shell; stubbed by lib/email when RESEND_API_KEY is empty) — after commit.
+  await notifyConsultantWelcome(orgId);
 
   return { ok: true, orgId };
 }

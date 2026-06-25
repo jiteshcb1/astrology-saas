@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/rbac";
+import { getBranding } from "@/lib/branding";
+import { generateProfileContent, isAiConfigured, type GenResult, type ProfileGen } from "@/lib/gemini";
 import {
   buildSocialLinks,
   parseSpecialities,
@@ -40,4 +42,13 @@ export async function updateProfileAction(
   revalidatePath("/dashboard/settings/profile");
   revalidatePath("/dashboard");
   return { ok: true };
+}
+
+// AI profile content (SP-4.6) — gated to the consultant; key + locale read server-side; never throws.
+export async function generateProfileContentAction(answers: Record<string, unknown>): Promise<GenResult<ProfileGen>> {
+  const { session } = await requireRole("access:dashboard");
+  const orgId = session.user.orgId;
+  if (!orgId || !isAiConfigured()) return { ok: false };
+  const branding = await getBranding(orgId);
+  return generateProfileContent(answers, branding?.defaultLocale ?? "en");
 }

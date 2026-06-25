@@ -30,3 +30,25 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
+
+/* Celestial starfield for the no-theme profile hero (SP-4.5). */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="twinkle"] { animation: none !important; }
+}
+
+/* SP-4.5+ profile hero motion (zodiac ring + drifting stars). CSS-only. */
+@keyframes zodiac-spin { to { transform: rotate(360deg); } }
+@keyframes star-drift {
+  0%, 100% { transform: translateY(0); opacity: 0.18; }
+  50% { transform: translateY(-5px); opacity: 0.28; }
+}
+.zodiac-ring { animation: zodiac-spin 90s linear infinite; transform-origin: 50% 50%; }
+.zodiac-ring-rev { animation: zodiac-spin 70s linear infinite reverse; transform-origin: 50% 50%; }
+.drift-star { animation: star-drift 5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .zodiac-ring, .zodiac-ring-rev, .drift-star, [style*="twinkle"] { animation: none !important; }
+}

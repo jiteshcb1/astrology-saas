@@ -1,6 +1,7 @@
 import { createHash, randomInt } from "node:crypto";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
+import { otpEmail } from "@/lib/emails";
 import { isDev } from "@/lib/env";
 
 // Email one-time-code (OTP) backend for the `email-otp` Auth.js provider.
@@ -38,15 +39,6 @@ function hashCode(code: string): string {
   return createHash("sha256").update(code).digest("hex");
 }
 
-function otpEmailHtml(code: string): string {
-  return `
-    <div style="font-family:Inter,Arial,sans-serif;color:#2a2748;max-width:440px;margin:0 auto;padding:24px">
-      <h1 style="font-family:Fraunces,Georgia,serif;font-weight:500;color:#14122b">Your verification code</h1>
-      <p>Use this code to sign in to Astro Consultancy. It expires in 10 minutes.</p>
-      <div style="font-size:2rem;letter-spacing:0.4rem;font-weight:600;color:#14122b;background:#f6efe2;border-radius:11px;padding:16px;text-align:center;margin:16px 0">${code}</div>
-      <p style="color:rgba(42,39,72,0.6);font-size:0.85rem">If you didn't request this, you can safely ignore this email.</p>
-    </div>`;
-}
 
 export interface SendOtpResult {
   ok: boolean;
@@ -109,12 +101,7 @@ export async function sendOtp(
     },
   });
 
-  await sendEmail({
-    to: normalized,
-    subject: "Your Astro Consultancy verification code",
-    text: `Your verification code is ${code}. It expires in 10 minutes.`,
-    html: otpEmailHtml(code),
-  });
+  await sendEmail({ to: normalized, ...otpEmail(code) });
 
   if (isDev) {
     console.log(`[otp:dev] code for ${normalized}: ${code}`);

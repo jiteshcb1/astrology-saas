@@ -28,8 +28,16 @@ export interface PublicPageData {
   slug: string;
   hostMemberId: string;
   timezone: string;
-  profile: { displayName: string; bio: string; specialities: string[]; complaintsContactNumber: string };
-  branding: { themeColor: string | null; logoUrl: string | null };
+  confirmedCount: number;
+  profile: {
+    displayName: string;
+    bio: string;
+    experience: string;
+    specialities: string[];
+    socialLinks: Record<string, string>;
+    complaintsContactNumber: string;
+  };
+  branding: { themeColor: string | null; logoUrl: string | null; backgroundStyle: string };
   packages: PublicPackageView[];
 }
 
@@ -51,12 +59,13 @@ export async function getActiveOrgBySlug(slugRaw: string): Promise<PublicPageDat
   if (!org || org.status !== "active") return null;
   const orgId = org.id;
 
-  const [branding, profile, schedule, host, pkgs] = await Promise.all([
+  const [branding, profile, schedule, host, pkgs, confirmedCount] = await Promise.all([
     getBranding(orgId),
     getProfile(orgId),
     tenantDb(orgId).availabilitySchedule.findFirst({ where: { isDefault: true } }),
     tenantDb(orgId).orgMember.findFirst({ where: { role: "consultant", status: "active" } }),
     tenantDb(orgId).package.findMany({ where: { isActive: true }, orderBy: { createdAt: "asc" } }),
+    tenantDb(orgId).booking.count({ where: { status: "confirmed" } }),
   ]);
 
   const logoUrl = branding?.logoKey ? await getSignedUrl(branding.logoKey) : null;
@@ -78,13 +87,16 @@ export async function getActiveOrgBySlug(slugRaw: string): Promise<PublicPageDat
     slug: org.slug,
     hostMemberId: host?.id ?? "",
     timezone: schedule?.timezone ?? "Asia/Kolkata",
+    confirmedCount,
     profile: {
       displayName: profile?.displayName ?? "",
       bio: profile?.bio ?? "",
+      experience: profile?.experience ?? "",
       specialities: profile?.specialities ?? [],
+      socialLinks: (profile?.socialLinks as Record<string, string>) ?? {},
       complaintsContactNumber: profile?.complaintsContactNumber ?? "",
     },
-    branding: { themeColor: branding?.themeColor ?? null, logoUrl },
+    branding: { themeColor: branding?.themeColor ?? null, logoUrl, backgroundStyle: branding?.backgroundStyle ?? "stars_zodiac" },
     packages,
   };
 }

@@ -8,11 +8,27 @@ import { Select } from "@/components/ui/Select";
 import { SlugField } from "@/components/ui/SlugField";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { QuestionsBuilder } from "@/components/dashboard/QuestionsBuilder";
+import { AiQuestionnaire, type AiAnswers, type AiStep } from "@/components/dashboard/AiQuestionnaire";
 import { PackageCard } from "@/components/public/PackageCard";
 import { formatMoney } from "@/lib/money";
 import { DURATION_OPTIONS, type PackageFormState } from "@/lib/packages";
 import type { QuestionInput } from "@/lib/booking-validate";
-import { checkPackageSlugAction, savePackageAction } from "@/app/dashboard/packages/actions";
+import {
+  checkPackageSlugAction,
+  savePackageAction,
+  generatePackageContentAction,
+  generateIntakeQuestionsAction,
+} from "@/app/dashboard/packages/actions";
+
+const PACKAGE_STEPS: AiStep[] = [
+  { id: "purpose", type: "single", question: "What is this session mainly for?", options: ["Career guidance", "Marriage compatibility", "Life path & purpose", "Business decisions", "General reading"] },
+  { id: "deliverables", type: "multi", question: "What will the seeker receive?", helper: "Pick all that apply.", options: ["Detailed chart analysis", "Personalized remedies", "Q&A discussion", "Written report after", "Recorded session", "Action plan"] },
+  { id: "audience", type: "single", question: "Who is this session best for?", options: ["First-time seekers", "Those at a crossroads", "Experienced spiritual seekers", "Anyone curious about astrology", "Professionals & business owners"] },
+  { id: "prepare", type: "multi", question: "What should the seeker prepare or bring?", helper: "Pick all that apply.", options: ["Birth date/time/place", "Specific questions ready", "Nothing — I'll guide them", "Recent photos for palmistry", "Property/business details for Vastu"] },
+  { id: "unique", type: "text", question: "What makes this session unique?", helper: "Optional.", placeholder: "e.g. Includes a follow-up voice note with remedies", skippable: true },
+  { id: "results", type: "text", question: "What results have past seekers experienced?", helper: "Optional.", placeholder: "e.g. Clarity on career switch, found the right marriage timing", skippable: true },
+  { id: "tone", type: "single", question: "What tone for the description?", options: ["Warm & reassuring", "Mystical & evocative", "Clear & practical", "Professional & detailed"] },
+];
 
 export interface PackageFormDefaults {
   id?: string;
@@ -37,13 +53,19 @@ export function PackageForm({
   defaults,
   bookingBase,
   themeColor,
+  aiEnabled = false,
 }: {
   defaults: PackageFormDefaults;
   bookingBase: string;
   themeColor?: string | null;
+  aiEnabled?: boolean;
 }) {
   const [state, action, pending] = useActionState<PackageFormState, FormData>(savePackageAction, {});
   const [slugReady, setSlugReady] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiNotice, setAiNotice] = useState(false);
+  const [genQ, setGenQ] = useState(false);
+  const [qNotice, setQNotice] = useState<string | null>(null);
 
   // Controlled state drives both submission and the live preview.
   const [title, setTitle] = useState(defaults.title);
@@ -72,6 +94,25 @@ export function PackageForm({
   const priceNum = Math.round((parseFloat(priceRupees) || 0) * 100);
   const durationLabel = allowChoose ? `${effectiveDurations.join("/")} min` : `${defaultDuration} min`;
 
+  async function onGenerate(answers: AiAnswers) {
+    const res = await generatePackageContentAction(answers, { title, durationLabel });
+    if (!res.ok) return { ok: false as const };
+    if (res.data.description) setDescriptionHtml(res.data.description);
+    if (!title.trim() && res.data.title) setTitle(res.data.title);
+    setAiNotice(true);
+    return { ok: true as const };
+  }
+
+  async function onGenerateQuestions() {
+    setGenQ(true);
+    setQNotice(null);
+    const res = await generateIntakeQuestionsAction({ title, description: descriptionHtml });
+    setGenQ(false);
+    if (!res.ok) return setQNotice("Couldn't generate questions right now — add them manually.");
+    setQuestions((cur) => [...cur, ...res.data.questions]);
+    setQNotice(`✓ Added ${res.data.questions.length} question${res.data.questions.length === 1 ? "" : "s"} — review and edit.`);
+  }
+
   return (
     <form action={action}>
       {defaults.id && <input type="hidden" name="id" value={defaults.id} />}
@@ -85,6 +126,13 @@ export function PackageForm({
       <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         {/* ── Form ── */}
         <div className="min-w-0 space-y-5">
+          {aiEnabled && (
+            <div className="flex items-center justify-between gap-3 rounded-card border border-dashed border-marigold/50 bg-marigold/5 px-4 py-3">
+              <p className="text-sm text-ink">Let AI draft this package for you.</p>
+              <Button type="button" className="shrink-0" onClick={() => setAiOpen(true)}>Start with AI ✨</Button>
+            </div>
+          )}
+
           <Card>
             <h2 className="mb-3 font-display text-lg text-ink">Details</h2>
             <div className="space-y-3">
@@ -99,7 +147,13 @@ export function PackageForm({
                 onValidityChange={setSlugReady}
               />
               <div>
-                <span className="mb-1.5 block text-sm text-muted">Description</span>
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <span className="text-sm text-muted">Description</span>
+                  {aiEnabled && (
+                    <button type="button" onClick={() => setAiOpen(true)} className="text-xs font-medium text-marigold hover:underline">Generate with AI ✨</button>
+                  )}
+                </div>
+                {aiNotice && <p className="mb-2 rounded-control bg-marigold/10 px-3 py-2 text-xs text-ink">✓ Generated — review and edit before saving.</p>}
                 <RichTextEditor value={descriptionHtml} onChange={setDescriptionHtml} />
               </div>
             </div>
@@ -183,8 +237,16 @@ export function PackageForm({
           </Card>
 
           <Card>
-            <h2 className="mb-1 font-display text-lg text-ink">Booking questions</h2>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <h2 className="font-display text-lg text-ink">Booking questions</h2>
+              {aiEnabled && (
+                <button type="button" onClick={onGenerateQuestions} disabled={genQ} className="text-xs font-medium text-marigold hover:underline disabled:opacity-50">
+                  {genQ ? "Generating…" : "Generate with AI ✨"}
+                </button>
+              )}
+            </div>
             <p className="mb-3 text-sm text-muted">Asked on the booking form before a seeker confirms. Hidden questions aren&apos;t shown.</p>
+            {qNotice && <p className="mb-3 rounded-control bg-marigold/10 px-3 py-2 text-xs text-ink">{qNotice}</p>}
             <QuestionsBuilder value={questions} onChange={setQuestions} />
           </Card>
 
@@ -204,6 +266,10 @@ export function PackageForm({
           />
         </div>
       </div>
+
+      {aiEnabled && (
+        <AiQuestionnaire open={aiOpen} onClose={() => setAiOpen(false)} title="Generate your package" generateLabel="Generate description ✨" steps={PACKAGE_STEPS} onGenerate={onGenerate} />
+      )}
     </form>
   );
 }

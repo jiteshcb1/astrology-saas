@@ -1,14 +1,19 @@
 import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db";
 import { tenantDb, tenantTransaction, type Scoped } from "@/lib/tenant-db";
 import { writeAuditLog } from "@/lib/audit";
 import { getActiveOrgBySlug } from "@/lib/public-page";
 import { getPaymentMethod, toSafeView, type SafePaymentView } from "@/lib/payments";
 import { decryptSecret, isEncryptionConfigured } from "@/lib/crypto";
 import { createOrder, verifyCheckoutSignature, type RazorpayWebhookEvent } from "@/lib/razorpay";
-import { renderConsultationReceiptPdf } from "@/lib/pdf";
-import { putObject, getSignedUrl } from "@/lib/storage";
-import { sendEmail } from "@/lib/email";
+import { getSignedUrl } from "@/lib/storage";
 import { formatMoney } from "@/lib/money";
+import {
+  notifyBookingConfirmed,
+  notifyProofReceived,
+  notifyBookingDeclined,
+  notifyNewBooking,
+} from "@/lib/notifications";
 
 // Payment cores (SP-4.3). Platform NEVER touches funds: gateway orders are created on the consultant's
 // OWN Razorpay keys (funds settle to them); UPI is their own VPA. Secrets are decrypted (lib/crypto.ts)
@@ -72,26 +77,16 @@ async function buildConsultationReceipt(
   orgId: string,
   booking: { id: string; durationMin: number; seekerName: string | null; package: { title: string; price: number }; slot: { startsAt: Date } | null },
 ): Promise<{ amount: number; currency: string; gstNumber: string; pdfUrl: string; receiptNumber: string }> {
-  const profile = await tenantDb(orgId).consultantProfile.findFirst();
+  // SP-4.4: the receipt is a branded HTML page (Workers-safe, no PDF). We keep the Receipt record and
+  // store the receipt's web path in pdfUrl so dashboards/oversight can link to it.
+  const [profile, org] = await Promise.all([
+    tenantDb(orgId).consultantProfile.findFirst(),
+    prisma.organization.findUnique({ where: { id: orgId }, select: { slug: true } }),
+  ]);
   const gstNumber = profile?.gstNumber ?? "";
-  const consultantName = profile?.displayName ?? "Consultant";
   const receiptNumber = `CON-${booking.id.slice(-10)}`;
-  const amount = booking.package.price;
-  const currency = "INR";
-  const pdfUrl = `receipts/${orgId}/${receiptNumber}.pdf`;
-  const bytes = await renderConsultationReceiptPdf({
-    receiptNumber,
-    consultantName,
-    gstNumber,
-    seekerName: booking.seekerName ?? "",
-    packageTitle: booking.package.title,
-    amount,
-    currency,
-    startsAt: booking.slot?.startsAt ?? null,
-    issuedAt: new Date(),
-  });
-  await putObject({ key: pdfUrl, body: bytes, contentType: "application/pdf" });
-  return { amount, currency, gstNumber, pdfUrl, receiptNumber };
+  const pdfUrl = org ? `/${org.slug}/book/${booking.id}/receipt` : "";
+  return { amount: booking.package.price, currency: "INR", gstNumber, pdfUrl, receiptNumber };
 }
 
 async function writeReceiptRow(
@@ -178,7 +173,7 @@ async function confirmBookingInTx(
   patch: PaymentRefPatch,
   source: string,
   now: Date,
-): Promise<{ ok: boolean; expired?: boolean }> {
+): Promise<{ ok: boolean; expired?: boolean; changed?: boolean }> {
   const upsertPayment = async (status: string) => {
     const upd = await t.payment.updateMany({ where: { bookingId }, data: { ...patch, status } });
     if (upd.count === 0) await t.payment.create({ data: { bookingId, mode: "gateway", amount: packagePrice, status, ...patch } });
@@ -190,7 +185,7 @@ async function confirmBookingInTx(
   });
   if (res.count !== 1) {
     const cur = await t.booking.findFirst({ where: { id: bookingId }, select: { status: true } });
-    if (cur?.status === "confirmed") return { ok: true }; // the other path already confirmed — idempotent
+    if (cur?.status === "confirmed") return { ok: true, changed: false }; // the other path already confirmed — idempotent
     // Lost the race to the sweep (expired). Money may have been captured — flag, never drop silently.
     await upsertPayment("success");
     await writeAuditLog({ actorUserId: null, action: "payment.orphaned_after_expiry", resourceType: "booking", resourceId: bookingId, orgId, metadata: { source } }, db);
@@ -199,24 +194,25 @@ async function confirmBookingInTx(
   await upsertPayment("success");
   await writeReceiptRow(t, orgId, bookingId, receipt.receiptNumber, receipt);
   await writeAuditLog({ actorUserId: null, action: "booking.confirmed", resourceType: "booking", resourceId: bookingId, orgId, metadata: { source, amount: receipt.amount, currency: receipt.currency } }, db);
-  return { ok: true };
+  return { ok: true, changed: true };
 }
 
+// Runs the confirm in a tx and returns whether THIS call did the transition (for one-shot notifications).
 async function transitionToConfirmed(
   orgId: string,
   bookingId: string,
   patch: PaymentRefPatch,
   source: string,
   now: Date,
-): Promise<ConfirmPayResult> {
+): Promise<ConfirmPayResult & { changed?: boolean }> {
   const booking = (await tenantDb(orgId).booking.findFirst({ where: { id: bookingId }, include: { package: true, slot: true } })) as BkPkgSlot | null;
   if (!booking || !booking.package) return { ok: false, reason: "not_found" };
-  if (booking.status === "confirmed") return { ok: true, duplicate: true };
-  const receipt = await buildConsultationReceipt(orgId, booking); // PDF + R2 before the tx (deterministic key)
-  return tenantTransaction(async ({ db, tenant }) => {
-    const r = await confirmBookingInTx(tenant(orgId), db, orgId, bookingId, booking.package.price, receipt, patch, source, now);
-    return r.ok ? { ok: true as const } : { ok: false as const, reason: "expired" as const };
-  });
+  if (booking.status === "confirmed") return { ok: true, duplicate: true, changed: false };
+  const receipt = await buildConsultationReceipt(orgId, booking);
+  const r = await tenantTransaction(async ({ db, tenant }) =>
+    confirmBookingInTx(tenant(orgId), db, orgId, bookingId, booking.package.price, receipt, patch, source, now),
+  );
+  return r.ok ? { ok: true, changed: r.changed } : { ok: false, reason: "expired" };
 }
 
 export async function confirmGatewayPaymentCore(
@@ -231,7 +227,12 @@ export async function confirmGatewayPaymentCore(
   if (!verifyCheckoutSignature(keySecret, proof.orderId, proof.paymentId, proof.signature)) {
     return { ok: false, reason: "signature" };
   }
-  return transitionToConfirmed(orgId, bookingId, { gatewayPaymentRef: proof.paymentId, gatewayOrderId: proof.orderId }, "gateway_callback", now);
+  const res = await transitionToConfirmed(orgId, bookingId, { gatewayPaymentRef: proof.paymentId, gatewayOrderId: proof.orderId }, "gateway_callback", now);
+  if (res.changed) {
+    await notifyBookingConfirmed(orgId, bookingId);
+    await notifyNewBooking(orgId, bookingId, "gateway");
+  }
+  return res.ok ? { ok: true } : { ok: false, reason: res.reason ?? "expired" };
 }
 
 // ── UPI: seeker submits proof → pending_verification (consultant confirms later) ──
@@ -247,7 +248,7 @@ export async function submitUpiProofCore(
   if (!booking || !booking.package) return { ok: false, reason: "not_found" };
   const amount = booking.package.price;
 
-  return tenantTransaction(async ({ db, tenant }) => {
+  const result = await tenantTransaction(async ({ db, tenant }) => {
     const t = tenant(orgId);
     const res = await t.booking.updateMany({
       where: { id: bookingId, status: { in: HOLD_OPEN }, holdExpiresAt: { gt: now } },
@@ -277,6 +278,12 @@ export async function submitUpiProofCore(
     );
     return { ok: true as const };
   });
+
+  if (result.ok) {
+    await notifyProofReceived(orgId, bookingId);
+    await notifyNewBooking(orgId, bookingId, "upi_qr");
+  }
+  return result;
 }
 
 // ── Webhook (idempotent, mirrors SP-1.6) ─────────────────────────────────────
@@ -311,6 +318,10 @@ export async function applyPaymentWebhookEvent(
         now,
       );
     });
+    if (res.changed) {
+      await notifyBookingConfirmed(orgId, payment.bookingId);
+      await notifyNewBooking(orgId, payment.bookingId, "gateway");
+    }
     return { ok: res.ok || res.expired === true };
   } catch (e) {
     if (isUniqueViolation(e)) return { ok: true, duplicate: true };
@@ -345,9 +356,7 @@ export async function verifyBookingPaymentCore(
       );
       return { ok: true as const };
     });
-    if (result.ok && booking.seekerEmail) {
-      await sendEmail({ to: booking.seekerEmail, subject: "Your booking is confirmed", text: `Your ${booking.package.title} booking is confirmed.` });
-    }
+    if (result.ok) await notifyBookingConfirmed(orgId, bookingId);
     return result;
   }
 
@@ -364,9 +373,7 @@ export async function verifyBookingPaymentCore(
     );
     return { ok: true as const };
   });
-  if (result.ok && booking.seekerEmail) {
-    await sendEmail({ to: booking.seekerEmail, subject: "About your booking", text: `We couldn't verify payment for your ${booking.package.title} booking. Please rebook or contact the consultant.` });
-  }
+  if (result.ok) await notifyBookingDeclined(orgId, bookingId);
   return result;
 }
 

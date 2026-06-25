@@ -17,12 +17,15 @@ d("getActiveOrgBySlug (SP-4.1 public read path)", () => {
     orgId = org.id;
     await prisma.orgMember.create({ data: { organizationId: orgId, userId: user.id, role: "consultant", status: "active" } });
     await prisma.consultantProfile.create({
-      data: { organizationId: orgId, displayName: "Pandit Ravi", bio: "Vedic astrologer", specialities: ["Kundali Reading"], complaintsContactNumber: "+91 9876543210", onboardedAt: new Date() },
+      data: { organizationId: orgId, displayName: "Pandit Ravi", bio: "Vedic astrologer", experience: "18 years of practice", specialities: ["Kundali Reading"], socialLinks: { instagram: "pandit", website: "pandit.example" }, complaintsContactNumber: "+91 9876543210", onboardedAt: new Date() },
     });
     await prisma.availabilitySchedule.create({ data: { organizationId: orgId, name: "WH", timezone: "Asia/Kolkata", isDefault: true } });
-    await prisma.package.create({
+    const pkg = await prisma.package.create({
       data: { organizationId: orgId, title: "Kundali Reading", slug: "kundali-reading", allowedDurations: [30], defaultDurationMin: 30, price: 110000, isActive: true },
     });
+    // One confirmed + one held booking → confirmedCount must count only the confirmed.
+    await prisma.booking.create({ data: { organizationId: orgId, packageId: pkg.id, durationMin: 30, status: "confirmed" } });
+    await prisma.booking.create({ data: { organizationId: orgId, packageId: pkg.id, durationMin: 30, status: "held" } });
     await prisma.package.create({
       data: { organizationId: orgId, title: "Hidden", slug: "hidden", allowedDurations: [30], defaultDurationMin: 30, price: 50000, isActive: false },
     });
@@ -39,6 +42,9 @@ d("getActiveOrgBySlug (SP-4.1 public read path)", () => {
     expect(data).not.toBeNull();
     expect(data!.profile.displayName).toBe("Pandit Ravi");
     expect(data!.profile.specialities).toEqual(["Kundali Reading"]);
+    expect(data!.profile.experience).toBe("18 years of practice");
+    expect(data!.profile.socialLinks).toMatchObject({ instagram: "pandit", website: "pandit.example" });
+    expect(data!.confirmedCount).toBe(1); // held booking not counted
     expect(data!.timezone).toBe("Asia/Kolkata");
     expect(data!.hostMemberId).toBeTruthy();
     expect(data!.packages.map((p) => p.title)).toEqual(["Kundali Reading"]); // inactive excluded

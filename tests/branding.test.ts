@@ -5,8 +5,11 @@ import {
   getBranding,
   INK,
   IVORY,
+  MARIGOLD,
+  NIGHT,
   meetsContrast,
   readableTextOn,
+  resolveBrand,
   updateBrandingCore,
 } from "../lib/branding";
 
@@ -29,6 +32,18 @@ describe("branding contrast", () => {
   it("readableTextOn: ink on light, ivory on dark", () => {
     expect(readableTextOn("#f6efe2")).toBe(INK);
     expect(readableTextOn("#14122b")).toBe(IVORY);
+  });
+
+  it("resolveBrand: themeColor → primary; none → indigo; secondary always marigold", () => {
+    const set = resolveBrand("#e8a33d");
+    expect(set.primary).toBe("#e8a33d");
+    expect(set.secondary).toBe(MARIGOLD);
+    expect(set.onPrimary).toBe(readableTextOn("#e8a33d"));
+
+    const none = resolveBrand(null);
+    expect(none.primary).toBe(NIGHT);
+    expect(none.onPrimary).toBe(IVORY); // ivory reads on indigo
+    expect(none.secondary).toBe(MARIGOLD);
   });
 });
 
@@ -66,7 +81,7 @@ d("updateBrandingCore (SP-2.3)", () => {
     await prisma.$disconnect();
   });
 
-  const valid = { logoKey: "branding/x/logo.png", themeColor: "#14122b", fontKey, defaultLocale: "en" };
+  const valid = { logoKey: "branding/x/logo.png", themeColor: "#14122b", fontKey, defaultLocale: "en", backgroundStyle: "stars_zodiac" };
 
   it("rejects a non-catalog colour", async () => {
     const r = await updateBrandingCore(orgId, { ...valid, themeColor: "#abcdef" }, actorId);
@@ -90,13 +105,19 @@ d("updateBrandingCore (SP-2.3)", () => {
     expect(b?.themeColor).toBe("#14122b");
     expect(b?.fontKey).toBe(fontKey);
     expect(b?.logoKey).toBe("branding/x/logo.png");
+    expect(b?.backgroundStyle).toBe("stars_zodiac");
     expect(await prisma.auditLog.count({ where: { actorUserId: actorId, action: "branding.update" } })).toBeGreaterThan(0);
 
-    // Omitting logoKey leaves the existing logo intact.
-    const r2 = await updateBrandingCore(orgId, { themeColor: "#14122b", fontKey, defaultLocale: "hi" }, actorId);
+    // Omitting logoKey leaves the existing logo intact; junk backgroundStyle falls back to default.
+    const r2 = await updateBrandingCore(orgId, { themeColor: "#14122b", fontKey, defaultLocale: "hi", backgroundStyle: "rocketship" }, actorId);
     expect(r2.ok).toBe(true);
     b = await getBranding(orgId);
     expect(b?.logoKey).toBe("branding/x/logo.png");
     expect(b?.defaultLocale).toBe("hi");
+    expect(b?.backgroundStyle).toBe("stars_zodiac"); // invalid → default
+
+    // A valid non-default value persists.
+    await updateBrandingCore(orgId, { themeColor: "#14122b", fontKey, defaultLocale: "en", backgroundStyle: "none" }, actorId);
+    expect((await getBranding(orgId))?.backgroundStyle).toBe("none");
   });
 });

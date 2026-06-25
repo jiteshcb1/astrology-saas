@@ -2,8 +2,8 @@ import { Resend } from "resend";
 import { env, isDev } from "@/lib/env";
 
 // Thin, mockable email client. Single `sendEmail()` interface for the whole app.
-// STUB: when RESEND_API_KEY is empty we just log to the console (dev) instead of sending.
-// TODO: replace the console fallback with real error handling / queueing for production.
+// When RESEND_API_KEY is empty (local dev) we log instead of sending, so the app runs keyless.
+// Never throws — failures return { ok: false } so callers (post-commit notifications) can't break a flow.
 
 export interface SendEmailOptions {
   to: string | string[];
@@ -12,16 +12,16 @@ export interface SendEmailOptions {
   text?: string;
   /** HTML body. */
   html?: string;
-  /** Defaults to a placeholder until a verified domain is configured. */
+  /** Defaults to env.EMAIL_FROM (the verified domain). */
   from?: string;
+  /** Reply-To — seeker emails set this to the consultant's own email. */
+  replyTo?: string;
 }
-
-const DEFAULT_FROM = "Astro Consultancy <onboarding@example.com>";
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
 export async function sendEmail(options: SendEmailOptions): Promise<{ ok: boolean; id?: string }> {
-  const { to, subject, text, html, from = DEFAULT_FROM } = options;
+  const { to, subject, text, html, from = env.EMAIL_FROM, replyTo } = options;
 
   if (!resend) {
     // No API key configured — log-only stub.
@@ -29,19 +29,23 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ ok: boolea
     return { ok: true };
   }
 
-  const result = await resend.emails.send({
-    from,
-    to,
-    subject,
-    // Resend requires at least one of html/text/react.
-    html: html ?? undefined,
-    text: text ?? subject,
-  });
-
-  if (result.error) {
-    if (isDev) console.error("[email] send failed", result.error);
+  try {
+    const result = await resend.emails.send({
+      from,
+      to,
+      subject,
+      replyTo, // Resend SDK v6 accepts camelCase replyTo
+      // Resend requires at least one of html/text/react.
+      html: html ?? undefined,
+      text: text ?? subject,
+    });
+    if (result.error) {
+      if (isDev) console.error("[email] send failed", result.error);
+      return { ok: false };
+    }
+    return { ok: true, id: result.data?.id };
+  } catch (e) {
+    if (isDev) console.error("[email] send threw", e);
     return { ok: false };
   }
-
-  return { ok: true, id: result.data?.id };
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { MultiSelect } from "@/components/ui/MultiSelect";
+import { AiQuestionnaire, type AiAnswers, type AiStep } from "@/components/dashboard/AiQuestionnaire";
 import { SPECIALITY_OPTIONS, type ProfileFormState } from "@/lib/consultant-profile";
-import { updateProfileAction } from "@/app/dashboard/settings/actions";
+import { updateProfileAction, generateProfileContentAction } from "@/app/dashboard/settings/actions";
 
 export interface ProfileFormDefaults {
   displayName: string;
@@ -25,6 +26,17 @@ export interface ProfileFormDefaults {
 const textareaClass =
   "w-full rounded-control border border-line bg-white px-4 py-2.5 text-sm text-ink outline-none transition focus:border-marigold";
 
+const PROFILE_STEPS: AiStep[] = [
+  { id: "specialization", type: "single", question: "What do you specialize in?", options: ["Vedic / Jyotish", "Tarot", "Numerology", "Palmistry", "Vastu", "Prashna", "Multiple"] },
+  { id: "years", type: "single", question: "How many years have you been practicing?", options: ["1-2", "3-5", "5-10", "10+", "20+"] },
+  { id: "audience", type: "multi", question: "Who do you primarily help?", helper: "Pick all that apply.", options: ["Career & finance", "Relationships & marriage", "Health & wellbeing", "Spiritual growth", "Business decisions", "All of these"] },
+  { id: "unique", type: "multi", question: "What makes your readings unique?", helper: "Pick all that apply.", options: ["Traditional Vedic methods", "Intuitive + classical blend", "Modern practical approach", "Multilingual (Hindi/English)", "Focus on remedies & solutions"] },
+  { id: "testimonials", type: "text", question: "What do your seekers say about working with you?", helper: "Optional — a line or two.", placeholder: "e.g. Very accurate, life-changing guidance", skippable: true },
+  { id: "credentials", type: "text", question: "Any credentials or training to include?", helper: "Optional.", placeholder: "e.g. Trained under Pt. XYZ, ICAS certified", skippable: true },
+  { id: "tone", type: "single", question: "What tone should your profile have?", options: ["Warm & approachable", "Professional & authoritative", "Spiritual & mystical", "Friendly & modern"] },
+  { id: "languages", type: "single", question: "Which languages do you consult in?", options: ["Hindi", "English", "Both", "Hindi/English/Other"] },
+];
+
 function SectionHeader({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="mb-4">
@@ -34,32 +46,57 @@ function SectionHeader({ title, hint }: { title: string; hint?: string }) {
   );
 }
 
-export function ProfileForm({ defaults }: { defaults: ProfileFormDefaults }) {
+export function ProfileForm({ defaults, aiEnabled = false }: { defaults: ProfileFormDefaults; aiEnabled?: boolean }) {
   const [state, action, pending] = useActionState<ProfileFormState, FormData>(updateProfileAction, {});
+
+  // AI can populate these, so they're controlled (other fields stay uncontrolled).
+  const [bio, setBio] = useState(defaults.bio);
+  const [experience, setExperience] = useState(defaults.experience);
+  const [specialities, setSpecialities] = useState<string[]>(defaults.specialities);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiNotice, setAiNotice] = useState(false);
+
+  async function onGenerate(answers: AiAnswers) {
+    const res = await generateProfileContentAction(answers);
+    if (!res.ok) return { ok: false as const };
+    if (res.data.bio) setBio(res.data.bio);
+    if (res.data.about) setExperience(res.data.about);
+    if (res.data.specialities.length) setSpecialities(res.data.specialities);
+    setAiNotice(true);
+    return { ok: true as const };
+  }
 
   return (
     <form action={action} className="space-y-5">
-      {/* 1 — Personal details */}
       <Card>
-        <SectionHeader title="Personal details" hint="What seekers see on your public booking page." />
+        <div className="flex items-start justify-between gap-3">
+          <SectionHeader title="Personal details" hint="What seekers see on your public booking page." />
+          {aiEnabled && (
+            <Button type="button" variant="ghost" className="shrink-0" onClick={() => setAiOpen(true)}>Generate with AI ✨</Button>
+          )}
+        </div>
+        {aiNotice && <p className="mb-3 rounded-control bg-marigold/10 px-3 py-2 text-sm text-ink">✓ Generated — review and edit before saving.</p>}
         <div className="space-y-3">
           <Input name="displayName" label="Display name" defaultValue={defaults.displayName} placeholder="Pandit Ravi Sharma" required />
           <label className="block">
-            <span className="mb-1.5 block text-sm text-muted">Bio</span>
-            <textarea name="bio" rows={4} defaultValue={defaults.bio} className={textareaClass} placeholder="Tell seekers about your practice…" required />
+            <span className="mb-1.5 block text-sm text-muted">Bio <span className="text-muted/70">(short tagline)</span></span>
+            <textarea name="bio" rows={2} value={bio} onChange={(e) => setBio(e.target.value)} className={textareaClass} placeholder="One warm line seekers see under your name…" required />
           </label>
-          <Input name="experience" label="Experience" defaultValue={defaults.experience} placeholder="e.g. 12 years in Vedic astrology" required />
+          <label className="block">
+            <span className="mb-1.5 block text-sm text-muted">About <span className="text-muted/70">(your story)</span></span>
+            <textarea name="experience" rows={6} value={experience} onChange={(e) => setExperience(e.target.value)} className={textareaClass} placeholder="Your background, approach and experience…" required />
+          </label>
           <MultiSelect
             name="specialities"
             label="Specialities"
             options={SPECIALITY_OPTIONS}
-            defaultValue={defaults.specialities}
+            value={specialities}
+            onChange={setSpecialities}
             placeholder="Select your specialities…"
           />
         </div>
       </Card>
 
-      {/* 2 — Social details (optional, encouraged) */}
       <Card>
         <SectionHeader
           title="Social details"
@@ -73,29 +110,12 @@ export function ProfileForm({ defaults }: { defaults: ProfileFormDefaults }) {
         </div>
       </Card>
 
-      {/* 3 — Business details (contact required; GST optional) */}
       <Card>
         <SectionHeader title="Business details" hint="Used on receipts and shown for complaints/feedback." />
         <div className="space-y-3">
-          <Input
-            name="complaintsContactNumber"
-            label="Complaints / feedback contact"
-            defaultValue={defaults.complaintsContactNumber}
-            placeholder="+91 98XXX XXXXX"
-            required
-          />
-          <Input
-            name="gstNumber"
-            label="GST number (optional)"
-            defaultValue={defaults.gstNumber}
-            placeholder="22ABCDE1234F1Z5"
-          />
-          <Input
-            name="gstLegalName"
-            label="Registered business name (optional)"
-            defaultValue={defaults.gstLegalName}
-            placeholder="Auto-filled from your GSTIN once verification is connected"
-          />
+          <Input name="complaintsContactNumber" label="Complaints / feedback contact" defaultValue={defaults.complaintsContactNumber} placeholder="+91 98XXX XXXXX" required />
+          <Input name="gstNumber" label="GST number (optional)" defaultValue={defaults.gstNumber} placeholder="22ABCDE1234F1Z5" />
+          <Input name="gstLegalName" label="Registered business name (optional)" defaultValue={defaults.gstLegalName} placeholder="Auto-filled from your GSTIN once verification is connected" />
         </div>
       </Card>
 
@@ -104,6 +124,10 @@ export function ProfileForm({ defaults }: { defaults: ProfileFormDefaults }) {
       <Button type="submit" disabled={pending}>
         {pending ? "Saving…" : "Save profile"}
       </Button>
+
+      {aiEnabled && (
+        <AiQuestionnaire open={aiOpen} onClose={() => setAiOpen(false)} title="Generate your profile" generateLabel="Generate profile ✨" steps={PROFILE_STEPS} onGenerate={onGenerate} />
+      )}
     </form>
   );
 }
