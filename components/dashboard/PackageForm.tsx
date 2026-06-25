@@ -28,6 +28,7 @@ const PACKAGE_STEPS: AiStep[] = [
   { id: "unique", type: "text", question: "What makes this session unique?", helper: "Optional.", placeholder: "e.g. Includes a follow-up voice note with remedies", skippable: true },
   { id: "results", type: "text", question: "What results have past seekers experienced?", helper: "Optional.", placeholder: "e.g. Clarity on career switch, found the right marriage timing", skippable: true },
   { id: "tone", type: "single", question: "What tone for the description?", options: ["Warm & reassuring", "Mystical & evocative", "Clear & practical", "Professional & detailed"] },
+  { id: "language", type: "single", question: "Which language should we write the description in?", helper: "Hinglish = a natural Hindi + English mix.", options: ["English", "Hindi", "Hinglish"] },
 ];
 
 export interface PackageFormDefaults {

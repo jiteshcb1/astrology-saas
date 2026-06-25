@@ -5,7 +5,7 @@ import { QUESTION_FIELD_TYPES, QUESTION_REQUIREMENTS, type QuestionInput } from 
 // The API key is read from process.env at call time and NEVER leaves the server. Every function fails
 // gracefully (returns a result object, never throws) so a generation problem can't break a form.
 
-const MODEL = "gemini-1.5-flash";
+const MODEL = "gemini-2.5-flash"; // current Flash (1.5 retired); fast + cheap, reliable free-tier availability
 const BIO_MAX = 300;
 const ABOUT_MAX = 2500;
 const DESC_MAX = 6000;
@@ -88,9 +88,18 @@ export function coerceQuestions(input: unknown): QuestionInput[] {
 }
 
 function langLine(locale: string): string {
-  return locale === "hi"
-    ? "Write the output in natural Hindi (Devanagari)."
-    : "Write the output in clear, natural English.";
+  if (locale === "hi") return "Write ALL output text in natural Hindi (Devanagari script).";
+  if (locale === "hinglish") return "Write ALL output text in Hinglish — a natural conversational mix of Hindi and English, in Latin (Roman) script.";
+  return "Write ALL output text in clear, natural English.";
+}
+
+// Map a questionnaire language choice ("English" | "Hindi" | "Hinglish") to a locale. null if unrecognized.
+export function localeFromChoice(value: unknown): string | null {
+  const v = String(value ?? "").trim().toLowerCase();
+  if (v === "hinglish") return "hinglish";
+  if (v === "hindi") return "hi";
+  if (v === "english") return "en";
+  return null;
 }
 
 // ── Gemini call (never throws) ───────────────────────────────────────────────

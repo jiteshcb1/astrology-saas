@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/rbac";
 import { getBranding } from "@/lib/branding";
-import { generateProfileContent, isAiConfigured, type GenResult, type ProfileGen } from "@/lib/gemini";
+import { generateProfileContent, isAiConfigured, localeFromChoice, type GenResult, type ProfileGen } from "@/lib/gemini";
 import {
   buildSocialLinks,
   parseSpecialities,
@@ -49,6 +49,8 @@ export async function generateProfileContentAction(answers: Record<string, unkno
   const { session } = await requireRole("access:dashboard");
   const orgId = session.user.orgId;
   if (!orgId || !isAiConfigured()) return { ok: false };
+  // Language is chosen in the questionnaire ("language" step); fall back to branding default, then English.
   const branding = await getBranding(orgId);
-  return generateProfileContent(answers, branding?.defaultLocale ?? "en");
+  const locale = localeFromChoice(answers.language) ?? branding?.defaultLocale ?? "en";
+  return generateProfileContent(answers, locale);
 }

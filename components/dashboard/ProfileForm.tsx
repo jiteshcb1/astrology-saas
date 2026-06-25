@@ -34,7 +34,7 @@ const PROFILE_STEPS: AiStep[] = [
   { id: "testimonials", type: "text", question: "What do your seekers say about working with you?", helper: "Optional — a line or two.", placeholder: "e.g. Very accurate, life-changing guidance", skippable: true },
   { id: "credentials", type: "text", question: "Any credentials or training to include?", helper: "Optional.", placeholder: "e.g. Trained under Pt. XYZ, ICAS certified", skippable: true },
   { id: "tone", type: "single", question: "What tone should your profile have?", options: ["Warm & approachable", "Professional & authoritative", "Spiritual & mystical", "Friendly & modern"] },
-  { id: "languages", type: "single", question: "Which languages do you consult in?", options: ["Hindi", "English", "Both", "Hindi/English/Other"] },
+  { id: "language", type: "single", question: "Which language should we write your profile in?", helper: "Hinglish = a natural Hindi + English mix.", options: ["English", "Hindi", "Hinglish"] },
 ];
 
 function SectionHeader({ title, hint }: { title: string; hint?: string }) {

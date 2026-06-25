@@ -19,6 +19,7 @@ import {
   generatePackageContent,
   generateIntakeQuestions,
   isAiConfigured,
+  localeFromChoice,
   type GenResult,
   type PackageGen,
 } from "@/lib/gemini";
@@ -157,7 +158,8 @@ export async function generatePackageContentAction(
   const { session } = await requireRole("access:dashboard");
   const orgId = session.user.orgId;
   if (!orgId || !isAiConfigured()) return { ok: false };
-  return generatePackageContent(answers, ctx, await aiLocale(orgId));
+  const locale = localeFromChoice(answers.language) ?? (await aiLocale(orgId));
+  return generatePackageContent(answers, ctx, locale);
 }
 
 export async function generateIntakeQuestionsAction(
