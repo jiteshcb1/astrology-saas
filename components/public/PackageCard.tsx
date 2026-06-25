@@ -58,9 +58,18 @@ export function PackageCard({
         selected ? "" : "border-line"
       } ${interactive ? "cursor-pointer outline-none hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(20,18,43,0.12)] focus-visible:border-marigold" : ""}`}
     >
-      <p className="text-xs uppercase tracking-wide text-muted">Video Meeting · {durationLabel}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-sand-2/40 px-2.5 py-1 text-xs font-medium text-ink">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0"><rect x="2" y="6" width="13" height="12" rx="2" /><path d="M15 10l6-3v10l-6-3z" strokeLinejoin="round" /></svg>
+          Video Meeting
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-sand-2/40 px-2.5 py-1 text-xs font-medium text-ink">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          {durationLabel}
+        </span>
+      </div>
 
-      <h3 className="mt-2 break-words font-display text-xl text-ink">{title || "Your package name"}</h3>
+      <h3 className="mt-3 break-words font-display text-xl text-ink">{title || "Your package name"}</h3>
 
       <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted">
         {text || "A short description of what this session covers will appear here."}

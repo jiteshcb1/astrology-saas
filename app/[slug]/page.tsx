@@ -37,6 +37,7 @@ export default async function PublicBookingRoute({ params }: { params: Promise<{
       slug={slug}
       timezone={data.timezone}
       confirmedCount={data.confirmedCount}
+      legal={data.legal}
       getSlots={getSlots}
       onContinue={onContinue}
     />

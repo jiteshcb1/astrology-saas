@@ -22,7 +22,7 @@ function isEmptyHtml(html: string): boolean {
 }
 
 /** Controlled rich-text editor. `value`/`onChange` are HTML strings ("" empty). */
-export function RichTextEditor({ value, onChange }: { value: string; onChange: (html: string) => void }) {
+export function RichTextEditor({ value, onChange, placeholder = "What this session covers…" }: { value: string; onChange: (html: string) => void; placeholder?: string }) {
   return (
     <div className="rte">
       <ReactQuill
@@ -31,7 +31,7 @@ export function RichTextEditor({ value, onChange }: { value: string; onChange: (
         onChange={(html: string) => onChange(isEmptyHtml(html) ? "" : html)}
         modules={MODULES}
         formats={FORMATS}
-        placeholder="What this session covers…"
+        placeholder={placeholder}
       />
       {/* Theme Quill's chrome to our tokens (scoped under .rte). */}
       <style jsx global>{`

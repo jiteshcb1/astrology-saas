@@ -101,7 +101,7 @@ export async function sendOtp(
     },
   });
 
-  await sendEmail({ to: normalized, ...otpEmail(code) });
+  await sendEmail({ to: normalized, category: "otp", ...otpEmail(code) });
 
   if (isDev) {
     console.log(`[otp:dev] code for ${normalized}: ${code}`);

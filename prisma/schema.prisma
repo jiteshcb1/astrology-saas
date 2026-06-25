@@ -85,6 +85,7 @@ model Organization {
   receipts          Receipt[]
   consultantProfile ConsultantProfile?
   branding          OrgBranding?
+  legalDocuments    LegalDocuments?
   paymentMethod     PaymentMethod?
   schedules         AvailabilitySchedule[]
   packages          Package[]
@@ -360,6 +361,46 @@ model OrgBranding {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("org_branding")
+}
+
+// Per-consultant legal docs (tenant-scoped, 1:1 org). Rich HTML, sanitized on save. updatedAt drives the
+// "Last updated" date on the public profile. Registered in config/tenant-models.json.
+model LegalDocuments {
+  id              String   @id @default(cuid())
+  organizationId  String   @unique
+  privacyPolicy   String   @default("")
+  termsConditions String   @default("")
+  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("legal_documents")
+}
+
+// Platform-level legal docs (super-admin authored, NOT tenant-scoped). docType ∈ privacy | terms_of_use |
+// terms. Viewable at /legal/*; the landing page links to them later. Accessed via bare prisma.platformLegal.
+model PlatformLegal {
+  id          String   @id @default(cuid())
+  docType     String   @unique
+  contentHtml String   @default("")
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("platform_legal")
+}
+
+// Platform-level operational settings (super-admin gated, NOT tenant-scoped). Single source of truth for
+// system-wide toggles keyed by string (e.g. emails.otp, emails.transactional). value is flexible Json
+// ({enabled:boolean} for the email switches). Absent row = default ON. Accessed via bare prisma.platformSetting.
+model PlatformSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json     @default("{}")
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("platform_settings")
 }
 
 // ─── Payment methods (SP-2.4) — tenant-scoped (1:1 org) ──────────────────────

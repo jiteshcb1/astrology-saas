@@ -15,6 +15,7 @@ export type TenantModelKey =
   | "receipt"
   | "consultantProfile"
   | "orgBranding"
+  | "legalDocuments"
   | "paymentMethod"
   | "availabilitySchedule"
   | "availabilityRule"
@@ -107,6 +108,20 @@ function scope(orgId: string, db: Db) {
         }),
       updateMany: (args: Prisma.OrgBrandingUpdateManyArgs) =>
         db.orgBranding.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
+    },
+    legalDocuments: {
+      findFirst: (args?: Prisma.LegalDocumentsFindFirstArgs) =>
+        db.legalDocuments.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      count: (args?: Prisma.LegalDocumentsCountArgs) =>
+        db.legalDocuments.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      create: (
+        args: { data: Omit<Prisma.LegalDocumentsUncheckedCreateInput, "organizationId"> } & Pick<
+          Prisma.LegalDocumentsCreateArgs,
+          "select" | "include"
+        >,
+      ) => db.legalDocuments.create({ ...args, data: { ...args.data, organizationId: orgId } }),
+      updateMany: (args: Prisma.LegalDocumentsUpdateManyArgs) =>
+        db.legalDocuments.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
     },
     paymentMethod: {
       findFirst: (args?: Prisma.PaymentMethodFindFirstArgs) =>

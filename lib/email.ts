@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { env, isDev } from "@/lib/env";
+import { isEmailCategoryEnabled, type EmailCategory } from "@/lib/platform-settings";
 
 // Thin, mockable email client. Single `sendEmail()` interface for the whole app.
 // When RESEND_API_KEY is empty (local dev) we log instead of sending, so the app runs keyless.
@@ -16,12 +17,20 @@ export interface SendEmailOptions {
   from?: string;
   /** Reply-To — seeker emails set this to the consultant's own email. */
   replyTo?: string;
+  /** Which super-admin kill-switch governs this email. Defaults to "transactional". */
+  category?: EmailCategory;
 }
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
 export async function sendEmail(options: SendEmailOptions): Promise<{ ok: boolean; id?: string }> {
-  const { to, subject, text, html, from = env.EMAIL_FROM, replyTo } = options;
+  const { to, subject, text, html, from = env.EMAIL_FROM, replyTo, category = "transactional" } = options;
+
+  // Global kill-switch (super-admin, /superadmin/settings). Paused → skip silently; return ok so no flow breaks.
+  if (!(await isEmailCategoryEnabled(category))) {
+    console.log("[email] paused:", category, "—", subject);
+    return { ok: true };
+  }
 
   if (!resend) {
     // No API key configured — log-only stub.

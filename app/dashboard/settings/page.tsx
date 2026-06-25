@@ -34,6 +34,12 @@ export default async function SettingsPage() {
               <p className="mt-1 text-sm text-muted">UPI QR or your own gateway keys.</p>
             </Card>
           </Link>
+          <Link href="/dashboard/settings/legal">
+            <Card className="h-full transition hover:border-marigold">
+              <h2 className="font-display text-lg text-ink">Legal</h2>
+              <p className="mt-1 text-sm text-muted">Privacy policy &amp; terms shown on your booking page.</p>
+            </Card>
+          </Link>
         </div>
       </div>
     </>

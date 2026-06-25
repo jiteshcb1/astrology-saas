@@ -11,6 +11,8 @@ export interface AiStep {
   options?: string[];
   skippable?: boolean;
   placeholder?: string;
+  /** For text steps: require at least this many characters (shows a counter; gates Next/Generate). */
+  minLength?: number;
 }
 export type AiAnswers = Record<string, string | string[]>;
 
@@ -55,7 +57,15 @@ export function AiQuestionnaire({
   const step = steps[idx];
   const isLast = idx === steps.length - 1;
   const current = answers[step?.id];
-  const answered = step?.type === "multi" ? Array.isArray(current) && current.length > 0 : Boolean(current);
+  const textLen = typeof current === "string" ? current.trim().length : 0;
+  const answered =
+    step?.type === "multi"
+      ? Array.isArray(current) && current.length > 0
+      : step?.type === "text"
+        ? step.minLength
+          ? textLen >= step.minLength
+          : Boolean(current)
+        : Boolean(current);
 
   function setAnswer(v: string | string[]) {
     setAnswers((a) => ({ ...a, [step.id]: v }));
@@ -113,13 +123,22 @@ export function AiQuestionnaire({
 
             <div className="mt-4">
               {step.type === "text" ? (
-                <textarea
-                  rows={3}
-                  value={typeof current === "string" ? current : ""}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  placeholder={step.placeholder}
-                  className="w-full rounded-control border border-line bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-marigold"
-                />
+                <>
+                  <textarea
+                    rows={4}
+                    value={typeof current === "string" ? current : ""}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    placeholder={step.placeholder}
+                    className="w-full rounded-control border border-line bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-marigold"
+                  />
+                  {step.minLength && (
+                    <p className={`mt-1.5 text-xs ${textLen >= step.minLength ? "text-green" : "text-muted"}`}>
+                      {textLen >= step.minLength
+                        ? `${textLen} characters ✓`
+                        : `${textLen}/${step.minLength} characters — a couple of specific lines here make a real difference: the AI weaves them in so your bio sounds authentically like you, not generic.`}
+                    </p>
+                  )}
+                </>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {(step.options ?? []).map((opt) => {

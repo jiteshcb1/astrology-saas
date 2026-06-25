@@ -25,6 +25,8 @@ const NAV: NavItem[] = [
   { href: "/superadmin/flags", label: "Feature Flags", icon: I(<path d="M5 3v14M5 4h9l-2 3 2 3H5" strokeLinecap="round" strokeLinejoin="round" />) },
   { href: "/superadmin/oversight", label: "Oversight", icon: I(<><circle cx="9" cy="9" r="6" /><path d="M9 6v3l2 2" strokeLinecap="round" /></>) },
   { href: "/superadmin/catalogs", label: "Catalogs", icon: I(<><rect x="3" y="3" width="14" height="14" rx="2" /><path d="M3 8h14M8 3v14" strokeLinecap="round" /></>) },
+  { href: "/superadmin/legal", label: "Legal", icon: I(<><path d="M5 3h7l3 3v11a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" strokeLinejoin="round" /><path d="M7 9h6M7 12h6M7 15h4" strokeLinecap="round" /></>) },
+  { href: "/superadmin/settings", label: "Settings", icon: I(<><circle cx="10" cy="10" r="3" /><path d="M10 1.5v2.5M10 16v2.5M1.5 10h2.5M16 10h2.5M4 4l1.8 1.8M14.2 14.2L16 16M16 4l-1.8 1.8M5.8 14.2L4 16" strokeLinecap="round" /></>) },
 ];
 
 export function SuperadminSidebar({ email, role }: { email: string; role: string }) {

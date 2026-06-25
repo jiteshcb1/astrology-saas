@@ -27,11 +27,29 @@ const textareaClass =
   "w-full rounded-control border border-line bg-white px-4 py-2.5 text-sm text-ink outline-none transition focus:border-marigold";
 
 const PROFILE_STEPS: AiStep[] = [
-  { id: "specialization", type: "single", question: "What do you specialize in?", options: ["Vedic / Jyotish", "Tarot", "Numerology", "Palmistry", "Vastu", "Prashna", "Multiple"] },
+  {
+    id: "specialization",
+    type: "multi",
+    question: "What do you specialize in?",
+    helper: "Pick all that apply.",
+    options: ["Vedic / Jyotish", "Tarot", "Numerology", "Palmistry", "Vastu", "Prashna", "KP Astrology", "Lal Kitab", "Nadi Astrology", "Kundali / Birth Chart", "Matchmaking / Kundali Milan", "Gemstone & Remedies", "Muhurat / Timing", "Face Reading"],
+  },
   { id: "years", type: "single", question: "How many years have you been practicing?", options: ["1-2", "3-5", "5-10", "10+", "20+"] },
-  { id: "audience", type: "multi", question: "Who do you primarily help?", helper: "Pick all that apply.", options: ["Career & finance", "Relationships & marriage", "Health & wellbeing", "Spiritual growth", "Business decisions", "All of these"] },
-  { id: "unique", type: "multi", question: "What makes your readings unique?", helper: "Pick all that apply.", options: ["Traditional Vedic methods", "Intuitive + classical blend", "Modern practical approach", "Multilingual (Hindi/English)", "Focus on remedies & solutions"] },
-  { id: "testimonials", type: "text", question: "What do your seekers say about working with you?", helper: "Optional — a line or two.", placeholder: "e.g. Very accurate, life-changing guidance", skippable: true },
+  {
+    id: "audience",
+    type: "multi",
+    question: "Who do you primarily help?",
+    helper: "Pick all that apply.",
+    options: ["Career & finance", "Relationships & marriage", "Health & wellbeing", "Spiritual growth", "Business decisions", "Marriage & matchmaking", "Education & students", "Family & children", "Wealth & investments", "Legal matters & disputes", "Foreign travel & settlement", "Job seekers & professionals"],
+  },
+  {
+    id: "unique",
+    type: "multi",
+    question: "What makes your readings unique?",
+    helper: "Pick all that apply.",
+    options: ["Traditional Vedic methods", "Intuitive + classical blend", "Modern, practical approach", "Multilingual (Hindi/English)", "Focus on remedies & solutions", "Data-driven predictions", "Compassionate & non-judgmental", "Quick, actionable guidance", "Deep birth-chart analysis", "Honest, no sugar-coating", "Follow-up support after sessions"],
+  },
+  { id: "testimonials", type: "text", question: "What do your seekers say about working with you?", helper: "Add a couple of real lines — this makes your bio specific and trustworthy.", placeholder: "e.g. \"Vijay's guidance helped me avoid mistakes in my job search and land a role at CRISIL.\"", minLength: 50 },
   { id: "credentials", type: "text", question: "Any credentials or training to include?", helper: "Optional.", placeholder: "e.g. Trained under Pt. XYZ, ICAS certified", skippable: true },
   { id: "tone", type: "single", question: "What tone should your profile have?", options: ["Warm & approachable", "Professional & authoritative", "Spiritual & mystical", "Friendly & modern"] },
   { id: "language", type: "single", question: "Which language should we write your profile in?", helper: "Hinglish = a natural Hindi + English mix.", options: ["English", "Hindi", "Hinglish"] },

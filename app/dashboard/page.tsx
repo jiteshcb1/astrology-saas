@@ -4,6 +4,7 @@ import { getProfile } from "@/lib/consultant-profile";
 import { getBranding } from "@/lib/branding";
 import { getPaymentMethod } from "@/lib/payments";
 import { listPackages } from "@/lib/packages";
+import { getLegalDocuments, legalHasContent } from "@/lib/legal";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -37,6 +38,8 @@ export default async function DashboardHome() {
   const branding = orgId ? await getBranding(orgId) : null;
   const paymentMethod = orgId ? await getPaymentMethod(orgId) : null;
   const packageCount = orgId ? (await listPackages(orgId)).length : 0;
+  const legal = orgId ? await getLegalDocuments(orgId) : null;
+  const legalDone = legalHasContent(legal?.privacyPolicy) && legalHasContent(legal?.termsConditions);
 
   const profileComplete = Boolean(profile?.bio && profile.bio.trim());
   const checklist: ChecklistItem[] = [
@@ -45,6 +48,7 @@ export default async function DashboardHome() {
     { label: "Connect Google Calendar", done: false, soon: true },
     { label: "Brand your booking page", done: Boolean(branding?.themeColor), href: "/dashboard/settings/branding", cta: "Set up" },
     { label: "Set up payments", done: Boolean(paymentMethod), href: "/dashboard/settings/payments", cta: "Set up" },
+    { label: "Add your legal pages", done: legalDone, href: "/dashboard/settings/legal", cta: "Set up" },
     { label: "Create your first package", done: packageCount > 0, href: "/dashboard/packages/new", cta: "Create" },
   ];
 

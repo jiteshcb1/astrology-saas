@@ -34,6 +34,7 @@ export function PublicProfile({
   slug,
   timezone = "Asia/Kolkata",
   confirmedCount = 0,
+  legal,
   getSlots,
   onContinue,
 }: {
@@ -44,6 +45,7 @@ export function PublicProfile({
   slug?: string;
   timezone?: string;
   confirmedCount?: number;
+  legal?: { hasPrivacy: boolean; hasTerms: boolean };
   getSlots?: (packageId: string, durationMin: number, fromISO: string, toISO: string) => Promise<string[]>;
   onContinue?: (packageId: string, durationMin: number, startISO: string) => Promise<{ ok: boolean; bookingId?: string; reason?: string }>;
 }) {
@@ -186,7 +188,25 @@ export function PublicProfile({
           </section>
         )}
 
-        <footer className="text-center text-xs text-muted">Terms · Privacy · Powered by Astro Consultancy</footer>
+        <footer className="space-y-3 text-center">
+          {slug && (legal?.hasTerms || legal?.hasPrivacy) && (
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {legal?.hasTerms && (
+                <a href={`/${slug}/terms`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2 text-xs font-medium text-ink transition hover:border-marigold hover:text-terra">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0"><path d="M6 3h8l4 4v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z" strokeLinejoin="round" /><path d="M8 11h8M8 15h5" strokeLinecap="round" /></svg>
+                  Terms &amp; Conditions
+                </a>
+              )}
+              {legal?.hasPrivacy && (
+                <a href={`/${slug}/privacy`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2 text-xs font-medium text-ink transition hover:border-marigold hover:text-terra">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" strokeLinejoin="round" /></svg>
+                  Privacy Policy
+                </a>
+              )}
+            </div>
+          )}
+          <p className="text-xs text-muted">Powered by Astro Consultancy</p>
+        </footer>
       </div>
 
       <BookingDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} pkg={selectedPkg} slug={slug} timezone={timezone} accent={primary} onAccent={onPrimary} getSlots={getSlots} onContinue={onContinue} />

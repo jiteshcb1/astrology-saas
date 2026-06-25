@@ -38,7 +38,13 @@ export interface PublicPageData {
     complaintsContactNumber: string;
   };
   branding: { themeColor: string | null; logoUrl: string | null; backgroundStyle: string };
+  legal: { hasPrivacy: boolean; hasTerms: boolean };
   packages: PublicPackageView[];
+}
+
+// Inlined (not imported from lib/legal, which imports this module) — does the HTML hold real content?
+function htmlHasContent(html: string | null | undefined): boolean {
+  return Boolean(html && html.replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").trim().length > 0);
 }
 
 function durationLabel(p: { allowBookerChooseDuration: boolean; allowedDurations: number[]; defaultDurationMin: number }): string {
@@ -59,13 +65,14 @@ export async function getActiveOrgBySlug(slugRaw: string): Promise<PublicPageDat
   if (!org || org.status !== "active") return null;
   const orgId = org.id;
 
-  const [branding, profile, schedule, host, pkgs, confirmedCount] = await Promise.all([
+  const [branding, profile, schedule, host, pkgs, confirmedCount, legalDoc] = await Promise.all([
     getBranding(orgId),
     getProfile(orgId),
     tenantDb(orgId).availabilitySchedule.findFirst({ where: { isDefault: true } }),
     tenantDb(orgId).orgMember.findFirst({ where: { role: "consultant", status: "active" } }),
     tenantDb(orgId).package.findMany({ where: { isActive: true }, orderBy: { createdAt: "asc" } }),
     tenantDb(orgId).booking.count({ where: { status: "confirmed" } }),
+    tenantDb(orgId).legalDocuments.findFirst(),
   ]);
 
   const logoUrl = branding?.logoKey ? await getSignedUrl(branding.logoKey) : null;
@@ -97,6 +104,7 @@ export async function getActiveOrgBySlug(slugRaw: string): Promise<PublicPageDat
       complaintsContactNumber: profile?.complaintsContactNumber ?? "",
     },
     branding: { themeColor: branding?.themeColor ?? null, logoUrl, backgroundStyle: branding?.backgroundStyle ?? "stars_zodiac" },
+    legal: { hasPrivacy: htmlHasContent(legalDoc?.privacyPolicy), hasTerms: htmlHasContent(legalDoc?.termsConditions) },
     packages,
   };
 }
