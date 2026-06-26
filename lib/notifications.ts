@@ -5,7 +5,7 @@ import { getBranding } from "@/lib/branding";
 import { getProfile } from "@/lib/consultant-profile";
 import { getSignedUrl } from "@/lib/storage";
 import { formatMoney } from "@/lib/money";
-import { env } from "@/lib/env";
+import { env, isDev } from "@/lib/env";
 import { sendEmail } from "@/lib/email";
 import {
   consultantFrom,
@@ -14,6 +14,7 @@ import {
   bookingDeclinedEmail,
   newBookingConsultantEmail,
   consultantWelcomeEmail,
+  orgInviteEmail,
 } from "@/lib/emails";
 
 // Server-side notification senders (SP-4.4). Each assembles consultant branding + booking data and sends
@@ -123,4 +124,15 @@ export async function notifyConsultantWelcome(orgId: string): Promise<void> {
   if (!owner?.email) return;
   const mail = consultantWelcomeEmail({ orgName: org.name, signInUrl: `${BASE}/signin` });
   await sendEmail({ to: owner.email, ...mail });
+}
+
+// SP-5.1 team invite. inviteUrl carries the RAW token (hashed at rest). Dev-logs the URL like [otp:dev]
+// so the flow works with the Resend stub.
+export async function notifyOrgInvite(p: { orgId: string; email: string; roleLabel: string; message?: string | null; inviteUrl: string }): Promise<void> {
+  const org = await prisma.organization.findUnique({ where: { id: p.orgId }, select: { name: true, ownerUserId: true } });
+  if (!org) return;
+  const inviter = org.ownerUserId ? await prisma.user.findUnique({ where: { id: org.ownerUserId }, select: { name: true } }) : null;
+  const mail = orgInviteEmail({ inviterName: inviter?.name || org.name, orgName: org.name, roleLabel: p.roleLabel, message: p.message, inviteUrl: p.inviteUrl });
+  await sendEmail({ to: p.email, category: "transactional", ...mail });
+  if (isDev) console.log(`[invite:dev] invite URL for ${p.email}: ${p.inviteUrl}`);
 }

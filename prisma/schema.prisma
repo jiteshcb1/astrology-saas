@@ -81,6 +81,7 @@ model Organization {
 
   owner             User?              @relation("OrgOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
   members           OrgMember[]
+  invites           OrgInvite[]
   subscription      Subscription?
   receipts          Receipt[]
   consultantProfile ConsultantProfile?
@@ -111,6 +112,30 @@ model OrgMember {
   @@unique([userId, organizationId])
   @@index([organizationId, role, status])
   @@map("org_members")
+}
+
+// Pending team invitations (SP-5.1). Tenant-scoped. Lets the owner invite by email before that person has
+// an account. token is crypto-random, stored SHA-256 hashed (raw token only in the email link). One-time:
+// status → accepted on first accept. Expiry derived from expiresAt (7 days). status: pending|accepted|cancelled.
+model OrgInvite {
+  id              String     @id @default(cuid())
+  organizationId  String
+  email           String
+  role            MemberRole
+  tokenHash       String     @unique
+  message         String?
+  status          String     @default("pending")
+  expiresAt       DateTime   @db.Timestamptz(6)
+  invitedByUserId String?
+  acceptedByUserId String?
+  createdAt       DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime   @updatedAt @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([email])
+  @@map("org_invites")
 }
 
 // ─── Auth.js (NextAuth) models ───────────────────────────────────────────────

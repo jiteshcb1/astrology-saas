@@ -1,8 +1,8 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type Package } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { tenantDb, tenantTransaction } from "@/lib/tenant-db";
 import { writeAuditLog } from "@/lib/audit";
-import { computeFreeIntervals, type OverrideInput, type RuleInput, type ScheduleWithRules } from "@/lib/availability";
+import { computeFreeIntervals, getMemberSchedule, type OverrideInput, type RuleInput, type ScheduleWithRules } from "@/lib/availability";
 import { addMinutes, utcToZonedParts } from "@/lib/timezone";
 
 // The scheduling engine (SP-3.5). getAvailableSlots computes bookable start instants (UTC) from a
@@ -22,6 +22,11 @@ export interface ReserveParams {
 export type ReserveResult =
   | { ok: true; bookingId: string; slotId: string }
   | { ok: false; reason: "slot_taken" | "too_soon" | "invalid" };
+
+// Round-robin assignment result — adds "no_host" (no eligible Consulting member free for this time).
+export type AssignResult =
+  | { ok: true; bookingId: string; slotId: string }
+  | { ok: false; reason: "slot_taken" | "too_soon" | "invalid" | "no_host" };
 
 interface FreqLimit {
   per_day?: number;
@@ -63,15 +68,6 @@ function isExpiredHold(b: BookingState | null | undefined, now: Date): boolean {
   return HOLD_STATUSES.has(b.status) && (b.holdExpiresAt == null || b.holdExpiresAt.getTime() <= now.getTime());
 }
 
-async function loadScheduleFor(orgId: string, scheduleId?: string | null): Promise<ScheduleWithRules | null> {
-  const where = scheduleId ? { id: scheduleId } : { isDefault: true };
-  const s = await tenantDb(orgId).availabilitySchedule.findFirst({
-    where,
-    include: { rules: true, overrides: true },
-  });
-  return s as ScheduleWithRules | null;
-}
-
 function dayKey(d: Date, tz: string): string {
   const p = utcToZonedParts(d, tz);
   return `${p.year}-${p.month}-${p.day}`;
@@ -86,21 +82,19 @@ function monthKey(d: Date, tz: string): string {
   return `${p.year}-${p.month}`;
 }
 
-export async function getAvailableSlots(
+// Single-host free start instants (UTC) for a resolved schedule. The package carries the limits
+// (buffers/notice/frequency/interval); the schedule carries the hours. Extracted so getAvailableSlots can
+// union across hosts and isHostFreeForSlot can re-check one host at booking time with identical logic.
+async function computeHostFreeStarts(
   orgId: string,
-  params: { packageId: string; hostMemberId: string; fromISO: string; toISO: string; durationMin?: number; now?: Date },
+  pkg: Package,
+  schedule: ScheduleWithRules,
+  hostMemberId: string,
+  fromISO: string,
+  toISO: string,
+  duration: number,
+  now: Date,
 ): Promise<Date[]> {
-  const pkg = await tenantDb(orgId).package.findFirst({ where: { id: params.packageId } });
-  if (!pkg || !pkg.isActive) return [];
-
-  const duration =
-    params.durationMin && pkg.allowedDurations.includes(params.durationMin)
-      ? params.durationMin
-      : pkg.defaultDurationMin;
-
-  const schedule = await loadScheduleFor(orgId, pkg.scheduleId);
-  if (!schedule) return [];
-
   const intervals = computeFreeIntervals({
     timezone: schedule.timezone,
     rules: schedule.rules as unknown as RuleInput[],
@@ -110,19 +104,18 @@ export async function getAvailableSlots(
       startTime: o.startTime,
       endTime: o.endTime,
     })) as OverrideInput[],
-    fromISO: params.fromISO,
-    toISO: params.toISO,
+    fromISO,
+    toISO,
   });
   if (intervals.length === 0) return [];
 
   // Existing reservations for this host (active only) — the busy set. Expired-but-unswept holds are
   // joined and filtered out so they neither block slots nor count toward frequency caps.
-  const nowForBusy = params.now ?? new Date();
   const busyRows = (await tenantDb(orgId).bookingSlot.findMany({
-    where: { hostMemberId: params.hostMemberId, active: true },
+    where: { hostMemberId, active: true },
     include: { booking: { select: { status: true, holdExpiresAt: true } } },
   })) as SlotWithBooking[];
-  const busy = busyRows.filter((s) => isBlocking(s.booking, nowForBusy));
+  const busy = busyRows.filter((s) => isBlocking(s.booking, now));
   // Booked counts per period (for frequency caps), keyed in the schedule's timezone.
   const freq = (pkg.freqLimit ?? {}) as FreqLimit;
   const perDay = new Map<string, number>();
@@ -138,7 +131,7 @@ export async function getAvailableSlots(
     (freq.per_week != null && (perWeek.get(weekKey(start, schedule.timezone)) ?? 0) >= freq.per_week) ||
     (freq.per_month != null && (perMonth.get(monthKey(start, schedule.timezone)) ?? 0) >= freq.per_month);
 
-  const notBefore = new Date((params.now ?? new Date()).getTime() + pkg.minNoticeMin * 60_000);
+  const notBefore = new Date(now.getTime() + pkg.minNoticeMin * 60_000);
   const step = pkg.slotIntervalMin > 0 ? pkg.slotIntervalMin : 15;
   const out: Date[] = [];
 
@@ -157,6 +150,61 @@ export async function getAvailableSlots(
     }
   }
   return out;
+}
+
+// Resolve the owner's OrgMember id (the owner schedule falls back to the legacy default).
+async function getOwnerMemberId(orgId: string): Promise<string | null> {
+  const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { ownerUserId: true } });
+  if (!org?.ownerUserId) return null;
+  const m = await tenantDb(orgId).orgMember.findFirst({ where: { userId: org.ownerUserId, status: "active" } });
+  return m?.id ?? null;
+}
+
+// Public slot computation (SP-5.2): the UNION of free start instants across the given hosts — a time shows
+// if AT LEAST ONE host is free for it. Seekers see only times, never which host they'll get.
+export async function getAvailableSlots(
+  orgId: string,
+  params: { packageId: string; hostMemberIds: string[]; fromISO: string; toISO: string; durationMin?: number; now?: Date },
+): Promise<Date[]> {
+  const pkg = await tenantDb(orgId).package.findFirst({ where: { id: params.packageId } });
+  if (!pkg || !pkg.isActive) return [];
+
+  const duration =
+    params.durationMin && pkg.allowedDurations.includes(params.durationMin) ? params.durationMin : pkg.defaultDurationMin;
+  const now = params.now ?? new Date();
+  const ownerMemberId = await getOwnerMemberId(orgId);
+
+  const tsSet = new Set<number>();
+  for (const host of params.hostMemberIds) {
+    const schedule = await getMemberSchedule(orgId, host, host === ownerMemberId);
+    if (!schedule) continue; // a host with no availability contributes nothing
+    const starts = await computeHostFreeStarts(orgId, pkg as Package, schedule, host, params.fromISO, params.toISO, duration, now);
+    for (const d of starts) tsSet.add(d.getTime());
+  }
+  return Array.from(tsSet)
+    .sort((a, b) => a - b)
+    .map((t) => new Date(t));
+}
+
+// Is this specific host free for exactly `startsAt`? Re-checks with the same logic as getAvailableSlots over
+// the day(s) around startsAt, so "shown == bookable". Used inside assignAndReserveSlot.
+async function isHostFreeForSlot(
+  orgId: string,
+  pkg: Package,
+  hostMemberId: string,
+  isOwner: boolean,
+  startsAt: Date,
+  duration: number,
+  now: Date,
+): Promise<boolean> {
+  const schedule = await getMemberSchedule(orgId, hostMemberId, isOwner);
+  if (!schedule) return false;
+  // Date-only window (the day before/after) — computeFreeIntervals/eachDateISO expect "YYYY-MM-DD". Stepping
+  // origin per day is identical to getAvailableSlots, so "shown == bookable".
+  const fromISO = new Date(startsAt.getTime() - 86_400_000).toISOString().slice(0, 10);
+  const toISO = new Date(startsAt.getTime() + 86_400_000).toISOString().slice(0, 10);
+  const starts = await computeHostFreeStarts(orgId, pkg, schedule, hostMemberId, fromISO, toISO, duration, now);
+  return starts.some((d) => d.getTime() === startsAt.getTime());
 }
 
 export async function reserveSlot(params: ReserveParams): Promise<ReserveResult> {
@@ -210,6 +258,74 @@ export async function reserveSlot(params: ReserveParams): Promise<ReserveResult>
       throw e2;
     }
   }
+}
+
+// Per-host stats for round-robin ordering: current LIVE load + the timestamp of the most recent assignment.
+async function hostAssignmentStats(orgId: string, hostIds: string[]): Promise<Map<string, { load: number; lastAssignedMs: number }>> {
+  const slots = (await tenantDb(orgId).bookingSlot.findMany({
+    where: { hostMemberId: { in: hostIds } },
+    include: { booking: { select: { status: true, holdExpiresAt: true } } },
+  })) as SlotWithBooking[];
+  const map = new Map<string, { load: number; lastAssignedMs: number }>();
+  for (const id of hostIds) map.set(id, { load: 0, lastAssignedMs: -Infinity });
+  for (const s of slots) {
+    const e = map.get(s.hostMemberId);
+    if (!e) continue;
+    if (s.booking && LIVE_STATUSES.has(s.booking.status)) e.load += 1;
+    if (s.createdAt.getTime() > e.lastAssignedMs) e.lastAssignedMs = s.createdAt.getTime();
+  }
+  return map;
+}
+
+// Eligible hosts for a slot, ordered by the round-robin metric: fewest LIVE bookings first, then
+// least-recently-assigned (never-assigned first). Hosts = active owner (consultant) + team_consulting members.
+async function selectEligibleHostsOrdered(orgId: string, pkg: Package, startsAt: Date, duration: number, now: Date): Promise<string[]> {
+  const ownerMemberId = await getOwnerMemberId(orgId);
+  const members = await tenantDb(orgId).orgMember.findMany({
+    where: { status: "active", role: { in: ["consultant", "team_consulting"] } },
+    orderBy: { createdAt: "asc" },
+  });
+  const eligible: string[] = [];
+  for (const m of members) {
+    if (await isHostFreeForSlot(orgId, pkg, m.id, m.id === ownerMemberId, startsAt, duration, now)) eligible.push(m.id);
+  }
+  if (eligible.length <= 1) return eligible;
+  const stats = await hostAssignmentStats(orgId, eligible);
+  return eligible.sort((a, b) => {
+    const sa = stats.get(a)!;
+    const sb = stats.get(b)!;
+    if (sa.load !== sb.load) return sa.load - sb.load;
+    return sa.lastAssignedMs - sb.lastAssignedMs;
+  });
+}
+
+// SP-5.2: pick a free Consulting host by round-robin and reserve atomically. The seeker never chooses.
+// Tries eligible hosts in order; the GiST constraint arbitrates concurrency, so if the top host loses the
+// race we fall through to the next free host (or slot_taken if none remain). Re-checks availability now.
+export async function assignAndReserveSlot(params: {
+  orgId: string;
+  packageId: string;
+  startsAt: Date;
+  durationMin: number;
+  seekerUserId?: string | null;
+  now?: Date;
+}): Promise<AssignResult> {
+  const { orgId, packageId, startsAt, durationMin } = params;
+  const now = params.now ?? new Date();
+  const pkg = await tenantDb(orgId).package.findFirst({ where: { id: packageId } });
+  if (!pkg || !pkg.isActive) return { ok: false, reason: "invalid" };
+  const duration = pkg.allowedDurations.includes(durationMin) ? durationMin : pkg.defaultDurationMin;
+
+  const ordered = await selectEligibleHostsOrdered(orgId, pkg as Package, startsAt, duration, now);
+  if (ordered.length === 0) return { ok: false, reason: "no_host" };
+
+  for (const host of ordered) {
+    const r = await reserveSlot({ orgId, packageId, hostMemberId: host, startsAt, durationMin: duration, seekerUserId: params.seekerUserId, now });
+    if (r.ok) return r;
+    if (r.reason === "slot_taken") continue; // host got taken in the race → try the next free host
+    return r; // too_soon / invalid apply to every host
+  }
+  return { ok: false, reason: "slot_taken" };
 }
 
 // Deactivate any overlapping EXPIRED holds for this host so a fresh hold can take the slot. Returns

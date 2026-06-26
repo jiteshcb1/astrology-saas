@@ -14,10 +14,10 @@ export async function getPublicSlotsAction(
   toISO: string,
 ): Promise<string[]> {
   const data = await getActiveOrgBySlug(slug);
-  if (!data || !data.hostMemberId) return [];
+  if (!data || data.hostMemberIds.length === 0) return [];
   const slots = await getAvailableSlots(data.orgId, {
     packageId,
-    hostMemberId: data.hostMemberId,
+    hostMemberIds: data.hostMemberIds,
     fromISO,
     toISO,
     durationMin,

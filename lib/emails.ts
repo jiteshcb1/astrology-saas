@@ -154,3 +154,21 @@ export function consultantWelcomeEmail(p: { orgName: string; signInUrl: string }
   const text = `Welcome to Astro Consultancy.\nYour consultancy "${p.orgName}" is ready. Sign in: ${p.signInUrl}`;
   return { subject: `Your consultancy "${p.orgName}" is ready on Astro`, html, text };
 }
+
+export function orgInviteEmail(p: { inviterName: string; orgName: string; roleLabel: string; message?: string | null; inviteUrl: string }): EmailContent {
+  const access =
+    p.roleLabel === "Consulting"
+      ? "run sessions, manage your own availability, and take assigned bookings"
+      : "view receipts and financial records";
+  const note = p.message ? `<p style="margin:12px 0 0;padding:12px 14px;background:#f6efe2;border-radius:10px;font-style:italic;">“${esc(p.message)}”</p>` : "";
+  const html = layout({
+    brandName: "Astro Consultancy",
+    preheader: `Join ${p.orgName} as a ${p.roleLabel} team member`,
+    bodyHtml: `<h1 style="margin:0 0 6px;font-size:21px;">You're invited to join ${esc(p.orgName)}</h1>
+<p style="margin:0;"><strong>${esc(p.inviterName)}</strong> invited you to join <strong>${esc(p.orgName)}</strong> as a <strong>${esc(p.roleLabel)}</strong> team member — you'll ${access}.</p>${note}
+<div style="margin:18px 0 0;">${button("Accept invitation", p.inviteUrl, MARIGOLD)}</div>
+<p style="margin:14px 0 0;font-size:13px;color:#6b6680;">This invitation expires in 7 days.</p>`,
+  });
+  const text = `${p.inviterName} invited you to join ${p.orgName} as a ${p.roleLabel} team member.\n${p.message ? `\n"${p.message}"\n` : ""}\nAccept: ${p.inviteUrl}\n\nThis invitation expires in 7 days.`;
+  return { subject: `${p.inviterName} invited you to join ${p.orgName} on Astro`, html, text };
+}

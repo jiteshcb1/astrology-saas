@@ -1,17 +1,22 @@
-import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/rbac";
+import { notFound, redirect } from "next/navigation";
+import { requireMember } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
-import { getDefaultSchedule } from "@/lib/availability";
+import { getMemberSchedule } from "@/lib/availability";
 import { PageHeader } from "@/components/superadmin/PageHeader";
 import { AvailabilityEditor, type OverrideState } from "@/components/dashboard/AvailabilityEditor";
 
+// SP-5.2: per-member availability. The owner edits their schedule; each team_consulting member edits theirs.
+// Accounts members don't take calls → no availability.
 export default async function AvailabilityPage() {
-  const { session, role } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
-  const profile = orgId ? await getProfile(orgId) : null;
-  if (role === "consultant" && (!orgId || !profile?.onboardedAt)) redirect("/onboarding");
+  const { orgId, memberId, role } = await requireMember();
+  if (role !== "consultant" && role !== "team_consulting") notFound();
+  const isOwner = role === "consultant";
+  if (isOwner) {
+    const profile = await getProfile(orgId);
+    if (!profile?.onboardedAt) redirect("/onboarding");
+  }
 
-  const schedule = orgId ? await getDefaultSchedule(orgId) : null;
+  const schedule = await getMemberSchedule(orgId, memberId, isOwner);
 
   const week = [0, 1, 2, 3, 4, 5, 6].map((weekday) => {
     const ranges = (schedule?.rules ?? [])
@@ -35,7 +40,7 @@ export default async function AvailabilityPage() {
 
   return (
     <>
-      <PageHeader title="Availability" subtitle="When you're open for bookings" />
+      <PageHeader title="Availability" subtitle="Your hours — when you're open for bookings" />
       <div className="mx-auto w-full max-w-5xl px-6 py-6">
         <AvailabilityEditor defaults={defaults} />
       </div>

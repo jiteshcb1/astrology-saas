@@ -85,8 +85,29 @@ export async function getDefaultSchedule(orgId: string): Promise<ScheduleWithRul
   return s as ScheduleWithRules | null;
 }
 
+// Per-member availability (SP-5.2). Each Consulting member (owner included) has their own schedule keyed by
+// ownerMemberId. Back-compat: the owner falls back to the legacy default schedule (ownerMemberId null) so
+// existing single-consultant orgs keep working; a non-owner with no own schedule has no availability.
+export async function getMemberSchedule(orgId: string, memberId: string, isOwner: boolean): Promise<ScheduleWithRules | null> {
+  const own = await tenantDb(orgId).availabilitySchedule.findFirst({
+    where: { ownerMemberId: memberId },
+    include: { rules: { orderBy: { weekday: "asc" } }, overrides: { orderBy: { date: "asc" } } },
+  });
+  if (own) return own as ScheduleWithRules;
+  if (isOwner) {
+    const legacy = await tenantDb(orgId).availabilitySchedule.findFirst({
+      where: { isDefault: true, ownerMemberId: null },
+      include: { rules: { orderBy: { weekday: "asc" } }, overrides: { orderBy: { date: "asc" } } },
+    });
+    if (legacy) return legacy as ScheduleWithRules;
+  }
+  return null;
+}
+
 export async function saveAvailabilityCore(
   orgId: string,
+  memberId: string,
+  isOwner: boolean,
   input: { timezone: string; rules: RuleInput[]; overrides: OverrideInput[] },
   actorUserId: string,
 ): Promise<AvailabilityResult> {
@@ -106,10 +127,18 @@ export async function saveAvailabilityCore(
   if (!input.timezone.trim()) return { ok: false, error: "Choose a timezone." };
 
   await tenantTransaction(async ({ db, tenant }) => {
-    let schedule = await tenant(orgId).availabilitySchedule.findFirst({ where: { isDefault: true } });
+    // The member's own schedule (ownerMemberId). Owner may adopt the legacy default in place.
+    let schedule = await tenant(orgId).availabilitySchedule.findFirst({ where: { ownerMemberId: memberId } });
+    if (!schedule && isOwner) {
+      const legacy = await tenant(orgId).availabilitySchedule.findFirst({ where: { isDefault: true, ownerMemberId: null } });
+      if (legacy) {
+        await tenant(orgId).availabilitySchedule.updateMany({ where: { id: legacy.id }, data: { ownerMemberId: memberId, timezone: input.timezone.trim() } });
+        schedule = legacy;
+      }
+    }
     if (!schedule) {
       schedule = await tenant(orgId).availabilitySchedule.create({
-        data: { name: "Working hours", timezone: input.timezone.trim(), isDefault: true },
+        data: { name: "Working hours", timezone: input.timezone.trim(), isDefault: isOwner, ownerMemberId: memberId },
       });
     } else {
       await tenant(orgId).availabilitySchedule.updateMany({
@@ -140,7 +169,7 @@ export async function saveAvailabilityCore(
     }
 
     await writeAuditLog(
-      { actorUserId, action: "availability.update", resourceType: "availability_schedule", resourceId: scheduleId, orgId },
+      { actorUserId, action: "availability.update", resourceType: "availability_schedule", resourceId: scheduleId, orgId, metadata: { memberId } },
       db,
     );
   });

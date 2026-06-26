@@ -1,1 +1,1 @@
-["orgMember", "receipt", "consultantProfile", "orgBranding", "legalDocuments", "paymentMethod", "availabilitySchedule", "availabilityRule", "availabilityOverride", "package", "packageQuestion", "booking", "bookingSlot", "payment"]
+["orgMember", "orgInvite", "receipt", "consultantProfile", "orgBranding", "legalDocuments", "paymentMethod", "availabilitySchedule", "availabilityRule", "availabilityOverride", "package", "packageQuestion", "booking", "bookingSlot", "payment"]

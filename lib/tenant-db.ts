@@ -12,6 +12,7 @@ type Db = PrismaClient | Prisma.TransactionClient;
 // Keep in sync with config/tenant-models.json (which is the runtime source of truth).
 export type TenantModelKey =
   | "orgMember"
+  | "orgInvite"
   | "receipt"
   | "consultantProfile"
   | "orgBranding"
@@ -54,6 +55,23 @@ function scope(orgId: string, db: Db) {
         db.orgMember.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
       deleteMany: (args?: Prisma.OrgMemberDeleteManyArgs) =>
         db.orgMember.deleteMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+    },
+    orgInvite: {
+      findMany: (args?: Prisma.OrgInviteFindManyArgs) =>
+        db.orgInvite.findMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      findFirst: (args?: Prisma.OrgInviteFindFirstArgs) =>
+        db.orgInvite.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      count: (args?: Prisma.OrgInviteCountArgs) =>
+        db.orgInvite.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      create: (
+        args: { data: Omit<Prisma.OrgInviteUncheckedCreateInput, "organizationId"> } & Pick<
+          Prisma.OrgInviteCreateArgs,
+          "select" | "include"
+        >,
+      ) =>
+        db.orgInvite.create({ ...args, data: { ...args.data, organizationId: orgId } }),
+      updateMany: (args: Prisma.OrgInviteUpdateManyArgs) =>
+        db.orgInvite.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
     },
     receipt: {
       findMany: (args?: Prisma.ReceiptFindManyArgs) =>
@@ -291,4 +309,21 @@ export function tenantTransaction<T>(
   return prisma.$transaction((tx) =>
     cb({ db: blockTenantModels(tx), tenant: (orgId) => scope(orgId, tx) }),
   );
+}
+
+// Sanctioned cross-tenant lookup: an org invite is identified by a globally-unique token hash held by
+// someone who is not yet a member, so we can't scope by orgId up front. Resolves the invite (incl. its
+// organizationId) here in the data-access layer; the caller then acts within tenant(orgId).
+export function findOrgInviteByTokenHash(tokenHash: string) {
+  return prisma.orgInvite.findUnique({ where: { tokenHash } });
+}
+
+// Sanctioned: resolve a user's active membership (which org am I in?) before we have an orgId to scope by.
+// Used by requireMember() so a dashboard user (owner or team member) is bound to their live org/role.
+export function findActiveMembershipByUser(userId: string) {
+  return prisma.orgMember.findFirst({
+    where: { userId, status: "active" },
+    select: { id: true, organizationId: true, role: true },
+    orderBy: { createdAt: "asc" },
+  });
 }

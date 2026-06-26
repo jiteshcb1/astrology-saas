@@ -46,7 +46,7 @@ d("getActiveOrgBySlug (SP-4.1 public read path)", () => {
     expect(data!.profile.socialLinks).toMatchObject({ instagram: "pandit", website: "pandit.example" });
     expect(data!.confirmedCount).toBe(1); // held booking not counted
     expect(data!.timezone).toBe("Asia/Kolkata");
-    expect(data!.hostMemberId).toBeTruthy();
+    expect(data!.hostMemberIds.length).toBeGreaterThan(0);
     expect(data!.packages.map((p) => p.title)).toEqual(["Kundali Reading"]); // inactive excluded
     expect(data!.packages[0].priceLabel).toContain("1,100");
   });

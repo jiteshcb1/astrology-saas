@@ -1,7 +1,7 @@
 "use server";
 
 import { getActiveOrgBySlug } from "@/lib/public-page";
-import { reserveSlot } from "@/lib/scheduling";
+import { assignAndReserveSlot } from "@/lib/scheduling";
 import { confirmBookingDetailsCore, type ConfirmResult, type SeekerDetails } from "@/lib/booking";
 import {
   createGatewayOrderCore,
@@ -28,15 +28,16 @@ export async function holdSlotAction(
   startISO: string,
 ): Promise<HoldResult> {
   const org = await getActiveOrgBySlug(slug);
-  if (!org || !org.hostMemberId) return { ok: false, reason: "unavailable" };
-  const res = await reserveSlot({
+  if (!org || org.hostMemberIds.length === 0) return { ok: false, reason: "unavailable" };
+  // Round-robin (SP-5.2): the host is auto-assigned inside the transaction; the seeker never picks one.
+  const res = await assignAndReserveSlot({
     orgId: org.orgId,
     packageId,
-    hostMemberId: org.hostMemberId,
     startsAt: new Date(startISO),
     durationMin,
   });
-  return res.ok ? { ok: true, bookingId: res.bookingId } : { ok: false, reason: res.reason };
+  if (res.ok) return { ok: true, bookingId: res.bookingId };
+  return { ok: false, reason: res.reason === "no_host" ? "unavailable" : res.reason };
 }
 
 // Re-hold the same slot after a hold expired (creates a fresh held booking if still free).

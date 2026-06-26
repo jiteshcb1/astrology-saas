@@ -14,17 +14,18 @@ d("scheduling engine (SP-3)", () => {
   let pkgId = "";
   let scheduleId = "";
 
+  // SP-5.2: schedules are per-host (ownerMemberId). Each host that's queried via getAvailableSlots needs one;
+  // reserveSlot-only hosts don't (reserveSlot just inserts a slot, GiST-guarded). Wednesday 09:00–13:00 IST.
+  async function makeSchedule(hostId: string): Promise<string> {
+    const s = await prisma.availabilitySchedule.create({ data: { organizationId: orgId, name: "WH", timezone: "Asia/Kolkata", ownerMemberId: hostId } });
+    await prisma.availabilityRule.create({ data: { organizationId: orgId, scheduleId: s.id, weekday: 3, startTime: "09:00", endTime: "13:00" } });
+    return s.id;
+  }
+
   beforeAll(async () => {
     const org = await prisma.organization.create({ data: { name: "Sched Org", slug: `${PREFIX}org-${stamp}` } });
     orgId = org.id;
-    const schedule = await prisma.availabilitySchedule.create({
-      data: { organizationId: orgId, name: "WH", timezone: "Asia/Kolkata", isDefault: true },
-    });
-    scheduleId = schedule.id;
-    // Wednesday (weekday 3) 09:00–13:00 IST.
-    await prisma.availabilityRule.create({
-      data: { organizationId: orgId, scheduleId, weekday: 3, startTime: "09:00", endTime: "13:00" },
-    });
+    scheduleId = await makeSchedule("host-A");
     const pkg = await prisma.package.create({
       data: {
         organizationId: orgId,
@@ -49,7 +50,7 @@ d("scheduling engine (SP-3)", () => {
   it("computes slots from availability and excludes a booked window", async () => {
     const slots = await getAvailableSlots(orgId, {
       packageId: pkgId,
-      hostMemberId: "host-A",
+      hostMemberIds: ["host-A"],
       fromISO: "2026-07-01",
       toISO: "2026-07-01",
       now: PAST,
@@ -61,7 +62,7 @@ d("scheduling engine (SP-3)", () => {
     // Book 10:30 IST (05:00Z) for host-A, then re-query: that start disappears.
     const r = await reserveSlot({ orgId, packageId: pkgId, hostMemberId: "host-A", startsAt: new Date("2026-07-01T05:00:00Z"), durationMin: 30, now: PAST });
     expect(r.ok).toBe(true);
-    const after = await getAvailableSlots(orgId, { packageId: pkgId, hostMemberId: "host-A", fromISO: "2026-07-01", toISO: "2026-07-01", now: PAST });
+    const after = await getAvailableSlots(orgId, { packageId: pkgId, hostMemberIds: ["host-A"], fromISO: "2026-07-01", toISO: "2026-07-01", now: PAST });
     expect(after.map((s) => s.toISOString())).not.toContain("2026-07-01T05:00:00.000Z");
     expect(after).toHaveLength(7);
   });
@@ -96,14 +97,16 @@ d("scheduling engine (SP-3)", () => {
     const pkg = await prisma.package.create({
       data: { organizationId: orgId, title: "Notice", slug: "notice", allowedDurations: [30], defaultDurationMin: 30, price: 0, slotIntervalMin: 30, minNoticeMin: 120, scheduleId },
     });
+    await makeSchedule("host-N");
     const now = new Date("2026-07-01T03:30:00Z"); // 09:00 IST; notBefore = 11:00 IST (05:30Z)
-    const slots = await getAvailableSlots(orgId, { packageId: pkg.id, hostMemberId: "host-N", fromISO: "2026-07-01", toISO: "2026-07-01", now });
+    const slots = await getAvailableSlots(orgId, { packageId: pkg.id, hostMemberIds: ["host-N"], fromISO: "2026-07-01", toISO: "2026-07-01", now });
     expect(slots.every((s) => s.getTime() >= new Date("2026-07-01T05:30:00Z").getTime())).toBe(true);
     expect(slots[0].toISOString()).toBe("2026-07-01T05:30:00.000Z");
   });
 
   // ─── SP-4.2 hold / expiry / anti-race ──────────────────────────────────────
   it("HOLD EXPIRY: an expired hold no longer blocks — slot is free again and re-holdable (lazy)", async () => {
+    await makeSchedule("host-EXP");
     const start = new Date("2026-07-01T04:30:00Z"); // 10:00 IST, inside the window
     // now=PAST → holdExpiresAt = PAST + 10min, i.e. long expired relative to 2026-07-02.
     const r1 = await reserveSlot({ orgId, packageId: pkgId, hostMemberId: "host-EXP", startsAt: start, durationMin: 30, now: PAST });
@@ -111,7 +114,7 @@ d("scheduling engine (SP-3)", () => {
 
     // `later` is after the hold's PAST+10min expiry but before the slot date (so minNotice keeps 07-01 slots).
     const later = new Date("2026-06-15T00:00:00Z");
-    const slots = await getAvailableSlots(orgId, { packageId: pkgId, hostMemberId: "host-EXP", fromISO: "2026-07-01", toISO: "2026-07-01", now: later });
+    const slots = await getAvailableSlots(orgId, { packageId: pkgId, hostMemberIds: ["host-EXP"], fromISO: "2026-07-01", toISO: "2026-07-01", now: later });
     expect(slots.map((s) => s.toISOString())).toContain("2026-07-01T04:30:00.000Z"); // expired hold doesn't block
 
     const r2 = await reserveSlot({ orgId, packageId: pkgId, hostMemberId: "host-EXP", startsAt: start, durationMin: 30, now: later });
@@ -149,10 +152,11 @@ d("scheduling engine (SP-3)", () => {
     const pkg = await prisma.package.create({
       data: { organizationId: orgId, title: "Capped", slug: "capped", allowedDurations: [30], defaultDurationMin: 30, price: 0, slotIntervalMin: 30, freqLimit: { per_day: 1 }, scheduleId },
     });
+    await makeSchedule("host-CAP");
     // Book one slot for host-CAP that day → cap reached → no slots offered.
     const r = await reserveSlot({ orgId, packageId: pkg.id, hostMemberId: "host-CAP", startsAt: new Date("2026-07-01T03:30:00Z"), durationMin: 30, now: PAST });
     expect(r.ok).toBe(true);
-    const slots = await getAvailableSlots(orgId, { packageId: pkg.id, hostMemberId: "host-CAP", fromISO: "2026-07-01", toISO: "2026-07-01", now: PAST });
+    const slots = await getAvailableSlots(orgId, { packageId: pkg.id, hostMemberIds: ["host-CAP"], fromISO: "2026-07-01", toISO: "2026-07-01", now: PAST });
     expect(slots).toHaveLength(0);
   });
 });

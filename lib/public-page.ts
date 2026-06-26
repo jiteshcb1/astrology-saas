@@ -26,7 +26,7 @@ export interface PublicPageData {
   orgId: string;
   orgName: string;
   slug: string;
-  hostMemberId: string;
+  hostMemberIds: string[]; // owner + active Consulting members (round-robin pool, SP-5.2)
   timezone: string;
   confirmedCount: number;
   profile: {
@@ -65,11 +65,11 @@ export async function getActiveOrgBySlug(slugRaw: string): Promise<PublicPageDat
   if (!org || org.status !== "active") return null;
   const orgId = org.id;
 
-  const [branding, profile, schedule, host, pkgs, confirmedCount, legalDoc] = await Promise.all([
+  const [branding, profile, schedule, hosts, pkgs, confirmedCount, legalDoc] = await Promise.all([
     getBranding(orgId),
     getProfile(orgId),
     tenantDb(orgId).availabilitySchedule.findFirst({ where: { isDefault: true } }),
-    tenantDb(orgId).orgMember.findFirst({ where: { role: "consultant", status: "active" } }),
+    tenantDb(orgId).orgMember.findMany({ where: { role: { in: ["consultant", "team_consulting"] }, status: "active" }, orderBy: { createdAt: "asc" } }),
     tenantDb(orgId).package.findMany({ where: { isActive: true }, orderBy: { createdAt: "asc" } }),
     tenantDb(orgId).booking.count({ where: { status: "confirmed" } }),
     tenantDb(orgId).legalDocuments.findFirst(),
@@ -92,7 +92,7 @@ export async function getActiveOrgBySlug(slugRaw: string): Promise<PublicPageDat
     orgId,
     orgName: org.name,
     slug: org.slug,
-    hostMemberId: host?.id ?? "",
+    hostMemberIds: hosts.map((h) => h.id),
     timezone: schedule?.timezone ?? "Asia/Kolkata",
     confirmedCount,
     profile: {

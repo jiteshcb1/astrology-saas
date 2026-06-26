@@ -27,7 +27,7 @@ const NAV: NavItem[] = [
   { href: "/dashboard/bookings", label: "Bookings", icon: I(<><rect x="3" y="4" width="14" height="13" rx="2" /><path d="M3 8h14M7 2v4M13 2v4" strokeLinecap="round" /></>) },
   { href: "/dashboard/availability", label: "Availability", icon: I(<><circle cx="10" cy="10" r="8" /><path d="M10 5v5l3 2" strokeLinecap="round" /></>) },
   { href: "#", label: "Payments", soon: true, icon: I(<><rect x="2" y="5" width="16" height="11" rx="2" /><path d="M2 9h16" strokeLinecap="round" /></>) },
-  { href: "#", label: "Team", soon: true, icon: I(<><circle cx="7" cy="7" r="3" /><path d="M2 17c0-3 2-5 5-5s5 2 5 5M13 8l2 2 3-3" strokeLinecap="round" strokeLinejoin="round" /></>) },
+  { href: "/dashboard/team", label: "Team", icon: I(<><circle cx="7" cy="7" r="3" /><path d="M2 17c0-3 2-5 5-5s5 2 5 5M13 8l2 2 3-3" strokeLinecap="round" strokeLinejoin="round" /></>) },
   { href: "#", label: "Seekers", soon: true, icon: I(<path d="M4 3h12v14H6l-2 2z" strokeLinejoin="round" />) },
   { href: "/dashboard/settings", label: "Settings", icon: I(<><circle cx="10" cy="10" r="3" /><path d="M10 1v3M10 16v3M1 10h3M16 10h3M4 4l2 2M14 14l2 2M16 4l-2 2M4 16l2-2" strokeLinecap="round" /></>) },
 ];

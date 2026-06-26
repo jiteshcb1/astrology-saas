@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { requestOtp } from "./actions";
 
-export function SignInForm() {
+export function SignInForm({ callbackUrl = "/post-auth" }: { callbackUrl?: string }) {
   const router = useRouter();
+  const dest = callbackUrl || "/post-auth";
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -43,7 +44,7 @@ export function SignInForm() {
       setError("Invalid or expired code.");
       return;
     }
-    router.push("/post-auth");
+    router.push(dest);
   }
 
   return (
@@ -63,7 +64,7 @@ export function SignInForm() {
             type="button"
             variant="ghost"
             className="w-full"
-            onClick={() => signIn("google", { callbackUrl: "/post-auth" })}
+            onClick={() => signIn("google", { callbackUrl: dest })}
           >
             Continue with Google
           </Button>
