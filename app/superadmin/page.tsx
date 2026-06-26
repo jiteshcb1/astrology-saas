@@ -1,8 +1,19 @@
 import { Suspense } from "react";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/superadmin/PageHeader";
-import { StatCardSection, SignalSection, SignupTrendSection } from "@/components/superadmin/DashboardSections";
+import { StatCardSection, SignalSection } from "@/components/superadmin/DashboardSections";
+import { ConsultantGrowthChart } from "@/components/superadmin/ConsultantGrowthChart";
+import { RevenueTrendChart } from "@/components/superadmin/RevenueTrendChart";
 import { StatCardSkeletonRow, SectionSkeleton, ChartSkeleton } from "@/components/ui/skeletons";
+
+function ChartFallback({ height = 200 }: { height?: number }) {
+  return (
+    <Card>
+      <div aria-hidden className="shimmer mb-4 h-5 w-36 rounded" />
+      <ChartSkeleton height={height} />
+    </Card>
+  );
+}
 
 export default async function SuperadminDashboard() {
   // SP-5.5: each section streams under its own Suspense boundary with a matching CSS skeleton. All numbers
@@ -20,14 +31,12 @@ export default async function SuperadminDashboard() {
         </Suspense>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Suspense fallback={<Card><ChartSkeleton height={180} /></Card>}>
-            <SignupTrendSection />
+          <Suspense fallback={<ChartFallback />}>
+            <ConsultantGrowthChart />
           </Suspense>
-          {/* SP-5.6 chart slot — honest placeholder. */}
-          <Card>
-            <h2 className="mb-4 font-display text-lg text-ink">Revenue trend</h2>
-            <ChartSkeleton height={180} label="Revenue trend — coming in next update" />
-          </Card>
+          <Suspense fallback={<ChartFallback />}>
+            <RevenueTrendChart />
+          </Suspense>
         </div>
       </div>
     </>

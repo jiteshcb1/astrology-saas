@@ -18,7 +18,7 @@ export function AccountForm({ defaults }: { defaults: { name: string; phone: str
         <ReadOnlyField label="Email">{defaults.email || "—"}</ReadOnlyField>
         {state.error && <p className="text-sm text-terra">{state.error}</p>}
         {state.ok && <p className="text-sm text-green">Saved.</p>}
-        <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save"}</Button>
+        <Button type="submit" loading={pending} loadingLabel="Saving…">Save</Button>
       </form>
     </Card>
   );

@@ -217,7 +217,7 @@ export function LandingPreviewWorkspace({
                 onChange={(v) => setProf((s) => ({ ...s, specialities: v }))}
               />
               {profileMsg && <p className={`text-sm ${profileMsg === "Saved." ? "text-green" : "text-terra"}`}>{profileMsg}</p>}
-              <Button type="button" onClick={saveProfile} disabled={savingProfile}>{savingProfile ? "Saving…" : "Save profile"}</Button>
+              <Button type="button" onClick={saveProfile} loading={savingProfile} loadingLabel="Saving…">Save profile</Button>
             </>
           ) : (
             <>
@@ -238,8 +238,8 @@ export function LandingPreviewWorkspace({
                       <Link href={`/dashboard/packages/${p.id}`} className="rounded-control border border-line px-3 py-1.5 text-sm text-ink transition hover:border-marigold">
                         Full editor
                       </Link>
-                      <Button type="button" className="ml-auto h-9 py-0 text-sm" onClick={() => savePackage(p)} disabled={savingId === p.id}>
-                        {savingId === p.id ? "Saving…" : "Save"}
+                      <Button type="button" className="ml-auto h-9 py-0 text-sm" onClick={() => savePackage(p)} loading={savingId === p.id} loadingLabel="Saving…">
+                        Save
                       </Button>
                     </div>
                   </div>

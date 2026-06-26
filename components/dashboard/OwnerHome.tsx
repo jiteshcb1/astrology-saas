@@ -37,9 +37,9 @@ export async function OwnerStatCards({ orgId }: { orgId: string }) {
   const monthLabel = new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric", timeZone: TZ }).format(now);
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <MetricCard label="Total bookings" value={String(s.totalBookings)} hint="All time" />
-      <MetricCard label="Earnings this month" value={formatMoney(s.earningsThisMonthPaise)} hint={`Confirmed payments, ${monthLabel}`} footer={<EarningsDelta thisP={s.earningsThisMonthPaise} lastP={s.earningsLastMonthPaise} />} />
-      <MetricCard label="Upcoming sessions" value={String(s.upcomingCount)} hint={s.nextStartsAt ? `Next: ${fmtDateTime(s.nextStartsAt)}` : "None scheduled"} />
+      <MetricCard label="Total bookings" value={String(s.totalBookings)} hint="All time" href="/dashboard/bookings" ariaSuffix="View all bookings" />
+      <MetricCard label="Earnings this month" value={formatMoney(s.earningsThisMonthPaise)} hint={`Confirmed payments, ${monthLabel}`} footer={<EarningsDelta thisP={s.earningsThisMonthPaise} lastP={s.earningsLastMonthPaise} />} href="/dashboard/receipts" ariaSuffix="View receipts" />
+      <MetricCard label="Upcoming sessions" value={String(s.upcomingCount)} hint={s.nextStartsAt ? `Next: ${fmtDateTime(s.nextStartsAt)}` : "None scheduled"} href="/dashboard/bookings?filter=upcoming" ariaSuffix="View upcoming bookings" />
       <MetricCard label="Average rating" value="—" hint="No reviews yet" />
     </div>
   );

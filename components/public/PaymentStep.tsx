@@ -186,8 +186,8 @@ export function PaymentStep({
           <p className="mt-1 text-sm text-muted">You&apos;ll pay securely on {order_name(context)}&apos;s payment window. Your slot stays held.</p>
           <p className="mt-1.5 text-xs text-muted">🔒 {context.priceLabel} goes directly to {context.consultantName}.</p>
           {error && <p className="mt-3 rounded-control bg-terra/10 px-3 py-2 text-sm text-terra">{error}</p>}
-          <Button type="button" onClick={onGatewayPay} disabled={busy} className="mt-4 w-full" style={{ backgroundColor: accent, color: onAccent }}>
-            {busy ? (status ?? "Processing…") : `Pay ${context.priceLabel}`}
+          <Button type="button" onClick={onGatewayPay} loading={busy} loadingLabel={status ?? "Processing…"} className="mt-4 w-full" style={{ backgroundColor: accent, color: onAccent }}>
+            {`Pay ${context.priceLabel}`}
           </Button>
           {busy && status && <p className="mt-2 text-center text-xs text-muted">Please don&apos;t close this page.</p>}
         </div>
@@ -249,8 +249,8 @@ export function PaymentStep({
             <input value={utr} onChange={(e) => setUtr(e.target.value)} placeholder="12-digit UPI reference" className="w-full rounded-control border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-marigold" />
           </label>
           {error && <p className="mt-3 rounded-control bg-terra/10 px-3 py-2 text-sm text-terra">{error}</p>}
-          <Button type="button" onClick={onUpiSubmit} disabled={busy || !file} className="mt-4 w-full" style={{ backgroundColor: accent, color: onAccent }}>
-            {busy ? "Submitting…" : "Submit for verification"}
+          <Button type="button" onClick={onUpiSubmit} loading={busy} disabled={!file} loadingLabel="Submitting…" className="mt-4 w-full" style={{ backgroundColor: accent, color: onAccent }}>
+            Submit for verification
           </Button>
         </div>
       )}

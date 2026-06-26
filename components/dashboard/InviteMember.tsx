@@ -82,7 +82,7 @@ export function InviteMember({ canInvite, limit, trigger = "button" }: { canInvi
             {state.error && <p className="text-sm text-terra">{state.error}</p>}
           </div>
           <div className="border-t border-line p-5">
-            <Button type="submit" disabled={pending} className="w-full justify-center">{pending ? "Sending…" : "Send invite"}</Button>
+            <Button type="submit" loading={pending} loadingLabel="Sending…" className="w-full justify-center">Send invite</Button>
           </div>
         </form>
       </aside>

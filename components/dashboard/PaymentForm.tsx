@@ -87,8 +87,8 @@ function UpiPanel({ current }: { current: SafePaymentView | null }) {
         </div>
         {state.error && <p className="text-sm text-terra">{state.error}</p>}
         {state.ok && <p className="text-sm text-green">Saved. Seekers will pay you via UPI.</p>}
-        <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save UPI details"}
+        <Button type="submit" loading={pending} loadingLabel="Saving…">
+          Save UPI details
         </Button>
       </form>
     </Card>
@@ -120,8 +120,8 @@ function GatewayPanel({ current }: { current: SafePaymentView | null }) {
             </Button>
           </div>
           <form action={testAction}>
-            <Button type="submit" variant="ghost" disabled={testing}>
-              {testing ? "Testing…" : "Test connection"}
+            <Button type="submit" variant="ghost" loading={testing} loadingLabel="Testing…">
+              Test connection
             </Button>
           </form>
           {testState.tested && (

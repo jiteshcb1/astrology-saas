@@ -1,9 +1,14 @@
 import type { ButtonHTMLAttributes } from "react";
+import { CosmicLoader } from "@/components/ui/CosmicLoader";
 
 type Variant = "primary" | "ghost";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
+  /** SP-5.6: when true, show the Cosmic loader + loadingLabel and disable (prevents double-submit). */
+  loading?: boolean;
+  /** Label shown while loading (defaults to the button's children). */
+  loadingLabel?: string;
 }
 
 const base =
@@ -15,6 +20,17 @@ const variants: Record<Variant, string> = {
   ghost: "bg-white border border-line text-ink px-4 py-2.5 hover:border-marigold",
 };
 
-export function Button({ variant = "primary", className = "", ...props }: ButtonProps) {
-  return <button className={`${base} ${variants[variant]} ${className}`} {...props} />;
+export function Button({ variant = "primary", className = "", loading = false, loadingLabel, children, disabled, ...props }: ButtonProps) {
+  return (
+    <button className={`${base} ${variants[variant]} ${className}`} disabled={disabled || loading} aria-busy={loading || undefined} {...props}>
+      {loading ? (
+        <>
+          <CosmicLoader size="sm" variant="auto" />
+          <span>{loadingLabel ?? children}</span>
+        </>
+      ) : (
+        children
+      )}
+    </button>
+  );
 }

@@ -23,10 +23,10 @@ export async function StatCardSection() {
   const m = await getDashboardMetrics();
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <MetricCard label="Consultants" value={String(m.totalConsultants)} hint="Total organizations" filled footer={<DeltaBadge delta={m.consultantsDelta} />} />
-      <MetricCard label="Active subscriptions" value={String(m.activeSubscriptions)} hint="Currently billing" footer={<DeltaBadge delta={m.activeSubsDelta} />} />
-      <MetricCard label="MRR" value={`${formatMoney(m.mrrPaise)}/mo`} hint="Monthly, normalized" />
-      <MetricCard label="Suspended" value={String(m.suspendedOrgs)} hint="Offline booking pages" accent={m.suspendedOrgs > 0} />
+      <MetricCard label="Consultants" value={String(m.totalConsultants)} hint="Total organizations" filled footer={<DeltaBadge delta={m.consultantsDelta} />} href="/superadmin/consultants" ariaSuffix="View all consultants" />
+      <MetricCard label="Active subscriptions" value={String(m.activeSubscriptions)} hint="Currently billing" footer={<DeltaBadge delta={m.activeSubsDelta} />} href="/superadmin/consultants?filter=active" ariaSuffix="View active subscriptions" />
+      <MetricCard label="MRR" value={`${formatMoney(m.mrrPaise)}/mo`} hint="Monthly, normalized" href="/superadmin/oversight" ariaSuffix="View oversight" />
+      <MetricCard label="Suspended" value={String(m.suspendedOrgs)} hint="Offline booking pages" accent={m.suspendedOrgs > 0} href="/superadmin/consultants?filter=suspended" ariaSuffix="View suspended consultants" />
     </div>
   );
 }

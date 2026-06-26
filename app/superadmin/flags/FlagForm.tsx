@@ -77,8 +77,8 @@ export function FlagForm({
         <option value="false">Disabled</option>
       </Select>
       {state.error && <p className="text-sm text-terra">{state.error}</p>}
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : submitLabel}
+      <Button type="submit" loading={pending} loadingLabel="Saving…">
+        {submitLabel}
       </Button>
     </form>
   );

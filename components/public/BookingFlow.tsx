@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { CosmicLoader } from "@/components/ui/CosmicLoader";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { PaymentStep, type PaidOutcome } from "@/components/public/PaymentStep";
 import { resolveBrand } from "@/lib/branding";
@@ -205,7 +206,7 @@ export function BookingFlow({
             <>
               {/* Hold countdown */}
               <div className="mb-5 flex items-center gap-3 rounded-card border border-marigold/30 bg-marigold/10 px-4 py-3.5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-marigold/20 text-lg">⏳</span>
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-marigold/20"><CosmicLoader size="sm" variant="auto" /></span>
                 <div className="min-w-0">
                   {remaining > 0 && <div className="font-display text-2xl tabular-nums leading-none text-ink">{mm}:{ss}</div>}
                   <p className="mt-0.5 text-sm text-muted">Your slot is held — complete your booking below.</p>
@@ -266,7 +267,7 @@ export function BookingFlow({
           {mode === "pay" && (
             <>
               <div className="mb-5 flex items-center gap-3 rounded-card border border-marigold/30 bg-marigold/10 px-4 py-3.5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-marigold/20 text-lg">⏳</span>
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-marigold/20"><CosmicLoader size="sm" variant="auto" /></span>
                 <div className="min-w-0">
                   {remaining > 0 && <div className="font-display text-2xl tabular-nums leading-none text-ink">{mm}:{ss}</div>}
                   <p className="mt-0.5 text-sm text-muted">Your slot is held — complete payment to confirm.</p>

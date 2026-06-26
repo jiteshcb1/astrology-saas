@@ -1,13 +1,15 @@
 import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
-import { getMemberDashboard, type MemberBooking } from "@/lib/member-bookings";
+import { getMemberDashboard } from "@/lib/member-bookings";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { MetricCard } from "@/components/superadmin/MetricCard";
 import { PageHeader } from "@/components/superadmin/PageHeader";
 import { ShareLinkButton } from "@/components/dashboard/ShareLinkButton";
+import { JoinCallButton } from "@/components/dashboard/JoinCallButton";
+import { RelativeTime } from "@/components/ui/RelativeTime";
 import { StatCardSkeletonRow, TableSkeleton } from "@/components/ui/skeletons";
 
 const TZ = "Asia/Kolkata";
@@ -46,8 +48,6 @@ async function MemberSessions({ orgId, memberId }: { orgId: string; memberId: st
     prisma.organization.findUnique({ where: { id: orgId }, select: { slug: true } }),
   ]);
   const shareUrl = `${BASE}/${org?.slug ?? ""}`;
-  const joinable = (b: MemberBooking) =>
-    Boolean(b.meetLink && b.startsAt && now.getTime() >= b.startsAt.getTime() - 15 * 60_000 && (!b.endsAt || now.getTime() <= b.endsAt.getTime()));
 
   return (
     <>
@@ -70,11 +70,11 @@ async function MemberSessions({ orgId, memberId }: { orgId: string; memberId: st
                 <div className="mt-0.5 text-sm text-muted">{fmt(b.startsAt)} · {b.durationMin} min</div>
                 <div className="mt-0.5 text-xs text-muted">{b.seekerEmail || "—"}{b.seekerPhone ? ` · ${b.seekerPhone}` : ""}</div>
               </div>
-              {joinable(b) ? (
-                <a href={b.meetLink!} target="_blank" rel="noreferrer" className="shrink-0 rounded-control bg-marigold px-4 py-2 text-sm font-semibold text-night transition hover:-translate-y-0.5">Join call</a>
-              ) : (
-                <span className="shrink-0 text-xs text-muted">Join opens 15 min before</span>
-              )}
+              <JoinCallButton
+                startISO={b.startsAt ? b.startsAt.toISOString() : null}
+                endISO={b.endsAt ? b.endsAt.toISOString() : null}
+                meetLink={b.meetLink}
+              />
             </Card>
           ))}
         </div>
@@ -90,7 +90,7 @@ async function MemberSessions({ orgId, memberId }: { orgId: string; memberId: st
           {past.map((b, i) => (
             <div key={b.id} className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 ${i > 0 ? "border-t border-line" : ""}`}>
               <span className="min-w-0 flex-1 truncate text-sm text-ink">{b.seekerName || "Seeker"} <span className="text-muted">· {b.packageTitle}</span></span>
-              <span className="text-xs text-muted">{fmt(b.startsAt)}</span>
+              {b.startsAt ? <RelativeTime iso={b.startsAt.toISOString()} className="text-xs text-muted" /> : <span className="text-xs text-muted">—</span>}
               <StatusChip label={b.status === "confirmed" ? "completed" : b.status.replace(/_/g, " ")} tone={statusTone(b.status)} />
             </div>
           ))}

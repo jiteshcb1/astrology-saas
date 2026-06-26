@@ -314,7 +314,7 @@ export function AvailabilityEditor({
       )}
       {state.error && <p className="text-sm text-terra">{state.error}</p>}
       {state.ok && <p className="text-sm text-green">Availability saved.</p>}
-      <Button type="submit" disabled={pending || blockSave}>{pending ? "Saving…" : "Save availability"}</Button>
+      <Button type="submit" loading={pending} disabled={blockSave} loadingLabel="Saving…">Save availability</Button>
     </form>
   );
 }

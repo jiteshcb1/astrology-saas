@@ -12,8 +12,8 @@ export function ConsultantEditForm({ orgId, name }: { orgId: string; name: strin
       <input type="hidden" name="orgId" value={orgId} />
       <Input name="orgName" label="Organization name" defaultValue={name} required />
       {state.error && <p className="text-sm text-terra">{state.error}</p>}
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : "Save"}
+      <Button type="submit" loading={pending} loadingLabel="Saving…">
+        Save
       </Button>
     </form>
   );

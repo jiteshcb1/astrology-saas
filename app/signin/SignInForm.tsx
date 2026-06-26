@@ -115,8 +115,8 @@ export function SignInForm({ callbackUrl = "/post-auth" }: { callbackUrl?: strin
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Sending…" : "Send code"}
+            <Button type="submit" className="w-full" loading={loading} loadingLabel="Sending…">
+              Send code
             </Button>
           </form>
         </div>
@@ -133,8 +133,8 @@ export function SignInForm({ callbackUrl = "/post-auth" }: { callbackUrl?: strin
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
             required
           />
-          <Button type="submit" className="w-full" disabled={loading || code.length !== 6}>
-            {loading ? "Verifying…" : "Verify & continue"}
+          <Button type="submit" className="w-full" loading={loading} disabled={code.length !== 6} loadingLabel="Verifying…">
+            Verify & continue
           </Button>
           <div className="flex items-center justify-between text-sm">
             <button

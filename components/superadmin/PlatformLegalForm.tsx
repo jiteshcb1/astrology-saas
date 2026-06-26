@@ -46,7 +46,7 @@ function DocEditor({ doc }: { doc: PlatformDocDefault }) {
         <RichTextEditor value={html} onChange={setHtml} placeholder={`Write the platform ${PLATFORM_DOC_LABELS[doc.docType].toLowerCase()}…`} />
       </div>
       <div className="mt-3 flex items-center gap-3">
-        <Button type="button" onClick={save} disabled={pending}>{pending ? "Saving…" : "Save"}</Button>
+        <Button type="button" onClick={save} loading={pending} loadingLabel="Saving…">Save</Button>
         {doc.updatedAtISO && <span className="text-xs text-muted">Last updated {fmtDate(doc.updatedAtISO)}</span>}
         {msg && <span className={`text-sm ${msg.ok ? "text-green" : "text-terra"}`}>{msg.text}</span>}
       </div>

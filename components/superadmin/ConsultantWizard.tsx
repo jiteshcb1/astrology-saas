@@ -125,8 +125,8 @@ export function ConsultantWizard({
             <Button type="button" variant="ghost" onClick={() => setStep(1)}>
               Back
             </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Creating…" : "Create consultant"}
+            <Button type="submit" loading={pending} loadingLabel="Creating…">
+              Create consultant
             </Button>
           </div>
         </div>

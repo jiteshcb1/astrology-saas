@@ -1,9 +1,8 @@
-// Dev-only demo data for the consultant dashboard. Real bookings/payments/seekers arrive in
-// SP-3/SP-4/SP-6; until then this populates the dashboard so the design can be reviewed.
-// Gated by isDashboardDemo(): ON in dev, OFF in production unless DASHBOARD_DEMO=true.
-
+// Design-preview demo data for the consultant dashboard (calendar/charts/activity not yet backed by
+// real features). Since SP-5.5 the owner home shows REAL data + empty states by default; the demo is
+// now strictly opt-in for design review, gated by DASHBOARD_DEMO=true (dev or prod).
 export function isDashboardDemo(): boolean {
-  return process.env.NODE_ENV !== "production" || process.env.DASHBOARD_DEMO === "true";
+  return process.env.DASHBOARD_DEMO === "true";
 }
 
 export type DemoTone = "marigold" | "terra" | "green";

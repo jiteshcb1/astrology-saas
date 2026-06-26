@@ -10,7 +10,18 @@ import { ConsultingHome } from "@/components/dashboard/ConsultingHome";
 import { AccountsHome } from "@/components/dashboard/AccountsHome";
 import { DemoDashboard } from "@/components/dashboard/DemoDashboard";
 import { OwnerStatCards, OwnerUpcoming, OwnerChecklist } from "@/components/dashboard/OwnerHome";
+import { EarningsChart } from "@/components/dashboard/EarningsChart";
+import { BookingsByPackageChart } from "@/components/dashboard/BookingsByPackageChart";
 import { StatCardSkeletonRow, TableSkeleton, ChecklistSkeleton, ChartSkeleton } from "@/components/ui/skeletons";
+
+function ChartFallback({ width = "w-32", height = 200 }: { width?: string; height?: number }) {
+  return (
+    <Card>
+      <div aria-hidden className={`shimmer mb-4 h-5 ${width} rounded`} />
+      <ChartSkeleton height={height} />
+    </Card>
+  );
+}
 
 export default async function DashboardHome() {
   const { role, orgId, memberId } = await requireSection("home");
@@ -44,16 +55,14 @@ export default async function DashboardHome() {
           </Suspense>
         </div>
 
-        {/* SP-5.6 chart slots — honest placeholders (no broken blank space). */}
+        {/* SP-5.6 — real charts, each streaming under its own Suspense boundary. */}
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card>
-            <h2 className="mb-3 font-display text-lg text-ink">Earnings trend</h2>
-            <ChartSkeleton height={180} label="Earnings trend — coming in next update" />
-          </Card>
-          <Card>
-            <h2 className="mb-3 font-display text-lg text-ink">Bookings over time</h2>
-            <ChartSkeleton height={180} label="Bookings chart — coming in next update" />
-          </Card>
+          <Suspense fallback={<ChartFallback width="w-32" height={200} />}>
+            <EarningsChart orgId={orgId} />
+          </Suspense>
+          <Suspense fallback={<ChartFallback width="w-40" height={220} />}>
+            <BookingsByPackageChart orgId={orgId} />
+          </Suspense>
         </div>
       </div>
     </>

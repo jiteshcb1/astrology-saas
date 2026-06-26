@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -7,14 +8,20 @@ import { StatusChip, orgStatusTone, subStatusTone } from "@/components/ui/Status
 import { PageHeader } from "@/components/superadmin/PageHeader";
 import { deleteConsultantAction, setOrgStatusAction } from "./actions";
 
-export default async function ConsultantsPage() {
+export default async function ConsultantsPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
+  const { filter } = await searchParams;
+  // SP-5.6: dashboard stat cards deep-link here filtered by active subscription / suspended status.
+  const where: Prisma.OrganizationWhereInput =
+    filter === "suspended" ? { status: "suspended" } : filter === "active" ? { subscription: { is: { status: "active" } } } : {};
   const orgs = await prisma.organization.findMany({
+    where,
     orderBy: { createdAt: "desc" },
     include: {
       owner: { select: { email: true } },
       subscription: { include: { plan: { select: { name: true } } } },
     },
   });
+  const filterLabel = filter === "suspended" ? "Suspended" : filter === "active" ? "Active subscriptions" : null;
 
   return (
     <>
@@ -24,6 +31,12 @@ export default async function ConsultantsPage() {
         </Link>
       </PageHeader>
       <div className="mx-auto w-full max-w-6xl px-6 py-6">
+        {filterLabel && (
+          <div className="mb-4 flex items-center gap-3 text-sm">
+            <span className="rounded-full bg-marigold/15 px-3 py-1 text-ink">{filterLabel}</span>
+            <Link href="/superadmin/consultants" className="text-terra hover:underline">Clear filter</Link>
+          </div>
+        )}
         {orgs.length === 0 ? (
           <div className="rounded-card border border-line bg-white">
             <EmptyState

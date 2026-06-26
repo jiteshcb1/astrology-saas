@@ -1,0 +1,144 @@
+/* SP-5.6 "Cosmic Orrery" loader — CSS only (rotating arm + counter-rotated body), no canvas/JS loop.
+   Sized via --cl-size; everything else is calc() of it. Light/dark via --_dark (0|1) driving color-mix. */
+
+.loader {
+  --_dark: 0; /* 0 = light surface, 1 = dark surface */
+  --cl-size: 32px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--cl-size) * 0.28);
+  vertical-align: middle;
+  line-height: 0;
+}
+.loader[data-variant="light"] { --_dark: 0; }
+.loader[data-variant="dark"] { --_dark: 1; }
+.loader[data-variant="auto"] { --_dark: var(--background-is-dark, 0); }
+
+.viewport {
+  position: relative;
+  width: var(--cl-size);
+  height: var(--cl-size);
+}
+
+/* ── Earth (centre) — 3D via radial-gradient + adaptive halo ───────────────── */
+.earth {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--cl-size) * 0.3);
+  height: calc(var(--cl-size) * 0.3);
+  margin: calc(var(--cl-size) * -0.15);
+  border-radius: 50%;
+  z-index: 2;
+  background: radial-gradient(circle at 34% 30%, #5bbfa6, #2f7d72 55%, #123b3f);
+  box-shadow:
+    inset calc(var(--cl-size) * 0.02) calc(var(--cl-size) * 0.02) calc(var(--cl-size) * 0.03) rgba(255, 255, 255, calc(0.25 + var(--_dark) * 0.3)),
+    0 0 0 1px color-mix(in srgb, #fff calc(var(--_dark) * 60%), #06121a),
+    0 calc(var(--cl-size) * 0.02) calc(var(--cl-size) * 0.05) rgba(0, 0, 0, 0.35);
+}
+
+/* ── Orbit scaffolding ─────────────────────────────────────────────────────── */
+.orbit { position: absolute; inset: 0; }
+.sun { transform: scaleY(0.55); }
+.moon { transform: scaleY(0.42); }
+
+.arm {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+.sun .arm { animation: cl-cw 3.5s linear infinite; }
+.moon .arm { animation: cl-ccw 2s linear infinite; }
+
+/* body sits at the top of the arm; counter-rotates so it never spins on its axis */
+.sat {
+  position: absolute;
+  left: 0;
+}
+.sun .sat { top: calc(var(--cl-size) * -0.4); animation: cl-ccw 3.5s linear infinite; }
+.moon .sat { top: calc(var(--cl-size) * -0.27); animation: cl-cw 2s linear infinite; }
+
+/* undo the elliptical squash so the body stays round */
+.sun .desquash { transform: scaleY(1.818); }
+.moon .desquash { transform: scaleY(2.381); }
+
+/* ── Sun ───────────────────────────────────────────────────────────────────── */
+.sunBody {
+  width: calc(var(--cl-size) * 0.16);
+  height: calc(var(--cl-size) * 0.16);
+  margin: calc(var(--cl-size) * -0.08);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f4c430, #b8860b);
+  animation:
+    cl-depth 3.5s ease-in-out infinite,
+    cl-sun-glow 2s ease-in-out infinite;
+}
+
+/* ── Moon (with continuous phase morph) ────────────────────────────────────── */
+.moonBody {
+  position: relative;
+  width: calc(var(--cl-size) * 0.1);
+  height: calc(var(--cl-size) * 0.1);
+  margin: calc(var(--cl-size) * -0.05);
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at 35% 30%, #e8e8e8, #8a8a9a);
+  box-shadow: 0 0 calc(var(--cl-size) * 0.12) calc(var(--cl-size) * 0.02) rgba(200, 200, 220, 0.4);
+  animation: cl-depth 2s ease-in-out infinite;
+}
+.moonBody::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--color-sand);
+  animation: cl-phase 2s ease-in-out infinite;
+}
+.loader[data-variant="dark"] .moonBody::after,
+.loader[data-variant="auto"] .moonBody::after { background: var(--color-night); }
+
+/* ── Orbit rings (large variant only) ──────────────────────────────────────── */
+.ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, #fff calc(var(--_dark) * 100%), #14122b);
+  opacity: 0.1;
+}
+.ringSun { width: 80%; height: 44%; margin: -22% -40%; }
+.ringMoon { width: 54%; height: 22.7%; margin: -11.35% -27%; }
+
+.label {
+  font-size: calc(var(--cl-size) * 0.32);
+  line-height: 1.3;
+  color: var(--color-muted);
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────────── */
+@keyframes cl-cw { to { transform: rotate(360deg); } }
+@keyframes cl-ccw { to { transform: rotate(-360deg); } }
+@keyframes cl-sun-glow {
+  0%, 100% { box-shadow: 0 0 calc(var(--cl-size) * 0.18) calc(var(--cl-size) * 0.06) rgba(244, 196, 48, 0.55); }
+  50% { box-shadow: 0 0 calc(var(--cl-size) * 0.22) calc(var(--cl-size) * 0.08) rgba(244, 196, 48, 0.9); }
+}
+/* depth: the body is "behind" the earth on the lower arc (start/end) → dim + shrink */
+@keyframes cl-depth {
+  0%, 100% { opacity: 0.3; scale: 0.85; }
+  50% { opacity: 1; scale: 1; }
+}
+@keyframes cl-phase {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+@keyframes cl-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+
+/* ── Reduced motion: freeze the orrery, gently pulse the whole loader ───────── */
+@media (prefers-reduced-motion: reduce) {
+  .arm, .sat, .sunBody, .moonBody, .moonBody::after { animation: none !important; }
+  .viewport { animation: cl-pulse 2s ease-in-out infinite; }
+}

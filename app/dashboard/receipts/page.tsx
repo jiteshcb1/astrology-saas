@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireSection } from "@/lib/rbac";
 import { listOrgFinancials } from "@/lib/finance";
 import { formatMoney } from "@/lib/money";
@@ -17,10 +18,20 @@ function tone(status: string): "success" | "warning" | "danger" | "neutral" {
 }
 const STATUS_OPTIONS = ["all", "paid", "pending", "failed", "refunded"];
 
-export default async function ReceiptsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; status?: string }> }) {
+export default async function ReceiptsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; status?: string; month?: string }> }) {
   const { orgId } = await requireSection("finance");
-  const { from, to, status } = await searchParams;
-  const rows = await listOrgFinancials(orgId, { from, to, status });
+  const { from, to, status, month } = await searchParams;
+  // SP-5.6: the earnings chart deep-links here with ?month=YYYY-MM → derive that month's date range.
+  let effFrom = from;
+  let effTo = to;
+  let monthLabel: string | null = null;
+  if (month && /^\d{4}-\d{2}$/.test(month)) {
+    const [y, m] = month.split("-").map(Number);
+    effFrom = `${month}-01`;
+    effTo = `${month}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, "0")}`;
+    monthLabel = new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric" }).format(new Date(Date.UTC(y, m - 1, 1)));
+  }
+  const rows = await listOrgFinancials(orgId, { from: effFrom, to: effTo, status });
 
   return (
     <>
@@ -29,11 +40,11 @@ export default async function ReceiptsPage({ searchParams }: { searchParams: Pro
         <form method="GET" className="mb-4 flex flex-wrap items-end gap-3">
           <label className="block text-sm">
             <span className="mb-1.5 block text-muted">From</span>
-            <input type="date" name="from" defaultValue={from} className="rounded-control border border-line px-3 py-2 text-sm outline-none focus:border-marigold" />
+            <input type="date" name="from" defaultValue={effFrom} className="rounded-control border border-line px-3 py-2 text-sm outline-none focus:border-marigold" />
           </label>
           <label className="block text-sm">
             <span className="mb-1.5 block text-muted">To</span>
-            <input type="date" name="to" defaultValue={to} className="rounded-control border border-line px-3 py-2 text-sm outline-none focus:border-marigold" />
+            <input type="date" name="to" defaultValue={effTo} className="rounded-control border border-line px-3 py-2 text-sm outline-none focus:border-marigold" />
           </label>
           <label className="block text-sm">
             <span className="mb-1.5 block text-muted">Status</span>
@@ -45,6 +56,13 @@ export default async function ReceiptsPage({ searchParams }: { searchParams: Pro
           </label>
           <button type="submit" className="rounded-control border border-line px-4 py-2 text-sm text-ink transition hover:border-marigold">Apply</button>
         </form>
+
+        {monthLabel && (
+          <div className="mb-4 flex items-center gap-3 text-sm">
+            <span className="rounded-full bg-marigold/15 px-3 py-1 text-ink">{monthLabel}</span>
+            <Link href="/dashboard/receipts" className="text-terra hover:underline">Clear filter</Link>
+          </div>
+        )}
 
         {rows.length === 0 ? (
           <div className="rounded-card border border-line bg-white">

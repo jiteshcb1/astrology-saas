@@ -3,6 +3,7 @@ import { tenantDb } from "@/lib/tenant-db";
 import { getProfile } from "@/lib/consultant-profile";
 import { getPaymentMethod } from "@/lib/payments";
 import { utcToZonedParts, zonedClockToUtc } from "@/lib/timezone";
+import { monthKeyOf, monthSeries, monthStartUtcOf, type ChartDatum } from "@/lib/month-series";
 
 // SP-5.5: the consultant OWNER home, all real data (tenantDb-scoped, aggregated in-DB). No fabricated numbers —
 // "completed" isn't a status, so confirmed bookings are the source of truth; earnings come from consultation
@@ -121,4 +122,42 @@ export async function getOwnerChecklist(orgId: string): Promise<{ items: Checkli
   ];
   const doneCount = items.filter((i) => i.done).length;
   return { items, doneCount, total: items.length, allDone: doneCount === items.length };
+}
+
+// SP-5.6 charts. Earnings = consultation receipts (the SP-5.5 earnings-card source) bucketed by IST month.
+export async function getEarningsTrend(orgId: string, months = 6, now: Date = new Date()): Promise<ChartDatum[]> {
+  const buckets = monthSeries(now, months);
+  const rows = await tenantDb(orgId).receipt.findMany({
+    where: { type: "consultation", issuedAt: { gte: monthStartUtcOf(buckets[0].key) } },
+    select: { amount: true, issuedAt: true },
+  });
+  const agg = new Map(buckets.map((b) => [b.key, { value: 0, count: 0 }]));
+  for (const r of rows) {
+    const e = agg.get(monthKeyOf(r.issuedAt));
+    if (e) {
+      e.value += r.amount;
+      e.count += 1;
+    }
+  }
+  return buckets.map((b) => ({ ...b, value: agg.get(b.key)!.value, count: agg.get(b.key)!.count }));
+}
+
+// Confirmed bookings grouped by package over the last `days`, with each package's share of the total.
+export async function getBookingsByPackage(orgId: string, days = 90, now: Date = new Date()): Promise<ChartDatum[]> {
+  const since = new Date(now.getTime() - days * 86_400_000);
+  const rows = (await tenantDb(orgId).booking.findMany({
+    where: { status: "confirmed", createdAt: { gte: since } },
+    select: { packageId: true, package: { select: { title: true } } },
+  })) as unknown as { packageId: string; package: { title: string } }[];
+  const agg = new Map<string, { title: string; count: number }>();
+  for (const r of rows) {
+    const e = agg.get(r.packageId) ?? { title: r.package.title, count: 0 };
+    e.count += 1;
+    agg.set(r.packageId, e);
+  }
+  const total = rows.length;
+  return [...agg.entries()]
+    .map(([key, v]) => ({ key, label: v.title, full: v.title, value: v.count, count: v.count, pct: total ? Math.round((v.count / total) * 100) : 0 }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 8);
 }

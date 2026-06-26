@@ -1,11 +1,11 @@
 import { Suspense } from "react";
-import { getRevenueSummary, getMonthlyRevenue, getRevenueByPackage } from "@/lib/finance";
+import { getRevenueSummary, getRevenueByPackage } from "@/lib/finance";
 import { formatMoney } from "@/lib/money";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MetricCard } from "@/components/superadmin/MetricCard";
 import { PageHeader } from "@/components/superadmin/PageHeader";
-import { MonthlyBarChart } from "@/components/dashboard/MonthlyBarChart";
+import { EarningsChart } from "@/components/dashboard/EarningsChart";
 import { StatCardSkeletonRow, TableSkeleton, ChartSkeleton } from "@/components/ui/skeletons";
 
 async function AccountsStatCards({ orgId }: { orgId: string }) {
@@ -21,13 +21,12 @@ async function AccountsStatCards({ orgId }: { orgId: string }) {
 }
 
 async function AccountsRevenue({ orgId }: { orgId: string }) {
-  const [monthly, byPackage] = await Promise.all([getMonthlyRevenue(orgId, new Date(), 6), getRevenueByPackage(orgId)]);
+  const byPackage = await getRevenueByPackage(orgId);
   return (
     <>
-      <Card className="mt-6">
-        <h2 className="mb-4 font-display text-lg text-ink">Revenue — last 6 months</h2>
-        <MonthlyBarChart data={monthly} />
-      </Card>
+      <div className="mt-6">
+        <EarningsChart orgId={orgId} heading="Revenue — last 6 months" />
+      </div>
 
       <Card className="mt-6 p-0">
         <h2 className="px-6 pb-2 pt-6 font-display text-lg text-ink">Revenue by package</h2>

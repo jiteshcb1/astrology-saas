@@ -132,7 +132,7 @@ export function LegalForm({ defaults }: { defaults: { privacyPolicy: string; ter
       {defaults.updatedAtISO && <p className="text-xs text-muted">Last updated {fmtDate(defaults.updatedAtISO)}</p>}
       {state.error && <p className="text-sm text-terra">{state.error}</p>}
       {state.ok && <p className="text-sm text-green">Legal pages saved.</p>}
-      <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save legal pages"}</Button>
+      <Button type="submit" loading={pending} loadingLabel="Saving…">Save legal pages</Button>
     </form>
   );
 }

@@ -1,4 +1,7 @@
-// Barrel for the SP-5.5 UI primitives (empty states + skeleton loaders).
+// Barrel for the shared UI primitives.
+export { Button } from "@/components/ui/Button";
+export { CosmicLoader } from "@/components/ui/CosmicLoader";
+export { RelativeTime } from "@/components/ui/RelativeTime";
 export { EmptyState, type EmptyVariant } from "@/components/ui/EmptyState";
 export {
   StatCardSkeleton,

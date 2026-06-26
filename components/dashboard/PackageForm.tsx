@@ -252,7 +252,7 @@ export function PackageForm({
           </Card>
 
           {state.error && <p className="text-sm text-terra">{state.error}</p>}
-          <Button type="submit" disabled={pending || !slugReady}>{pending ? "Saving…" : "Save package"}</Button>
+          <Button type="submit" loading={pending} disabled={!slugReady} loadingLabel="Saving…">Save package</Button>
         </div>
 
         {/* ── Live preview ── */}

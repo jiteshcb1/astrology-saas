@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { CosmicLoader } from "@/components/ui/CosmicLoader";
 
 export interface AiStep {
   id: string;
@@ -112,7 +113,7 @@ export function AiQuestionnaire({
 
         {generating ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-            <div className="animate-pulse text-3xl">✨</div>
+            <CosmicLoader size="md" variant="auto" />
             <p className="font-display text-lg text-ink">Writing your content…</p>
             <p className="text-sm text-muted">This takes a few seconds.</p>
           </div>

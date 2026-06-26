@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { writeAuditLog } from "@/lib/audit";
+import { monthKeyOf, monthSeries, monthStartUtcOf, type ChartDatum } from "@/lib/month-series";
 
 // SANCTIONED super-admin cross-tenant READ path (foundation decision #6 — the "super_admin bypass
 // for oversight"). This is the ONLY place outside lib/tenant-db.ts allowed to touch tenant-scoped
@@ -20,6 +21,26 @@ export async function logOversightAccess(
   metadata?: Prisma.InputJsonValue,
 ): Promise<void> {
   await writeAuditLog({ actorUserId, action: "oversight.view", resourceType, metadata });
+}
+
+// SP-5.6 super-admin Revenue Trend — real platform revenue = subscription-type receipts across all orgs,
+// bucketed by IST month. Cross-tenant aggregate read (no PII) → one audit entry per load (oversight contract).
+export async function getSubscriptionRevenueTrend(actorUserId: string | null, months = 12, now: Date = new Date()): Promise<ChartDatum[]> {
+  const buckets = monthSeries(now, months);
+  const rows = await prisma.receipt.findMany({
+    where: { type: "subscription", issuedAt: { gte: monthStartUtcOf(buckets[0].key) } },
+    select: { amount: true, issuedAt: true },
+  });
+  const agg = new Map(buckets.map((b) => [b.key, { value: 0, count: 0 }]));
+  for (const r of rows) {
+    const e = agg.get(monthKeyOf(r.issuedAt));
+    if (e) {
+      e.value += r.amount;
+      e.count += 1;
+    }
+  }
+  await logOversightAccess(actorUserId, "subscription_revenue", { months });
+  return buckets.map((b) => ({ ...b, value: agg.get(b.key)!.value, count: agg.get(b.key)!.count }));
 }
 
 export async function listAllReceipts(

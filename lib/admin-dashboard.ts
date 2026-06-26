@@ -1,6 +1,7 @@
 import type { SubscriptionPlan } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { computeEffectivePrice } from "@/lib/billing";
+import { monthKeyOf, monthSeries, type ChartDatum } from "@/lib/month-series";
 
 // Read-only data for the Super Admin dashboard. Platform tables (organizations/subscriptions) are
 // not tenant-scoped, so bare prisma reads are fine (same as existing super-admin reads).
@@ -106,6 +107,16 @@ export interface TrendBucket {
 
 // Consultants created per month over the last `months` (oldest → newest). Computed in JS from
 // org createdAt — no chart dependency.
+// SP-5.6 — cumulative consultant (org) count by IST month over the last `months` (for the growth area chart).
+export async function getOrgGrowthTrend(months = 12, now: Date = new Date()): Promise<ChartDatum[]> {
+  const orgs = await prisma.organization.findMany({ select: { createdAt: true } });
+  const keys = orgs.map((o) => monthKeyOf(o.createdAt));
+  return monthSeries(now, months).map((b) => {
+    const value = keys.filter((k) => k <= b.key).length; // "YYYY-MM" compares lexically
+    return { ...b, value, count: value };
+  });
+}
+
 export async function getSignupTrend(months = 6): Promise<TrendBucket[]> {
   const orgs = await prisma.organization.findMany({ select: { createdAt: true } });
 

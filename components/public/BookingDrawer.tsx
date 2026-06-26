@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { CosmicLoader } from "@/components/ui/CosmicLoader";
 import { dateToISO, formatTime } from "@/lib/datetime";
 import { utcToZonedParts } from "@/lib/timezone";
 import type { PublicPackageView } from "@/lib/public-page";
@@ -183,7 +184,10 @@ export function BookingDrawer({
                 {!getSlots ? (
                   <p className="rounded-control border border-dashed border-line px-3 py-6 text-center text-xs text-muted">Live availability appears here for seekers.</p>
                 ) : loading ? (
-                  <div className="grid grid-cols-3 gap-2">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-9 animate-pulse rounded-control bg-sand-2/60" />)}</div>
+                  <div className="flex flex-col items-center gap-3 py-8">
+                    <CosmicLoader size="lg" variant="auto" />
+                    <p className="text-sm text-muted">Finding available times…</p>
+                  </div>
                 ) : slots.length === 0 ? (
                   <p className="rounded-control border border-line px-3 py-6 text-center text-sm text-muted">No availability on this date.</p>
                 ) : (
@@ -208,8 +212,8 @@ export function BookingDrawer({
         {onContinue && pkg && (
           <div className="border-t border-line p-5">
             {slotError && <p className="mb-2 text-sm text-terra">{slotError}</p>}
-            <Button type="button" disabled={!selectedSlot || holding} onClick={continueToBook} className="w-full" style={selectedSlot && !holding ? { backgroundColor: accent, color: onAccent } : undefined}>
-              {holding ? "Holding…" : selectedSlot ? `Continue · ${slotLabel(selectedSlot, tz)}` : "Select a time to continue"}
+            <Button type="button" disabled={!selectedSlot} loading={holding} loadingLabel="Holding…" onClick={continueToBook} className="w-full" style={selectedSlot && !holding ? { backgroundColor: accent, color: onAccent } : undefined}>
+              {selectedSlot ? `Continue · ${slotLabel(selectedSlot, tz)}` : "Select a time to continue"}
             </Button>
           </div>
         )}

@@ -64,8 +64,8 @@ export function CatalogForm({
         defaultValue={String(defaults?.sortOrder ?? 0)}
       />
       {state.error && <p className="text-sm text-terra">{state.error}</p>}
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : submitLabel}
+      <Button type="submit" loading={pending} loadingLabel="Saving…">
+        {submitLabel}
       </Button>
     </form>
   );

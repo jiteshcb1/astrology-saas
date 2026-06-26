@@ -56,8 +56,8 @@ export function AssignPlanForm({
         />
         <p className="text-xs text-muted">Seats beyond the {selectedPlan?.includedSeats ?? "—"} included.</p>
         {state.error && <p className="text-sm text-terra">{state.error}</p>}
-        <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Assign plan"}
+        <Button type="submit" loading={pending} loadingLabel="Saving…">
+          Assign plan
         </Button>
       </div>
       <CheckoutSummary summary={summary} />

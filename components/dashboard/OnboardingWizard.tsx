@@ -148,8 +148,8 @@ export function OnboardingWizard({
           <Button type="button" variant="ghost" onClick={() => setStep(2)}>
             Back
           </Button>
-          <Button type="submit" disabled={pending}>
-            {pending ? "Finishing…" : "Finish setup"}
+          <Button type="submit" loading={pending} loadingLabel="Finishing…">
+            Finish setup
           </Button>
         </div>
       </div>

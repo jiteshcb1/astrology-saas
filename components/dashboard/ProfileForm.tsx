@@ -139,8 +139,8 @@ export function ProfileForm({ defaults, aiEnabled = false }: { defaults: Profile
 
       {state.error && <p className="text-sm text-terra">{state.error}</p>}
       {state.ok && <p className="text-sm text-green">Profile saved.</p>}
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : "Save profile"}
+      <Button type="submit" loading={pending} loadingLabel="Saving…">
+        Save profile
       </Button>
 
       {aiEnabled && (
