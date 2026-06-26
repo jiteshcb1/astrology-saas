@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { tenantDb, tenantTransaction, findOrgInviteByTokenHash } from "@/lib/tenant-db";
 import { writeAuditLog } from "@/lib/audit";
+import { BILLABLE_ROLES, syncSeatCount } from "@/lib/seats";
 import { normalizeEmail } from "@/lib/otp";
 import { getBranding } from "@/lib/branding";
 import { getSignedUrl } from "@/lib/storage";
@@ -46,12 +47,14 @@ export interface SeatUsage {
   remaining: number;
 }
 export async function seatUsage(orgId: string): Promise<SeatUsage> {
+  // SP-5.4: billable members are role-based (owner + consulting); the gate limit is the AUTHORIZED capacity
+  // (purchasedSeats), not the auto-synced seatCount (which now tracks actual usage).
   const [usedActive, pendingCount, sub] = await Promise.all([
-    tenantDb(orgId).orgMember.count({ where: { status: "active", isBillableSeat: true } }),
+    tenantDb(orgId).orgMember.count({ where: { status: "active", role: { in: [...BILLABLE_ROLES] } } }),
     tenantDb(orgId).orgInvite.count({ where: { status: "pending", expiresAt: { gt: new Date() } } }),
     prisma.subscription.findUnique({ where: { orgId }, include: { plan: { select: { includedSeats: true } } } }),
   ]);
-  const limit = sub?.seatCount ?? sub?.plan.includedSeats ?? 1;
+  const limit = sub?.purchasedSeats ?? sub?.plan.includedSeats ?? 1;
   const remaining = Math.max(0, limit - usedActive - pendingCount);
   return { limit, usedActive, pendingCount, remaining };
 }
@@ -165,10 +168,12 @@ export async function changeRoleCore(orgId: string, memberId: string, role: stri
   if (!member) return { ok: false, error: "Member not found." };
   if (member.role === "consultant") return { ok: false, error: "The owner's role can't be changed." };
 
-  await tenantTransaction(async ({ db, tenant }) => {
+  await tenantTransaction(async (ctx) => {
+    const { db, tenant } = ctx;
     await tenant(orgId).orgMember.updateMany({ where: { id: memberId }, data: { role } });
     await db.user.update({ where: { id: member.userId }, data: { role } }); // live RBAC reflects immediately
     await writeAuditLog({ actorUserId, action: "team.role_change", resourceType: "org_member", resourceId: memberId, orgId, metadata: { role } }, db);
+    await syncSeatCount(ctx, orgId, "role_changed", actorUserId); // consulting↔accounts flips billability
   });
   return { ok: true };
 }
@@ -187,10 +192,12 @@ export async function removeMemberCore(orgId: string, memberId: string, actorUse
     return { ok: false, error: "This member has upcoming bookings. Reassign or cancel them before removing the member." };
   }
 
-  await tenantTransaction(async ({ db, tenant }) => {
+  await tenantTransaction(async (ctx) => {
+    const { db, tenant } = ctx;
     await tenant(orgId).orgMember.updateMany({ where: { id: memberId }, data: { status: "removed", isBillableSeat: false } });
     await db.user.update({ where: { id: member.userId }, data: { role: "seeker" } }); // revoke dashboard access
     await writeAuditLog({ actorUserId, action: "team.remove", resourceType: "org_member", resourceId: memberId, orgId, metadata: { role: member.role } }, db);
+    await syncSeatCount(ctx, orgId, "member_removed", actorUserId);
   });
   return { ok: true };
 }
@@ -229,11 +236,13 @@ export async function acceptInviteCore(token: string, userId: string): Promise<A
   if (usage.usedActive >= usage.limit) return { ok: false, error: "This team has no seats available right now." };
 
   try {
-    await tenantTransaction(async ({ db, tenant }) => {
+    await tenantTransaction(async (ctx) => {
+      const { db, tenant } = ctx;
       await tenant(orgId).orgMember.create({ data: { userId, role: invite.role, status: "active", isBillableSeat: true } });
       await db.user.update({ where: { id: userId }, data: { role: invite.role } });
       await tenant(orgId).orgInvite.updateMany({ where: { id: invite.id }, data: { status: "accepted", acceptedByUserId: userId } });
       await writeAuditLog({ actorUserId: userId, action: "team.accept", resourceType: "org_member", resourceId: invite.id, orgId, metadata: { role: invite.role } }, db);
+      await syncSeatCount(ctx, orgId, "member_added", userId);
     });
   } catch (e) {
     // Unique (userId, organizationId) collision → a concurrent accept already created the member. Idempotent.

@@ -82,7 +82,7 @@ export async function notifyBookingConfirmed(orgId: string, bookingId: string): 
     consultantName: brand.consultantName, logoUrl: brand.logoUrl, accent: brand.accent, locale: brand.locale,
     packageTitle: booking.package.title, whenLabel: when, amountLabel: formatMoney(booking.package.price), receiptUrl, calendarUrl,
   });
-  await sendEmail({ to: booking.seekerEmail, from: consultantFrom(brand.consultantName, env.EMAIL_FROM), replyTo: brand.ownerEmail ?? undefined, ...mail });
+  await sendEmail({ to: booking.seekerEmail, type: "booking_confirmed", from: consultantFrom(brand.consultantName, env.EMAIL_FROM), replyTo: brand.ownerEmail ?? undefined, ...mail });
 }
 
 export async function notifyProofReceived(orgId: string, bookingId: string): Promise<void> {
@@ -93,7 +93,7 @@ export async function notifyProofReceived(orgId: string, bookingId: string): Pro
     consultantName: brand.consultantName, logoUrl: brand.logoUrl, accent: brand.accent, locale: brand.locale,
     packageTitle: booking.package.title, whenLabel: when,
   });
-  await sendEmail({ to: booking.seekerEmail, from: consultantFrom(brand.consultantName, env.EMAIL_FROM), replyTo: brand.ownerEmail ?? undefined, ...mail });
+  await sendEmail({ to: booking.seekerEmail, type: "proof_received", from: consultantFrom(brand.consultantName, env.EMAIL_FROM), replyTo: brand.ownerEmail ?? undefined, ...mail });
 }
 
 export async function notifyBookingDeclined(orgId: string, bookingId: string): Promise<void> {
@@ -103,7 +103,7 @@ export async function notifyBookingDeclined(orgId: string, bookingId: string): P
     consultantName: brand.consultantName, logoUrl: brand.logoUrl, accent: brand.accent, locale: brand.locale,
     packageTitle: booking.package.title, rebookUrl: `${BASE}/${brand.slug}`, contact: brand.contact,
   });
-  await sendEmail({ to: booking.seekerEmail, from: consultantFrom(brand.consultantName, env.EMAIL_FROM), replyTo: brand.ownerEmail ?? undefined, ...mail });
+  await sendEmail({ to: booking.seekerEmail, type: "booking_declined", from: consultantFrom(brand.consultantName, env.EMAIL_FROM), replyTo: brand.ownerEmail ?? undefined, ...mail });
 }
 
 export async function notifyNewBooking(orgId: string, bookingId: string, mode: "upi_qr" | "gateway"): Promise<void> {
@@ -114,7 +114,7 @@ export async function notifyNewBooking(orgId: string, bookingId: string, mode: "
     seekerName: booking.seekerName ?? "A seeker", packageTitle: booking.package.title, whenLabel: when,
     amountLabel: formatMoney(booking.package.price), mode, bookingsUrl: `${BASE}/dashboard/bookings`,
   });
-  await sendEmail({ to: brand.ownerEmail, ...mail });
+  await sendEmail({ to: brand.ownerEmail, type: "new_booking", ...mail });
 }
 
 export async function notifyConsultantWelcome(orgId: string): Promise<void> {
@@ -123,7 +123,7 @@ export async function notifyConsultantWelcome(orgId: string): Promise<void> {
   const owner = await prisma.user.findUnique({ where: { id: org.ownerUserId }, select: { email: true } });
   if (!owner?.email) return;
   const mail = consultantWelcomeEmail({ orgName: org.name, signInUrl: `${BASE}/signin` });
-  await sendEmail({ to: owner.email, ...mail });
+  await sendEmail({ to: owner.email, type: "consultant_welcome", ...mail });
 }
 
 // SP-5.1 team invite. inviteUrl carries the RAW token (hashed at rest). Dev-logs the URL like [otp:dev]
@@ -133,6 +133,6 @@ export async function notifyOrgInvite(p: { orgId: string; email: string; roleLab
   if (!org) return;
   const inviter = org.ownerUserId ? await prisma.user.findUnique({ where: { id: org.ownerUserId }, select: { name: true } }) : null;
   const mail = orgInviteEmail({ inviterName: inviter?.name || org.name, orgName: org.name, roleLabel: p.roleLabel, message: p.message, inviteUrl: p.inviteUrl });
-  await sendEmail({ to: p.email, category: "transactional", ...mail });
+  await sendEmail({ to: p.email, type: "org_invite", ...mail });
   if (isDev) console.log(`[invite:dev] invite URL for ${p.email}: ${p.inviteUrl}`);
 }

@@ -258,7 +258,11 @@ model Subscription {
   id                     String             @id @default(cuid())
   orgId                  String             @unique
   planId                 String
+  // SP-5.4: seatCount = the AUTO-SYNCED count of active billable members (owner + consulting; accounts
+  // excluded). purchasedSeats = the admin-authorized capacity (includedSeats + additional granted) and the
+  // invite-gate limit. Over-limit ⇔ seatCount > purchasedSeats (flagged to the super-admin, never auto-charged).
   seatCount              Int                @default(1)
+  purchasedSeats         Int                @default(1)
   status                 SubscriptionStatus @default(active)
   currentPeriodEnd       DateTime?          @db.Timestamptz(6) // set by the gateway on charge
   gatewaySubscriptionRef String? // gateway's subscription id

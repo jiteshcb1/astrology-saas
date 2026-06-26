@@ -10,6 +10,7 @@ import { isDev } from "@/lib/env";
 //
 // Security posture (SP-1.2):
 // - crypto-strong 6-digit codes, SHA-256 at rest, 10-minute expiry, single-use.
+// - exactly ONE live code per email: issuing a new code invalidates any prior unconsumed ones.
 // - issuance rate limits (per-email cooldown + per-email/hour + per-IP/hour), DB-counted.
 // - verify attempt cap per code (lock on exceed).
 // - enumeration-safe: no user-existence lookup here; the user row is upserted only on a
@@ -91,6 +92,14 @@ export async function sendOtp(
     }
   }
 
+  // Invalidate any still-valid prior codes for this email so there is EXACTLY ONE live code at a time.
+  // Without this, a user who requested more than once ends up with several valid codes but verify only
+  // honors the newest — typing an older email's code fails repeatedly ("invalid code again and again").
+  await prisma.verificationCode.updateMany({
+    where: { email: normalized, consumed: false },
+    data: { consumed: true },
+  });
+
   const code = generateCode();
   await prisma.verificationCode.create({
     data: {
@@ -101,7 +110,7 @@ export async function sendOtp(
     },
   });
 
-  await sendEmail({ to: normalized, category: "otp", ...otpEmail(code) });
+  await sendEmail({ to: normalized, type: "otp", ...otpEmail(code) });
 
   if (isDev) {
     console.log(`[otp:dev] code for ${normalized}: ${code}`);

@@ -52,3 +52,19 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .zodiac-ring, .zodiac-ring-rev, .drift-star, [style*="twinkle"] { animation: none !important; }
 }
+
+/* SP-5.5 skeleton shimmer — pure CSS (animate background-position over a 200%-wide gradient). */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.shimmer {
+  background-color: var(--color-sand-2);
+  background-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.65) 50%, transparent 100%);
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer { animation: none !important; }
+}

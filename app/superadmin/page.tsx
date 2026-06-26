@@ -1,94 +1,34 @@
-import Link from "next/link";
+import { Suspense } from "react";
 import { Card } from "@/components/ui/Card";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { MetricCard } from "@/components/superadmin/MetricCard";
 import { PageHeader } from "@/components/superadmin/PageHeader";
-import { SignupTrendChart } from "@/components/superadmin/SignupTrendChart";
-import { getDashboardMetrics, getDashboardSignals, getSignupTrend } from "@/lib/admin-dashboard";
-
-function rupees(paise: number): string {
-  return `₹${Math.round(paise / 100).toLocaleString("en-IN")}`;
-}
-
-interface SignalRow {
-  id: string;
-  name: string;
-  meta: string;
-}
-
-function SignalCard({ title, items, empty }: { title: string; items: SignalRow[]; empty: string }) {
-  return (
-    <Card>
-      <h2 className="mb-1 font-display text-lg text-ink">{title}</h2>
-      {items.length === 0 ? (
-        <EmptyState title={empty} />
-      ) : (
-        <ul className="divide-y divide-line">
-          {items.map((it) => (
-            <li key={it.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-              <Link href={`/superadmin/consultants/${it.id}`} className="truncate font-medium text-ink hover:text-terra">
-                {it.name}
-              </Link>
-              <span className="shrink-0 text-muted">{it.meta}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
-  );
-}
+import { StatCardSection, SignalSection, SignupTrendSection } from "@/components/superadmin/DashboardSections";
+import { StatCardSkeletonRow, SectionSkeleton, ChartSkeleton } from "@/components/ui/skeletons";
 
 export default async function SuperadminDashboard() {
-  const [metrics, signals, trend] = await Promise.all([
-    getDashboardMetrics(),
-    getDashboardSignals(),
-    getSignupTrend(),
-  ]);
-
-  const fmtDate = (d: Date) => d.toLocaleDateString("en-IN");
-
+  // SP-5.5: each section streams under its own Suspense boundary with a matching CSS skeleton. All numbers
+  // come from named DB queries (lib/admin-dashboard); empty signal lists are invisible (no empty boxes).
   return (
     <>
       <PageHeader title="Dashboard" />
-      <div className="mx-auto w-full max-w-6xl px-6 py-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard label="Consultants" value={String(metrics.totalConsultants)} hint="Total organizations" filled />
-          <MetricCard label="Active subscriptions" value={String(metrics.activeSubscriptions)} hint="Currently billing" />
-          <MetricCard label="MRR" value={rupees(metrics.mrrPaise)} hint="Monthly, normalized" />
-          <MetricCard label="Suspended" value={String(metrics.suspendedOrgs)} hint="Offline booking pages" />
-        </div>
+      <div className="mx-auto w-full max-w-6xl space-y-6 px-6 py-6">
+        <Suspense fallback={<StatCardSkeletonRow />}>
+          <StatCardSection />
+        </Suspense>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <SignalCard
-            title="Nearing renewal"
-            empty="No renewals in the next 7 days."
-            items={signals.nearingRenewal.map((s) => ({
-              id: s.organization.id,
-              name: s.organization.name,
-              meta: s.currentPeriodEnd ? `renews ${fmtDate(s.currentPeriodEnd)}` : "—",
-            }))}
-          />
-          <SignalCard
-            title="Past due / in grace"
-            empty="No past-due subscriptions."
-            items={signals.pastDue.map((s) => ({ id: s.organization.id, name: s.organization.name, meta: "past due" }))}
-          />
-          <SignalCard
-            title="Recently suspended"
-            empty="No suspended consultants."
-            items={signals.recentlySuspended.map((o) => ({ id: o.id, name: o.name, meta: fmtDate(o.updatedAt) }))}
-          />
-          <SignalCard
-            title="Recent signups"
-            empty="No consultants yet."
-            items={signals.recentSignups.map((o) => ({ id: o.id, name: o.name, meta: fmtDate(o.createdAt) }))}
-          />
-        </div>
+        <Suspense fallback={<SectionSkeleton rows={4} />}>
+          <SignalSection />
+        </Suspense>
 
-        <Card className="mt-6">
-          <h2 className="mb-4 font-display text-lg text-ink">Consultants created (last 6 months)</h2>
-          <SignupTrendChart data={trend} />
-        </Card>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Suspense fallback={<Card><ChartSkeleton height={180} /></Card>}>
+            <SignupTrendSection />
+          </Suspense>
+          {/* SP-5.6 chart slot — honest placeholder. */}
+          <Card>
+            <h2 className="mb-4 font-display text-lg text-ink">Revenue trend</h2>
+            <ChartSkeleton height={180} label="Revenue trend — coming in next update" />
+          </Card>
+        </div>
       </div>
     </>
   );

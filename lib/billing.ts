@@ -195,10 +195,12 @@ export async function assignPlanCore(
   }
 
   await tenantTransaction(async ({ db }) => {
+    // The admin-entered seatCount is the AUTHORIZED capacity (includedSeats + additional) → purchasedSeats.
+    // seatCount itself is seeded here and then auto-corrected to actual billable members by lib/seats.ts.
     await db.subscription.upsert({
       where: { orgId },
-      create: { orgId, planId, seatCount, status: "active", gatewaySubscriptionRef, currentPeriodEnd },
-      update: { planId, seatCount, status: "active", gatewaySubscriptionRef, currentPeriodEnd },
+      create: { orgId, planId, seatCount, purchasedSeats: seatCount, status: "active", gatewaySubscriptionRef, currentPeriodEnd },
+      update: { planId, seatCount, purchasedSeats: seatCount, status: "active", gatewaySubscriptionRef, currentPeriodEnd },
     });
     await writeAuditLog(
       {

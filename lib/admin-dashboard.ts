@@ -14,43 +14,89 @@ function monthlyPaise(plan: Pick<SubscriptionPlan, "price" | "includedSeats" | "
   return plan.billingInterval === "yearly" ? Math.round(effective / 12) : effective;
 }
 
-export async function getDashboardMetrics() {
-  const [totalConsultants, activeSubscriptions, suspendedOrgs, activeSubs] = await Promise.all([
+// Delta = new-this-month (createdAt within 30d). null when the platform is younger than 30 days
+// (insufficient history) — per the "never show a misleading comparison" rule.
+export interface Delta {
+  value: number;
+}
+export interface DashboardMetrics {
+  totalConsultants: number;
+  activeSubscriptions: number;
+  suspendedOrgs: number;
+  mrrPaise: number;
+  consultantsDelta: Delta | null;
+  activeSubsDelta: Delta | null; // MRR intentionally has NO delta (no historical snapshot)
+}
+
+export async function getDashboardMetrics(now: Date = new Date()): Promise<DashboardMetrics> {
+  const since = new Date(now.getTime() - 30 * DAY_MS);
+  const [totalConsultants, activeSubscriptions, suspendedOrgs, activeSubs, newConsultants, newActiveSubs, oldest] = await Promise.all([
     prisma.organization.count(),
     prisma.subscription.count({ where: { status: "active" } }),
     prisma.organization.count({ where: { status: "suspended" } }),
     prisma.subscription.findMany({ where: { status: "active" }, include: { plan: true } }),
+    prisma.organization.count({ where: { createdAt: { gte: since } } }),
+    prisma.subscription.count({ where: { status: "active", createdAt: { gte: since } } }),
+    prisma.organization.findFirst({ orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
   ]);
   const mrrPaise = activeSubs.reduce((sum, s) => sum + monthlyPaise(s.plan, s.seatCount), 0);
-  return { totalConsultants, activeSubscriptions, suspendedOrgs, mrrPaise };
+  const platformYoung = !oldest || now.getTime() - oldest.createdAt.getTime() < 30 * DAY_MS;
+  return {
+    totalConsultants,
+    activeSubscriptions,
+    suspendedOrgs,
+    mrrPaise,
+    consultantsDelta: platformYoung ? null : { value: newConsultants },
+    activeSubsDelta: platformYoung ? null : { value: newActiveSubs },
+  };
 }
 
-export async function getDashboardSignals() {
-  const now = new Date();
-  const soon = new Date(now.getTime() + 7 * DAY_MS);
-  const orgRef = { organization: { select: { id: true, name: true } } } as const;
+export interface NearingRenewalItem { orgId: string; orgName: string; planName: string; currentPeriodEnd: Date | null; amountPaise: number }
+export interface PastDueItem { orgId: string; orgName: string; pastDueSince: Date | null; amountPaise: number }
+export interface SuspendedItem { orgId: string; orgName: string; suspendedAt: Date; reason: string | null }
+export interface SignupItem { orgId: string; orgName: string; ownerEmail: string | null; planName: string | null; createdAt: Date }
+export interface OverSeatItem { orgId: string; orgName: string; seatCount: number; purchasedSeats: number }
+export interface SignalList<T> { items: T[]; hasMore: boolean }
 
-  const [nearingRenewal, pastDue, recentlySuspended, recentSignups] = await Promise.all([
-    prisma.subscription.findMany({
-      where: { status: "active", currentPeriodEnd: { gte: now, lte: soon } },
-      include: orgRef,
-      orderBy: { currentPeriodEnd: "asc" },
-      take: 5,
-    }),
-    prisma.subscription.findMany({ where: { status: "past_due" }, include: orgRef, take: 5 }),
-    prisma.organization.findMany({
-      where: { status: "suspended" },
-      orderBy: { updatedAt: "desc" },
-      take: 5,
-      select: { id: true, name: true, updatedAt: true },
-    }),
-    prisma.organization.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: { id: true, name: true, createdAt: true },
-    }),
+function list<T>(rows: T[]): SignalList<T> {
+  return { items: rows.slice(0, 5), hasMore: rows.length > 5 };
+}
+
+export async function getDashboardSignals(now: Date = new Date()) {
+  const soon = new Date(now.getTime() + 7 * DAY_MS);
+  const subInclude = { organization: { select: { id: true, name: true } }, plan: true } as const;
+
+  const [renewRows, pastDueRows, suspendedRows, signupRows, allActiveSubs] = await Promise.all([
+    prisma.subscription.findMany({ where: { status: "active", currentPeriodEnd: { gte: now, lte: soon } }, include: subInclude, orderBy: { currentPeriodEnd: "asc" }, take: 6 }),
+    prisma.subscription.findMany({ where: { status: "past_due" }, include: subInclude, orderBy: { pastDueSince: "asc" }, take: 6 }),
+    prisma.organization.findMany({ where: { status: "suspended" }, orderBy: { updatedAt: "desc" }, take: 6, select: { id: true, name: true, updatedAt: true } }),
+    prisma.organization.findMany({ orderBy: { createdAt: "desc" }, take: 6, select: { id: true, name: true, createdAt: true, owner: { select: { email: true } }, subscription: { select: { plan: { select: { name: true } } } } } }),
+    prisma.subscription.findMany({ where: { status: "active" }, select: { seatCount: true, purchasedSeats: true, organization: { select: { id: true, name: true } } } }),
   ]);
-  return { nearingRenewal, pastDue, recentlySuspended, recentSignups };
+
+  // Latest suspend reason per suspended org — ONE audit query (no N+1).
+  const suspendedIds = suspendedRows.map((o) => o.id);
+  const reasonByOrg = new Map<string, string | null>();
+  if (suspendedIds.length) {
+    const audits = await prisma.auditLog.findMany({ where: { action: "org.suspend", orgId: { in: suspendedIds } }, orderBy: { createdAt: "desc" }, select: { orgId: true, metadata: true } });
+    for (const a of audits) {
+      if (a.orgId && !reasonByOrg.has(a.orgId)) {
+        const reason = a.metadata && typeof a.metadata === "object" && "reason" in a.metadata ? String((a.metadata as { reason?: unknown }).reason ?? "") : null;
+        reasonByOrg.set(a.orgId, reason || null);
+      }
+    }
+  }
+
+  const nearingRenewal = list<NearingRenewalItem>(renewRows.map((s) => ({ orgId: s.organization.id, orgName: s.organization.name, planName: s.plan.name, currentPeriodEnd: s.currentPeriodEnd, amountPaise: computeEffectivePrice(s.plan, s.seatCount) })));
+  const pastDue = list<PastDueItem>(pastDueRows.map((s) => ({ orgId: s.organization.id, orgName: s.organization.name, pastDueSince: s.pastDueSince, amountPaise: computeEffectivePrice(s.plan, s.seatCount) })));
+  const recentlySuspended = list<SuspendedItem>(suspendedRows.map((o) => ({ orgId: o.id, orgName: o.name, suspendedAt: o.updatedAt, reason: reasonByOrg.get(o.id) ?? null })));
+  const recentSignups = list<SignupItem>(signupRows.map((o) => ({ orgId: o.id, orgName: o.name, ownerEmail: o.owner?.email ?? null, planName: o.subscription?.plan.name ?? null, createdAt: o.createdAt })));
+  const overSeatLimit = list<OverSeatItem>(allActiveSubs.filter((s) => s.seatCount > s.purchasedSeats).map((s) => ({ orgId: s.organization.id, orgName: s.organization.name, seatCount: s.seatCount, purchasedSeats: s.purchasedSeats })));
+
+  // "All clear" = no ACTIONABLE problems (recent signups is informational, not a problem to act on).
+  const allClear = nearingRenewal.items.length === 0 && pastDue.items.length === 0 && recentlySuspended.items.length === 0 && overSeatLimit.items.length === 0;
+
+  return { nearingRenewal, pastDue, recentlySuspended, recentSignups, overSeatLimit, allClear };
 }
 
 export interface TrendBucket {

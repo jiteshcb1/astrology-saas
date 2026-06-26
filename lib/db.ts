@@ -14,8 +14,10 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+// Interactive transactions make several sequential round-trips to remote Neon; the Prisma default 5s ceiling
+// is tight under load (and across files in the test suite). Give tenantTransaction more headroom.
 export const prisma =
-  globalForPrisma.prisma ?? new PrismaClient({ adapter });
+  globalForPrisma.prisma ?? new PrismaClient({ adapter, transactionOptions: { timeout: 20_000, maxWait: 10_000 } });
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;

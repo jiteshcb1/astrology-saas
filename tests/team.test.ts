@@ -32,7 +32,8 @@ d("team management (SP-5.1)", () => {
   let planId = "";
 
   async function setSeats(n: number) {
-    await prisma.subscription.update({ where: { orgId }, data: { seatCount: n } });
+    // SP-5.4: the invite gate limit is purchasedSeats (authorized capacity), not seatCount (actual usage).
+    await prisma.subscription.update({ where: { orgId }, data: { purchasedSeats: n, seatCount: n } });
   }
 
   beforeAll(async () => {
@@ -115,10 +116,12 @@ d("team management (SP-5.1)", () => {
     expect(cr.ok).toBe(true);
     expect((await prisma.user.findUnique({ where: { id: joiner.id } }))?.role).toBe("team_accounts");
 
+    // SP-5.4: usedActive is now role-based billable (owner + consulting). The member is team_accounts here,
+    // so it is NOT a billable seat — removing it leaves usedActive unchanged.
     const before = (await seatUsage(orgId)).usedActive;
     const rm = await removeMemberCore(orgId, member!.id, ownerId);
     expect(rm.ok).toBe(true);
-    expect((await seatUsage(orgId)).usedActive).toBe(before - 1);
+    expect((await seatUsage(orgId)).usedActive).toBe(before);
     expect((await prisma.user.findUnique({ where: { id: joiner.id } }))?.role).toBe("seeker");
   });
 });

@@ -48,7 +48,7 @@ export default async function ReceiptsPage({ searchParams }: { searchParams: Pro
 
         {rows.length === 0 ? (
           <div className="rounded-card border border-line bg-white">
-            <EmptyState title="No records" message="Payments and receipts will appear here." />
+            <EmptyState variant="no_receipts_yet" />
           </div>
         ) : (
           <div className="overflow-x-auto rounded-card border border-line bg-white">

@@ -2,21 +2,21 @@
 
 import { useState, useTransition } from "react";
 import { Card } from "@/components/ui/Card";
-import { setEmailCategoryAction } from "@/app/superadmin/settings/actions";
+import { setEmailSettingAction } from "@/app/superadmin/settings/email-notifications/actions";
 
 function fmtDate(iso: string): string {
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
 }
 
 export function EmailToggleCard({
-  category,
+  settingKey,
   title,
   description,
   warning,
   initialEnabled,
   updatedAtISO,
 }: {
-  category: "otp" | "transactional";
+  settingKey: string;
   title: string;
   description: string;
   warning?: string;
@@ -32,7 +32,7 @@ export function EmailToggleCard({
     setErr(null);
     setEnabled(next); // optimistic
     start(async () => {
-      const r = await setEmailCategoryAction(category, next);
+      const r = await setEmailSettingAction(settingKey, next);
       if (!r.ok) {
         setEnabled(!next); // revert
         setErr(r.error);

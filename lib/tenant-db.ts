@@ -80,6 +80,8 @@ function scope(orgId: string, db: Db) {
         db.receipt.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
       count: (args?: Prisma.ReceiptCountArgs) =>
         db.receipt.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      aggregate: (args: Prisma.ReceiptAggregateArgs) =>
+        db.receipt.aggregate({ ...args, where: { ...args.where, organizationId: orgId } }),
       create: (
         args: { data: Omit<Prisma.ReceiptUncheckedCreateInput, "organizationId"> } & Pick<
           Prisma.ReceiptCreateArgs,

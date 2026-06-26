@@ -1,53 +1,66 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "../lib/db";
-import { getEmailSettings, isEmailCategoryEnabled, setEmailCategoryEnabled } from "../lib/platform-settings";
+import { getEmailSettingsView, isEmailTypeEnabled, setEmailSetting, MASTER_KEY } from "../lib/platform-settings";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const d = hasDb ? describe : describe.skip;
 const PREFIX = "psettings-";
 
-d("platform email kill-switch", () => {
+// All email setting rows are keyed "emails.*" — clean them so "default ON" is observable + tests are isolated.
+async function clearEmailSettings() {
+  await prisma.platformSetting.deleteMany({ where: { key: { startsWith: "emails." } } });
+}
+
+d("platform email kill-switch (per-type + master)", () => {
   const stamp = Date.now();
   let actorId = "";
 
   beforeAll(async () => {
     const actor = await prisma.user.create({ data: { email: `${PREFIX}admin-${stamp}@example.com`, role: "super_admin" } });
     actorId = actor.id;
-    // Start clean: remove any pre-existing email setting rows so "default ON" is observable.
-    await prisma.platformSetting.deleteMany({ where: { key: { in: ["emails.otp", "emails.transactional"] } } });
+    await clearEmailSettings();
   });
 
   afterAll(async () => {
-    await prisma.platformSetting.deleteMany({ where: { key: { in: ["emails.otp", "emails.transactional"] } } });
+    await clearEmailSettings();
     await prisma.auditLog.deleteMany({ where: { actorUserId: actorId } });
     await prisma.user.deleteMany({ where: { email: { startsWith: PREFIX } } });
     await prisma.$disconnect();
   });
 
-  it("defaults both categories ON when no row exists", async () => {
-    expect(await isEmailCategoryEnabled("otp")).toBe(true);
-    expect(await isEmailCategoryEnabled("transactional")).toBe(true);
-    const v = await getEmailSettings();
-    expect(v.otp.enabled).toBe(true);
-    expect(v.transactional.enabled).toBe(true);
-    expect(v.otp.updatedAtISO).toBeNull();
+  it("every type defaults ON when no row exists", async () => {
+    expect(await isEmailTypeEnabled("otp")).toBe(true);
+    expect(await isEmailTypeEnabled("booking_confirmed")).toBe(true);
+    const v = await getEmailSettingsView();
+    expect(v.master.enabled).toBe(true);
+    expect(v.master.updatedAtISO).toBeNull();
+    expect(v.types.find((t) => t.key === "otp")?.enabled).toBe(true);
   });
 
-  it("pausing one category is independent + audited; rejects unknown category", async () => {
-    const r = await setEmailCategoryEnabled("otp", false, actorId);
+  it("pausing one type is independent + audited; rejects unknown key", async () => {
+    const r = await setEmailSetting("booking_confirmed", false, actorId);
     expect(r.ok).toBe(true);
-    expect(await isEmailCategoryEnabled("otp")).toBe(false);
-    expect(await isEmailCategoryEnabled("transactional")).toBe(true); // unaffected
+    expect(await isEmailTypeEnabled("booking_confirmed")).toBe(false);
+    expect(await isEmailTypeEnabled("proof_received")).toBe(true); // other types unaffected
+    expect(await isEmailTypeEnabled("otp")).toBe(true);
 
-    const v = await getEmailSettings();
-    expect(v.otp.enabled).toBe(false);
-    expect(v.otp.updatedAtISO).toBeTruthy();
-
-    expect((await setEmailCategoryEnabled("bogus", false, actorId)).ok).toBe(false);
+    expect((await setEmailSetting("not_a_type", false, actorId)).ok).toBe(false);
     expect(await prisma.auditLog.count({ where: { actorUserId: actorId, action: "platform_setting.update" } })).toBeGreaterThan(0);
 
     // Re-enable round-trips.
-    await setEmailCategoryEnabled("otp", true, actorId);
-    expect(await isEmailCategoryEnabled("otp")).toBe(true);
+    await setEmailSetting("booking_confirmed", true, actorId);
+    expect(await isEmailTypeEnabled("booking_confirmed")).toBe(true);
+  });
+
+  it("master OFF gates every type even when the type's own row is ON; re-enabling restores", async () => {
+    await setEmailSetting("otp", true, actorId); // type explicitly ON
+    await setEmailSetting(MASTER_KEY, false, actorId);
+    expect(await isEmailTypeEnabled("otp")).toBe(false); // master overrides
+    expect(await isEmailTypeEnabled("new_booking")).toBe(false);
+    const v = await getEmailSettingsView();
+    expect(v.master.enabled).toBe(false);
+
+    await setEmailSetting(MASTER_KEY, true, actorId);
+    expect(await isEmailTypeEnabled("otp")).toBe(true); // type row still ON → restored
   });
 });

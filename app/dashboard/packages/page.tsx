@@ -7,6 +7,7 @@ import { getBranding } from "@/lib/branding";
 import { getSignedUrl } from "@/lib/storage";
 import { formatMoney } from "@/lib/money";
 import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
 import { PageHeader } from "@/components/superadmin/PageHeader";
@@ -83,13 +84,10 @@ export default async function PackagesPage() {
       <div className="mx-auto w-full max-w-6xl px-6 py-6">
         {packages.length === 0 ? (
           <Card>
-            <div className="py-8 text-center">
-              <h2 className="font-display text-lg text-ink">No packages yet</h2>
-              <p className="mt-1 text-sm text-muted">Create your first consultation type so seekers can book.</p>
-              <Link href="/dashboard/packages/new" className="mt-4 inline-block rounded-control bg-marigold px-4 py-2.5 text-sm font-semibold text-night">
-                Create a package
-              </Link>
-            </div>
+            <EmptyState
+              variant="no_packages_consultant"
+              cta={<Link href="/dashboard/packages/new" className="inline-block rounded-control bg-marigold px-4 py-2.5 text-sm font-semibold text-night">Create your first package →</Link>}
+            />
           </Card>
         ) : (
           <div className="grid items-stretch gap-5 md:grid-cols-2">

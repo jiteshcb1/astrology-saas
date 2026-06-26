@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { resolveBrand } from "@/lib/branding";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { PackageCard } from "@/components/public/PackageCard";
 import { BookingDrawer } from "@/components/public/BookingDrawer";
 import { SocialIcons } from "@/components/public/SocialIcons";
@@ -155,7 +156,9 @@ export function PublicProfile({
         <section id="packages" className="scroll-mt-20">
           <h2 className="mb-5 text-center font-display text-2xl text-ink">Book a Session</h2>
           {packages.length === 0 ? (
-            <p className="rounded-card border border-dashed border-line bg-white/50 px-6 py-8 text-center text-sm text-muted">No sessions published yet.</p>
+            <div className="rounded-card border border-dashed border-line bg-white/50">
+              <EmptyState variant="no_packages_public" />
+            </div>
           ) : (
             <div className="grid items-stretch gap-4 sm:grid-cols-2">
               {packages.map((p) => (

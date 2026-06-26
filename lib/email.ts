@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import { env, isDev } from "@/lib/env";
-import { isEmailCategoryEnabled, type EmailCategory } from "@/lib/platform-settings";
+import { isEmailTypeEnabled, type EmailType } from "@/lib/platform-settings";
 
 // Thin, mockable email client. Single `sendEmail()` interface for the whole app.
 // When RESEND_API_KEY is empty (local dev) we log instead of sending, so the app runs keyless.
@@ -17,18 +17,19 @@ export interface SendEmailOptions {
   from?: string;
   /** Reply-To — seeker emails set this to the consultant's own email. */
   replyTo?: string;
-  /** Which super-admin kill-switch governs this email. Defaults to "transactional". */
-  category?: EmailCategory;
+  /** Which notification type this is — gated by the super-admin per-type + master kill-switch. */
+  type: EmailType;
 }
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
 export async function sendEmail(options: SendEmailOptions): Promise<{ ok: boolean; id?: string }> {
-  const { to, subject, text, html, from = env.EMAIL_FROM, replyTo, category = "transactional" } = options;
+  const { to, subject, text, html, from = env.EMAIL_FROM, replyTo, type } = options;
 
-  // Global kill-switch (super-admin, /superadmin/settings). Paused → skip silently; return ok so no flow breaks.
-  if (!(await isEmailCategoryEnabled(category))) {
-    console.log("[email] paused:", category, "—", subject);
+  // Kill-switch (super-admin → Settings → Email Notification Management): a send needs BOTH the master switch
+  // and this type enabled. Paused → skip silently; return ok so no flow breaks.
+  if (!(await isEmailTypeEnabled(type))) {
+    console.log("[email] paused:", type, "—", subject);
     return { ok: true };
   }
 

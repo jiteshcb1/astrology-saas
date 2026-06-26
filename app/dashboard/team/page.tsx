@@ -1,6 +1,7 @@
 import { requireOrgOwner } from "@/lib/rbac";
 import { listTeam, seatUsage } from "@/lib/team";
 import { PageHeader } from "@/components/superadmin/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { RoleBadge } from "@/components/dashboard/RoleBadge";
 import { MemberActionsMenu } from "@/components/dashboard/MemberActionsMenu";
 import { InviteMember } from "@/components/dashboard/InviteMember";
@@ -53,12 +54,11 @@ export default async function TeamPage() {
         </div>
 
         {isEmpty && (
-          <div className="mt-4 rounded-card border border-line bg-white p-6 text-center">
-            <p className="font-display text-ink">Your team is just you for now</p>
-            <p className="mx-auto mt-1 max-w-sm text-sm text-muted">Invite a consulting partner to take calls, or an accounts manager to handle receipts and reporting.</p>
-            <div className="mx-auto mt-4 max-w-xs">
-              <InviteMember canInvite={canInvite} limit={usage.limit} trigger="card" />
-            </div>
+          <div className="mt-4 rounded-card border border-line bg-white">
+            <EmptyState
+              variant="no_team_yet"
+              cta={<div className="mx-auto max-w-xs"><InviteMember canInvite={canInvite} limit={usage.limit} trigger="card" /></div>}
+            />
           </div>
         )}
 

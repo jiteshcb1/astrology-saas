@@ -45,6 +45,26 @@ d("OTP backend (SP-1.2)", () => {
     expect(await verifyOtp(e, code)).toBe(false);
   });
 
+  it("issuing a new code invalidates the prior one (exactly one live code)", async () => {
+    const e = email("single");
+    const first = await sendOtp(e);
+    const code1 = first.devCode!;
+    const firstRow = await prisma.verificationCode.findFirstOrThrow({ where: { email: e }, orderBy: { createdAt: "desc" } });
+    // Age the first code past the resend cooldown so a second issue is permitted.
+    await prisma.verificationCode.update({ where: { id: firstRow.id }, data: { createdAt: new Date(Date.now() - 31_000) } });
+
+    const second = await sendOtp(e);
+    expect(second.ok).toBe(true);
+    const code2 = second.devCode!;
+
+    // The prior code's row is now consumed (invalidated by the new issue)...
+    const oldRow = await prisma.verificationCode.findUniqueOrThrow({ where: { id: firstRow.id } });
+    expect(oldRow.consumed).toBe(true);
+    // ...so an older code fails while the newest still verifies. (Guard the 1-in-10^6 code collision.)
+    if (code1 !== code2) expect(await verifyOtp(e, code1)).toBe(false);
+    expect(await verifyOtp(e, code2)).toBe(true);
+  });
+
   it("rejects an expired code", async () => {
     const e = email("expired");
     const sent = await sendOtp(e);
