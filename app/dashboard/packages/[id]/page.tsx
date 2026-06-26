@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { requireRole } from "@/lib/rbac";
+import { requireSection } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
 import { getPackage, getPackageQuestions } from "@/lib/packages";
 import type { QuestionInput } from "@/lib/booking-validate";
@@ -13,8 +13,7 @@ import { PackageForm } from "@/components/dashboard/PackageForm";
 
 export default async function EditPackagePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { session, role } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { role, orgId } = await requireSection("packages");
   const profile = orgId ? await getProfile(orgId) : null;
   if (role === "consultant" && (!orgId || !profile?.onboardedAt)) redirect("/onboarding");
 

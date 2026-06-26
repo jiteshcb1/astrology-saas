@@ -1,15 +1,13 @@
-import { notFound, redirect } from "next/navigation";
-import { requireMember } from "@/lib/rbac";
+import { redirect } from "next/navigation";
+import { requireSection } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
 import { getMemberSchedule } from "@/lib/availability";
 import { PageHeader } from "@/components/superadmin/PageHeader";
 import { AvailabilityEditor, type OverrideState } from "@/components/dashboard/AvailabilityEditor";
 
-// SP-5.2: per-member availability. The owner edits their schedule; each team_consulting member edits theirs.
-// Accounts members don't take calls → no availability.
+// SP-5.2/5.3: per-member availability (consultant owner + team_consulting only; requireSection 404s others).
 export default async function AvailabilityPage() {
-  const { orgId, memberId, role } = await requireMember();
-  if (role !== "consultant" && role !== "team_consulting") notFound();
+  const { orgId, memberId, role } = await requireSection("availability");
   const isOwner = role === "consultant";
   if (isOwner) {
     const profile = await getProfile(orgId);

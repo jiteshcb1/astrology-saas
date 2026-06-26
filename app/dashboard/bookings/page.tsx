@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/rbac";
+import { requireSection } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
 import { listConsultantBookings } from "@/lib/payment";
 import { formatMoney } from "@/lib/money";
@@ -7,8 +7,7 @@ import { PageHeader } from "@/components/superadmin/PageHeader";
 import { BookingsList, type BookingRow } from "@/components/dashboard/BookingsList";
 
 export default async function BookingsPage() {
-  const { session, role } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { role, orgId } = await requireSection("bookings_manage");
   const profile = orgId ? await getProfile(orgId) : null;
   if (role === "consultant" && (!orgId || !profile?.onboardedAt)) redirect("/onboarding");
 

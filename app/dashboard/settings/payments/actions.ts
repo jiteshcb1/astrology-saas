@@ -1,15 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireRole } from "@/lib/rbac";
+import { requireSection } from "@/lib/rbac";
 import { type PaymentFormState, saveGatewayCore, saveUpiCore, testConnectionCore } from "@/lib/payments";
 import { putObject } from "@/lib/storage";
 
 const MAX_QR_BYTES = 2 * 1024 * 1024; // 2 MB
 
 export async function saveUpiAction(_prev: PaymentFormState, formData: FormData): Promise<PaymentFormState> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { session, orgId } = await requireSection("settings");
   if (!orgId) return { error: "No organization is linked to your account." };
 
   // Optional QR image — through the storage client (stub or real); persist the object KEY only.
@@ -37,8 +36,7 @@ export async function saveUpiAction(_prev: PaymentFormState, formData: FormData)
 }
 
 export async function saveGatewayAction(_prev: PaymentFormState, formData: FormData): Promise<PaymentFormState> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { session, orgId } = await requireSection("settings");
   if (!orgId) return { error: "No organization is linked to your account." };
 
   const result = await saveGatewayCore(
@@ -57,8 +55,7 @@ export async function saveGatewayAction(_prev: PaymentFormState, formData: FormD
 }
 
 export async function testConnectionAction(): Promise<PaymentFormState> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { orgId } = await requireSection("settings");
   if (!orgId) return { error: "No organization is linked to your account." };
   const tested = await testConnectionCore(orgId); // returns only { ok, message } — never the keys
   return { tested };

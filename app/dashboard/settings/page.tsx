@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/rbac";
+import { requireSection } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/superadmin/PageHeader";
 
 export default async function SettingsPage() {
-  const { session, role } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { role, orgId } = await requireSection("settings");
   const profile = orgId ? await getProfile(orgId) : null;
   if (role === "consultant" && (!orgId || !profile?.onboardedAt)) redirect("/onboarding");
 

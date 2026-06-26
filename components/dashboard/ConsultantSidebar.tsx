@@ -19,20 +19,50 @@ const I = (path: ReactNode) => (
   </svg>
 );
 
-// Mirrors docs/mockups/demo-dashboard.html. Home + Settings are live this phase; the rest are
-// rendered disabled with a "Soon" pill (no dead routes).
-const NAV: NavItem[] = [
-  { href: "/dashboard", label: "Home", exact: true, icon: I(<path d="M3 9l7-6 7 6v8a1 1 0 01-1 1h-3v-5H7v5H4a1 1 0 01-1-1z" strokeLinejoin="round" />) },
-  { href: "/dashboard/packages", label: "Packages", icon: I(<><rect x="3" y="3" width="14" height="14" rx="2" /><path d="M3 8h14M8 3v14" strokeLinecap="round" /></>) },
-  { href: "/dashboard/bookings", label: "Bookings", icon: I(<><rect x="3" y="4" width="14" height="13" rx="2" /><path d="M3 8h14M7 2v4M13 2v4" strokeLinecap="round" /></>) },
-  { href: "/dashboard/availability", label: "Availability", icon: I(<><circle cx="10" cy="10" r="8" /><path d="M10 5v5l3 2" strokeLinecap="round" /></>) },
-  { href: "#", label: "Payments", soon: true, icon: I(<><rect x="2" y="5" width="16" height="11" rx="2" /><path d="M2 9h16" strokeLinecap="round" /></>) },
-  { href: "/dashboard/team", label: "Team", icon: I(<><circle cx="7" cy="7" r="3" /><path d="M2 17c0-3 2-5 5-5s5 2 5 5M13 8l2 2 3-3" strokeLinecap="round" strokeLinejoin="round" /></>) },
-  { href: "#", label: "Seekers", soon: true, icon: I(<path d="M4 3h12v14H6l-2 2z" strokeLinejoin="round" />) },
-  { href: "/dashboard/settings", label: "Settings", icon: I(<><circle cx="10" cy="10" r="3" /><path d="M10 1v3M10 16v3M1 10h3M16 10h3M4 4l2 2M14 14l2 2M16 4l-2 2M4 16l2-2" strokeLinecap="round" /></>) },
+const IC = {
+  home: I(<path d="M3 9l7-6 7 6v8a1 1 0 01-1 1h-3v-5H7v5H4a1 1 0 01-1-1z" strokeLinejoin="round" />),
+  packages: I(<><rect x="3" y="3" width="14" height="14" rx="2" /><path d="M3 8h14M8 3v14" strokeLinecap="round" /></>),
+  bookings: I(<><rect x="3" y="4" width="14" height="13" rx="2" /><path d="M3 8h14M7 2v4M13 2v4" strokeLinecap="round" /></>),
+  availability: I(<><circle cx="10" cy="10" r="8" /><path d="M10 5v5l3 2" strokeLinecap="round" /></>),
+  payments: I(<><rect x="2" y="5" width="16" height="11" rx="2" /><path d="M2 9h16" strokeLinecap="round" /></>),
+  team: I(<><circle cx="7" cy="7" r="3" /><path d="M2 17c0-3 2-5 5-5s5 2 5 5M13 8l2 2 3-3" strokeLinecap="round" strokeLinejoin="round" /></>),
+  seekers: I(<path d="M4 3h12v14H6l-2 2z" strokeLinejoin="round" />),
+  settings: I(<><circle cx="10" cy="10" r="3" /><path d="M10 1v3M10 16v3M1 10h3M16 10h3M4 4l2 2M14 14l2 2M16 4l-2 2M4 16l2-2" strokeLinecap="round" /></>),
+  revenue: I(<><path d="M3 17l4-5 3 3 5-7" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 3v14h14" strokeLinecap="round" /></>),
+  receipts: I(<><path d="M5 2h8l2 2v14l-2-1.2L11 18l-2-1.2L7 18l-2-1.2z" strokeLinejoin="round" /><path d="M7 6h6M7 9h6" strokeLinecap="round" /></>),
+  account: I(<><circle cx="10" cy="6.5" r="3" /><path d="M4 17c0-3.3 2.7-5 6-5s6 1.7 6 5" strokeLinecap="round" /></>),
+};
+
+// Nav is role-scoped (SP-5.3) — hidden, not disabled. Owner mirrors docs/mockups/demo-dashboard.html.
+const OWNER_NAV: NavItem[] = [
+  { href: "/dashboard", label: "Home", exact: true, icon: IC.home },
+  { href: "/dashboard/packages", label: "Packages", icon: IC.packages },
+  { href: "/dashboard/bookings", label: "Bookings", icon: IC.bookings },
+  { href: "/dashboard/availability", label: "Availability", icon: IC.availability },
+  { href: "#", label: "Payments", soon: true, icon: IC.payments },
+  { href: "/dashboard/team", label: "Team", icon: IC.team },
+  { href: "#", label: "Seekers", soon: true, icon: IC.seekers },
+  { href: "/dashboard/settings", label: "Settings", icon: IC.settings },
+];
+const CONSULTING_NAV: NavItem[] = [
+  { href: "/dashboard", label: "My Bookings", exact: true, icon: IC.bookings },
+  { href: "/dashboard/availability", label: "My Availability", icon: IC.availability },
+  { href: "/dashboard/account", label: "My Profile", icon: IC.account },
+];
+const ACCOUNTS_NAV: NavItem[] = [
+  { href: "/dashboard", label: "Revenue", exact: true, icon: IC.revenue },
+  { href: "/dashboard/receipts", label: "Receipts", icon: IC.receipts },
+  { href: "/dashboard/account", label: "Account", icon: IC.account },
 ];
 
+const ROLE_LABEL: Record<string, string> = {
+  consultant: "Owner",
+  team_consulting: "Consulting",
+  team_accounts: "Accounts",
+};
+
 export function ConsultantSidebar({ email, role }: { email: string; role: string }) {
+  const NAV = role === "team_consulting" ? CONSULTING_NAV : role === "team_accounts" ? ACCOUNTS_NAV : OWNER_NAV;
   const pathname = usePathname();
   const isActive = (item: NavItem) =>
     item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -86,7 +116,7 @@ export function ConsultantSidebar({ email, role }: { email: string; role: string
           </div>
           <div className="min-w-0 text-sm">
             <div className="truncate text-sand">{email || "—"}</div>
-            <div className="text-xs text-sand/50">{role}</div>
+            <div className="text-xs text-sand/50">{ROLE_LABEL[role] ?? role}</div>
           </div>
         </div>
         <SignOutButton />

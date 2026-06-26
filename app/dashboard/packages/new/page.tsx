@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/rbac";
+import { requireSection } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -10,8 +10,7 @@ import { PageHeader } from "@/components/superadmin/PageHeader";
 import { PackageForm } from "@/components/dashboard/PackageForm";
 
 export default async function NewPackagePage() {
-  const { session, role } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { role, orgId } = await requireSection("packages");
   const profile = orgId ? await getProfile(orgId) : null;
   if (role === "consultant" && (!orgId || !profile?.onboardedAt)) redirect("/onboarding");
 

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireRole } from "@/lib/rbac";
+import { requireSection } from "@/lib/rbac";
 import { type BrandingFormState, updateBrandingCore } from "@/lib/branding";
 import { putObject } from "@/lib/storage";
 
@@ -11,8 +11,7 @@ export async function saveBrandingAction(
   _prev: BrandingFormState,
   formData: FormData,
 ): Promise<BrandingFormState> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { session, orgId } = await requireSection("settings");
   if (!orgId) return { error: "No organization is linked to your account." };
 
   // Optional logo upload. Goes through the storage client (stub or real); we persist the object KEY.

@@ -1,12 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireRole } from "@/lib/rbac";
+import { requireSection } from "@/lib/rbac";
 import { updateLegalCore, type LegalFormState } from "@/lib/legal";
 
 export async function saveLegalAction(_prev: LegalFormState, formData: FormData): Promise<LegalFormState> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { session, orgId } = await requireSection("settings");
   if (!orgId) return { error: "No organization is linked to your account." };
 
   const result = await updateLegalCore(

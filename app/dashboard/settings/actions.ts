@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireRole } from "@/lib/rbac";
+import { requireSection } from "@/lib/rbac";
 import { getBranding } from "@/lib/branding";
 import { generateProfileContent, isAiConfigured, localeFromChoice, type GenResult, type ProfileGen } from "@/lib/gemini";
 import {
@@ -15,8 +15,7 @@ export async function updateProfileAction(
   _prev: ProfileFormState,
   formData: FormData,
 ): Promise<ProfileFormState> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { session, orgId } = await requireSection("settings");
   if (!orgId) return { error: "No organization is linked to your account." };
 
   const result = await updateProfileCore(
@@ -46,8 +45,7 @@ export async function updateProfileAction(
 
 // AI profile content (SP-4.6) — gated to the consultant; key + locale read server-side; never throws.
 export async function generateProfileContentAction(answers: Record<string, unknown>): Promise<GenResult<ProfileGen>> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { orgId } = await requireSection("settings");
   if (!orgId || !isAiConfigured()) return { ok: false };
   // Language is chosen in the questionnaire ("language" step); fall back to branding default, then English.
   const branding = await getBranding(orgId);

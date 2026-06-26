@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/rbac";
+import { requireSection } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
 import { listPackages } from "@/lib/packages";
 import { getBranding } from "@/lib/branding";
@@ -29,8 +29,7 @@ function excerpt(html: string | null): string {
 }
 
 export default async function PackagesPage() {
-  const { session, role } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { role, orgId } = await requireSection("packages");
   const profile = orgId ? await getProfile(orgId) : null;
   if (role === "consultant" && (!orgId || !profile?.onboardedAt)) redirect("/onboarding");
 

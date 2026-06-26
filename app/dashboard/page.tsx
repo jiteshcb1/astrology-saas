@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/rbac";
+import { requireSection, dashboardHomeKind } from "@/lib/rbac";
+import { ConsultingHome } from "@/components/dashboard/ConsultingHome";
+import { AccountsHome } from "@/components/dashboard/AccountsHome";
 import { getProfile } from "@/lib/consultant-profile";
 import { getBranding } from "@/lib/branding";
 import { getPaymentMethod } from "@/lib/payments";
@@ -31,8 +33,12 @@ const lastStatusTone = { completed: "success", no_show: "danger", refunded: "neu
 const payStatusTone = { success: "success", pending_verification: "warning", refunded: "neutral" } as const;
 
 export default async function DashboardHome() {
-  const { session, role } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { role, orgId, memberId } = await requireSection("home");
+  // SP-5.3: team members get their own role-scoped home; the owner keeps the full dashboard below.
+  const kind = dashboardHomeKind(role);
+  if (kind === "consulting") return <ConsultingHome orgId={orgId} memberId={memberId} />;
+  if (kind === "accounts") return <AccountsHome orgId={orgId} />;
+
   const profile = orgId ? await getProfile(orgId) : null;
   if (role === "consultant" && (!orgId || !profile?.onboardedAt)) redirect("/onboarding");
   const branding = orgId ? await getBranding(orgId) : null;

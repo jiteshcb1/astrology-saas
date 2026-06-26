@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { findActiveMembershipByUser } from "@/lib/tenant-db";
+import { canSee, dashboardHomeKind, type DashboardSection } from "@/lib/dashboard-policy";
 
 // Central authorization. This is the ONLY sanctioned access check — do not write ad-hoc
 // `if (role === …)` checks in routes/components. `can`/`roleHome` are pure (unit-tested);
@@ -31,6 +32,10 @@ export function roleHome(role?: string | null): string {
   if (role && DASHBOARD_ROLES.has(role)) return "/dashboard";
   return "/";
 }
+
+// Dashboard section policy lives in lib/dashboard-policy.ts (pure, no auth/db) so it's unit-testable;
+// re-exported so callers keep importing it from rbac. requireSection() below enforces it for real.
+export { canSee, dashboardHomeKind, type DashboardSection };
 
 /** Require a signed-in user; redirect to /signin otherwise. Returns the session. */
 export async function requireAuth() {
@@ -79,4 +84,15 @@ export async function requireMember() {
   const member = await findActiveMembershipByUser(session.user.id);
   if (!member) notFound();
   return { session, orgId: member.organizationId, memberId: member.id, role: member.role as string };
+}
+
+/**
+ * Section guard (SP-5.3): resolve the live member context and 404 if their role can't see this section.
+ * Used by every /dashboard page AND every owner/team server action so role isolation holds at the data layer,
+ * not just the UI. Returns { session, orgId, memberId, role }.
+ */
+export async function requireSection(section: DashboardSection) {
+  const ctx = await requireMember();
+  if (!canSee(ctx.role, section)) notFound();
+  return ctx;
 }

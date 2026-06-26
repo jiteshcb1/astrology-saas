@@ -1,15 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireMember } from "@/lib/rbac";
+import { requireSection } from "@/lib/rbac";
 import { type AvailabilityFormState, type OverrideInput, type RuleInput, saveAvailabilityCore } from "@/lib/availability";
 
 export async function saveAvailabilityAction(
   _prev: AvailabilityFormState,
   formData: FormData,
 ): Promise<AvailabilityFormState> {
-  const { session, orgId, memberId, role } = await requireMember();
-  if (role !== "consultant" && role !== "team_consulting") return { error: "Only consulting members manage availability." };
+  const { session, orgId, memberId, role } = await requireSection("availability");
 
   let rules: RuleInput[];
   let overrides: OverrideInput[];

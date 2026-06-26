@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/rbac";
+import { requireSection } from "@/lib/rbac";
 import {
   deletePackageCore,
   type FreqLimit,
@@ -40,8 +40,7 @@ function parseQuestions(v: FormDataEntryValue | null): QuestionInput[] {
 }
 
 export async function savePackageAction(_prev: PackageFormState, formData: FormData): Promise<PackageFormState> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { session, orgId } = await requireSection("packages");
   if (!orgId) return { error: "No organization is linked to your account." };
 
   const id = String(formData.get("id") ?? "") || undefined;
@@ -82,8 +81,7 @@ export async function checkPackageSlugAction(
   slugRaw: string,
   excludeId?: string,
 ): Promise<{ available: boolean; reason?: string }> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { orgId } = await requireSection("packages");
   if (!orgId) return { available: false, reason: "no-org" };
   const available = await isPackageSlugAvailable(orgId, slugRaw, excludeId);
   return { available, reason: available ? undefined : "taken" };
@@ -92,8 +90,7 @@ export async function checkPackageSlugAction(
 // Like savePackageAction but for an existing package and WITHOUT the redirect — used by the landing
 // preview panel so the workspace stays open. Reuses savePackageCore (no duplicated mutation logic).
 export async function quickSavePackageAction(_prev: PackageFormState, formData: FormData): Promise<PackageFormState> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { session, orgId } = await requireSection("packages");
   if (!orgId) return { error: "No organization is linked to your account." };
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Missing package id." };
@@ -130,16 +127,14 @@ export async function quickSavePackageAction(_prev: PackageFormState, formData: 
 }
 
 export async function setPackageActiveAction(formData: FormData): Promise<void> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { session, orgId } = await requireSection("packages");
   if (!orgId) return;
   await setPackageActiveCore(orgId, String(formData.get("id")), formData.get("isActive") === "true", session.user.id);
   revalidatePath("/dashboard/packages");
 }
 
 export async function deletePackageAction(formData: FormData): Promise<void> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { session, orgId } = await requireSection("packages");
   if (!orgId) return;
   // Guard inside the core blocks deletion when bookings exist (it deactivates instead).
   await deletePackageCore(orgId, String(formData.get("id")), session.user.id);
@@ -155,8 +150,7 @@ export async function generatePackageContentAction(
   answers: Record<string, unknown>,
   ctx: { title?: string; durationLabel?: string },
 ): Promise<GenResult<PackageGen>> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { orgId } = await requireSection("packages");
   if (!orgId || !isAiConfigured()) return { ok: false };
   const locale = localeFromChoice(answers.language) ?? (await aiLocale(orgId));
   return generatePackageContent(answers, ctx, locale);
@@ -165,8 +159,7 @@ export async function generatePackageContentAction(
 export async function generateIntakeQuestionsAction(
   ctx: { title?: string; description?: string },
 ): Promise<GenResult<{ questions: QuestionInput[] }>> {
-  const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  const { orgId } = await requireSection("packages");
   if (!orgId || !isAiConfigured()) return { ok: false };
   return generateIntakeQuestions(ctx, await aiLocale(orgId));
 }
