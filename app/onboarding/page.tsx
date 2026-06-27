@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { Card } from "@/components/ui/Card";
 import { getProfile } from "@/lib/consultant-profile";
+import { findActiveMembershipByUser } from "@/lib/tenant-db";
+import { getCalendarIntegration, toSafeView } from "@/lib/calendar";
 import { OnboardingWizard } from "@/components/dashboard/OnboardingWizard";
 
 // Focused, full-screen onboarding (outside the dashboard shell). Guarded to the consultant app.
@@ -22,11 +24,14 @@ export default async function OnboardingPage() {
     );
   }
 
-  const [org, profile] = await Promise.all([
+  const [org, profile, member] = await Promise.all([
     prisma.organization.findUnique({ where: { id: orgId }, select: { slug: true, name: true } }),
     getProfile(orgId),
+    findActiveMembershipByUser(session.user.id),
   ]);
   if (profile?.onboardedAt) redirect("/dashboard");
+  // Reflect the per-member calendar connection (Step 2) — same membership the OAuth flow connects.
+  const calView = member ? toSafeView(await getCalendarIntegration(member.organizationId, member.id)) : null;
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-sand px-4 py-12">
@@ -51,6 +56,8 @@ export default async function OnboardingPage() {
               businessType: profile?.businessType ?? undefined,
               timezone: profile?.timezone ?? undefined,
             }}
+            calendarConnected={Boolean(calView?.connected)}
+            calendarEmail={calView?.googleEmail ?? null}
           />
         </Card>
       </div>

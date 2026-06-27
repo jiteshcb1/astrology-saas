@@ -9,6 +9,13 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   }
+  // SP-6.4 custom domain (go-live at astro.hifiai.in). Uncomment ONLY after the `astro.hifiai.in`
+  // subdomain is delegated to Cloudflare as its own zone (see docs/6-Deployment-Runbook.md, DNS §).
+  // Until then, deploy serves at https://astro-consultancy.<account>.workers.dev. Requires the zone
+  // in this Cloudflare account, or `wrangler deploy` will fail.
+  // ,"routes": [
+  //   { "pattern": "astro.hifiai.in", "custom_domain": true }
+  // ]
   // R2 bucket binding (uncomment & fill once the bucket exists; storage client also reads
   // S3-compatible creds from env as a fallback):
   // ,"r2_buckets": [

@@ -11,8 +11,13 @@ import { deleteConsultantAction, setOrgStatusAction } from "./actions";
 export default async function ConsultantsPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   const { filter } = await searchParams;
   // SP-5.6: dashboard stat cards deep-link here filtered by active subscription / suspended status.
+  // SP-6.2 — the platform-owned demo org is never shown as a real consultant.
   const where: Prisma.OrganizationWhereInput =
-    filter === "suspended" ? { status: "suspended" } : filter === "active" ? { subscription: { is: { status: "active" } } } : {};
+    filter === "suspended"
+      ? { status: "suspended", isDemoOrg: false }
+      : filter === "active"
+        ? { subscription: { is: { status: "active" } }, isDemoOrg: false }
+        : { isDemoOrg: false };
   const orgs = await prisma.organization.findMany({
     where,
     orderBy: { createdAt: "desc" },

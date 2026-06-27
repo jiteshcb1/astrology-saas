@@ -7,6 +7,8 @@ import { getPaymentMethod, toSafeView, type SafePaymentView } from "@/lib/paymen
 import { decryptSecret, isEncryptionConfigured } from "@/lib/crypto";
 import { createOrder, verifyCheckoutSignature, type RazorpayWebhookEvent } from "@/lib/razorpay";
 import { getSignedUrl } from "@/lib/storage";
+import { invalidateMemberBusyCache } from "@/lib/calendar-freebusy";
+import { ensureMeetLink } from "@/lib/calendar-events";
 import { formatMoney } from "@/lib/money";
 import {
   notifyBookingConfirmed,
@@ -229,6 +231,7 @@ export async function confirmGatewayPaymentCore(
   }
   const res = await transitionToConfirmed(orgId, bookingId, { gatewayPaymentRef: proof.paymentId, gatewayOrderId: proof.orderId }, "gateway_callback", now);
   if (res.changed) {
+    await ensureMeetLink(orgId, bookingId); // T-1.3: best-effort Google event + Meet link, before the email
     await notifyBookingConfirmed(orgId, bookingId);
     await notifyNewBooking(orgId, bookingId, "gateway");
   }
@@ -319,6 +322,7 @@ export async function applyPaymentWebhookEvent(
       );
     });
     if (res.changed) {
+      await ensureMeetLink(orgId, payment.bookingId); // T-1.3
       await notifyBookingConfirmed(orgId, payment.bookingId);
       await notifyNewBooking(orgId, payment.bookingId, "gateway");
     }
@@ -356,7 +360,10 @@ export async function verifyBookingPaymentCore(
       );
       return { ok: true as const };
     });
-    if (result.ok) await notifyBookingConfirmed(orgId, bookingId);
+    if (result.ok) {
+      await ensureMeetLink(orgId, bookingId); // T-1.3
+      await notifyBookingConfirmed(orgId, bookingId);
+    }
     return result;
   }
 
@@ -373,7 +380,11 @@ export async function verifyBookingPaymentCore(
     );
     return { ok: true as const };
   });
-  if (result.ok) await notifyBookingDeclined(orgId, bookingId);
+  if (result.ok) {
+    // T-1.2: the host's slot freed up → drop their cached free/busy so the next slot load is fresh.
+    if (booking.slot?.hostMemberId) invalidateMemberBusyCache(booking.slot.hostMemberId);
+    await notifyBookingDeclined(orgId, bookingId);
+  }
   return result;
 }
 

@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { tenantDb } from "@/lib/tenant-db";
 import { getProfile } from "@/lib/consultant-profile";
 import { getPaymentMethod } from "@/lib/payments";
+import { isOwnerCalendarConnected } from "@/lib/calendar";
 import { utcToZonedParts, zonedClockToUtc } from "@/lib/timezone";
 import { monthKeyOf, monthSeries, monthStartUtcOf, type ChartDatum } from "@/lib/month-series";
 
@@ -63,6 +64,7 @@ export interface OwnerUpcomingRow {
   durationMin: number;
   status: string;
   hostName: string | null;
+  meetLink: string | null;
 }
 type UpRow = Prisma.BookingGetPayload<{ include: { package: { select: { title: true } }; slot: { select: { startsAt: true; endsAt: true; hostMemberId: true } } } }>;
 
@@ -94,6 +96,7 @@ export async function getOwnerUpcoming(orgId: string, now: Date = new Date()): P
       durationMin: r.durationMin,
       status: r.status,
       hostName: r.slot ? nameById.get(r.slot.hostMemberId) ?? null : null,
+      meetLink: r.meetLink,
     })),
   };
 }
@@ -106,18 +109,20 @@ export interface ChecklistItemState {
   cta: string;
 }
 export async function getOwnerChecklist(orgId: string): Promise<{ items: ChecklistItemState[]; doneCount: number; total: number; allDone: boolean }> {
-  const [profile, scheduleCount, packageCount, payment, bookingCount] = await Promise.all([
+  const [profile, scheduleCount, packageCount, payment, bookingCount, calendarConnected] = await Promise.all([
     getProfile(orgId),
     tenantDb(orgId).availabilitySchedule.count(),
     tenantDb(orgId).package.count({ where: { isActive: true } }),
     getPaymentMethod(orgId),
     tenantDb(orgId).booking.count(),
+    isOwnerCalendarConnected(orgId),
   ]);
   const items: ChecklistItemState[] = [
     { key: "profile", label: "Complete your profile", done: Boolean(profile?.displayName && profile?.bio), href: "/dashboard/settings/profile", cta: "Complete profile" },
     { key: "availability", label: "Set your availability", done: scheduleCount > 0, href: "/dashboard/availability", cta: "Set availability" },
     { key: "package", label: "Create your first package", done: packageCount > 0, href: "/dashboard/packages/new", cta: "Create a package" },
     { key: "payment", label: "Configure a payment method", done: Boolean(payment), href: "/dashboard/settings/payments", cta: "Add payment method" },
+    { key: "calendar", label: "Connect Google Calendar", done: calendarConnected, href: "/dashboard/settings/calendar", cta: "Connect calendar" },
     { key: "booking", label: "Receive your first booking", done: bookingCount > 0, cta: "Share your page" },
   ];
   const doneCount = items.filter((i) => i.done).length;

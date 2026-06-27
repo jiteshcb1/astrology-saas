@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatMoney } from "@/lib/money";
 import { getDashboardMetrics, getDashboardSignals, getSignupTrend } from "@/lib/admin-dashboard";
+import { countNewLeadsThisWeek } from "@/lib/leads";
 import { Card } from "@/components/ui/Card";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { MetricCard } from "@/components/superadmin/MetricCard";
@@ -61,7 +62,22 @@ function SignalCard({ title, rows, hasMore }: { title: string; rows: Row[]; hasM
 
 export async function SignalSection() {
   const now = new Date();
-  const s = await getDashboardSignals(now);
+  const [s, newLeads] = await Promise.all([getDashboardSignals(now), countNewLeadsThisWeek(now)]);
+
+  // SP-6.3 — "N new leads this week" signal (only when > 0).
+  const leadBanner = newLeads > 0 ? (
+    <Link href="/superadmin/leads?filter=new" className="block">
+      <Card className="border-l-4 border-l-marigold transition hover:shadow-md">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display text-lg text-ink">{newLeads} new lead{newLeads === 1 ? "" : "s"} this week</h2>
+            <p className="text-sm text-muted">Fresh inquiries from the get-started form — reach out on WhatsApp.</p>
+          </div>
+          <span className="shrink-0 text-terra">View →</span>
+        </div>
+      </Card>
+    </Link>
+  ) : null;
 
   const signups = (
     <SignalCard
@@ -74,6 +90,7 @@ export async function SignalSection() {
   if (s.allClear) {
     return (
       <div className="space-y-4">
+        {leadBanner}
         <Card className="border-l-4 border-l-marigold">
           <div className="flex items-center gap-4">
             <svg width="44" height="44" viewBox="0 0 48 48" fill="none" aria-hidden>
@@ -95,6 +112,7 @@ export async function SignalSection() {
 
   return (
     <div className="space-y-4">
+      {leadBanner}
       <div className="grid gap-4 lg:grid-cols-2">
         <SignalCard
           title="Nearing renewal"

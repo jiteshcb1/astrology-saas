@@ -25,7 +25,8 @@ export type TenantModelKey =
   | "packageQuestion"
   | "booking"
   | "bookingSlot"
-  | "payment";
+  | "payment"
+  | "calendarIntegration";
 
 const TENANT_MODELS: ReadonlySet<string> = new Set(tenantModels as string[]);
 
@@ -160,6 +161,28 @@ function scope(orgId: string, db: Db) {
         }),
       updateMany: (args: Prisma.PaymentMethodUpdateManyArgs) =>
         db.paymentMethod.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
+    },
+    calendarIntegration: {
+      findFirst: (args?: Prisma.CalendarIntegrationFindFirstArgs) =>
+        db.calendarIntegration.findFirst({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      findMany: (args?: Prisma.CalendarIntegrationFindManyArgs) =>
+        db.calendarIntegration.findMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      count: (args?: Prisma.CalendarIntegrationCountArgs) =>
+        db.calendarIntegration.count({ ...args, where: { ...args?.where, organizationId: orgId } }),
+      create: (
+        args: { data: Omit<Prisma.CalendarIntegrationUncheckedCreateInput, "organizationId"> } & Pick<
+          Prisma.CalendarIntegrationCreateArgs,
+          "select" | "include"
+        >,
+      ) =>
+        db.calendarIntegration.create({
+          ...args,
+          data: { ...args.data, organizationId: orgId },
+        }),
+      updateMany: (args: Prisma.CalendarIntegrationUpdateManyArgs) =>
+        db.calendarIntegration.updateMany({ ...args, where: { ...args.where, organizationId: orgId } }),
+      deleteMany: (args?: Prisma.CalendarIntegrationDeleteManyArgs) =>
+        db.calendarIntegration.deleteMany({ ...args, where: { ...args?.where, organizationId: orgId } }),
     },
     availabilitySchedule: {
       findMany: (args?: Prisma.AvailabilityScheduleFindManyArgs) =>

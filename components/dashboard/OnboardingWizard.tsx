@@ -59,10 +59,14 @@ export function OnboardingWizard({
   bookingBase,
   slug,
   defaults,
+  calendarConnected = false,
+  calendarEmail,
 }: {
   bookingBase: string;
   slug: string;
   defaults?: { displayName?: string; businessType?: string; timezone?: string };
+  calendarConnected?: boolean;
+  calendarEmail?: string | null;
 }) {
   const [state, formAction, pending] = useActionState<ProfileFormState, FormData>(completeOnboardingAction, {});
   const [step, setStep] = useState(1);
@@ -116,19 +120,33 @@ export function OnboardingWizard({
       <div className={step === 2 ? "space-y-3" : "hidden"}>
         <div className="rounded-card border border-line bg-sand-2/30 p-5">
           <h3 className="font-display text-lg text-ink">Connect Google Calendar</h3>
-          <p className="mt-1 text-sm text-muted">
-            Auto-create Meet links and block busy times. You can connect this any time from Settings.
-          </p>
-          <Button type="button" variant="ghost" disabled className="mt-3">
-            Connect Google (coming soon)
-          </Button>
+          {calendarConnected ? (
+            <>
+              <p className="mt-1 text-sm font-medium text-green">✓ Connected{calendarEmail ? ` as ${calendarEmail}` : ""}.</p>
+              <p className="mt-1 text-sm text-muted">We&apos;ll block busy times and add Google Meet links automatically.</p>
+            </>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-muted">
+                Auto-create Meet links and block busy times. You can connect this any time from Settings.
+              </p>
+              {/* Full navigation to the OAuth-init API route (sets a CSRF cookie + 302s to Google) — not a page. */}
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+              <a
+                href="/api/calendar/start?return=onboarding"
+                className="mt-3 inline-flex items-center gap-2 rounded-control bg-marigold px-4 py-2.5 text-sm font-semibold text-night transition hover:-translate-y-0.5"
+              >
+                Connect Google Calendar
+              </a>
+            </>
+          )}
         </div>
         <div className="flex justify-between pt-1">
           <Button type="button" variant="ghost" onClick={() => setStep(1)}>
             Back
           </Button>
           <Button type="button" onClick={() => setStep(3)}>
-            I&apos;ll connect later
+            {calendarConnected ? "Continue" : "I'll connect later"}
           </Button>
         </div>
       </div>

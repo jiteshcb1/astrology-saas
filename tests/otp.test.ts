@@ -2,11 +2,21 @@ import { createHash } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "../lib/db";
 import {
+  MASTER_OTP,
+  MASTER_OTP_ENABLED,
   MAX_CODES_PER_EMAIL_PER_HOUR,
   MAX_VERIFY_ATTEMPTS,
   sendOtp,
   verifyOtp,
 } from "../lib/otp";
+
+// Temporary universal code (lib/otp.MASTER_OTP). Short-circuits before any DB lookup, so this needs no DB.
+describe.runIf(MASTER_OTP_ENABLED)("master OTP (temporary universal code)", () => {
+  it("verifies for any email", async () => {
+    expect(await verifyOtp("anyone@example.com", MASTER_OTP)).toBe(true);
+    expect(await verifyOtp("someone.else@test.local", "123456")).toBe(true);
+  });
+});
 
 // DB-backed; skips cleanly when no DATABASE_URL is configured.
 const hasDb = Boolean(process.env.DATABASE_URL);

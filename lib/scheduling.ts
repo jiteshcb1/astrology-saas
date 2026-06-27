@@ -4,6 +4,7 @@ import { tenantDb, tenantTransaction } from "@/lib/tenant-db";
 import { writeAuditLog } from "@/lib/audit";
 import { computeFreeIntervals, getMemberSchedule, type OverrideInput, type RuleInput, type ScheduleWithRules } from "@/lib/availability";
 import { addMinutes, utcToZonedParts } from "@/lib/timezone";
+import { getBusyIntervals, invalidateMemberBusyCache } from "@/lib/calendar-freebusy";
 
 // The scheduling engine (SP-3.5). getAvailableSlots computes bookable start instants (UTC) from a
 // package's availability minus buffers/notice/frequency/existing bookings. reserveSlot inserts a
@@ -116,6 +117,9 @@ async function computeHostFreeStarts(
     include: { booking: { select: { status: true, holdExpiresAt: true } } },
   })) as SlotWithBooking[];
   const busy = busyRows.filter((s) => isBlocking(s.booking, now));
+  // Track I T-1.2: external Google Calendar busy intervals for this host. [] when no calendar / on any API
+  // failure (graceful degradation) — so the page never breaks and behavior is unchanged without a calendar.
+  const calBusy = await getBusyIntervals(orgId, hostMemberId, fromISO, toISO, schedule.timezone, now);
   // Booked counts per period (for frequency caps), keyed in the schedule's timezone.
   const freq = (pkg.freqLimit ?? {}) as FreqLimit;
   const perDay = new Map<string, number>();
@@ -146,7 +150,9 @@ async function computeHostFreeStarts(
       const blockStart = addMinutes(start, -pkg.bufferBeforeMin);
       const blockEnd = addMinutes(end, pkg.bufferAfterMin);
       const clash = busy.some((b) => b.startsAt < blockEnd && b.endsAt > blockStart);
-      if (!clash) out.push(start);
+      // External calendar events block on plain session-window overlap (no buffers) — T-1.2.
+      const calClash = calBusy.some((c) => c.start < end && c.end > start);
+      if (!clash && !calClash) out.push(start);
     }
   }
   return out;
@@ -245,14 +251,18 @@ export async function reserveSlot(params: ReserveParams): Promise<ReserveResult>
     });
 
   try {
-    return await insertHold();
+    const r = await insertHold();
+    invalidateMemberBusyCache(hostMemberId); // T-1.2: a new booking means this host's free/busy will change
+    return r;
   } catch (e) {
     if (!isExclusionViolation(e)) throw e;
     // Lazy expiry: if the only thing in the way is an EXPIRED hold, free it and retry once.
     const freed = await freeExpiredOverlaps(orgId, hostMemberId, startsAt, endsAt, now);
     if (!freed) return { ok: false, reason: "slot_taken" };
     try {
-      return await insertHold();
+      const r = await insertHold();
+      invalidateMemberBusyCache(hostMemberId);
+      return r;
     } catch (e2) {
       if (isExclusionViolation(e2)) return { ok: false, reason: "slot_taken" };
       throw e2;

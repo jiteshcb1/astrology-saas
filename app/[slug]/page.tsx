@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getActiveOrgBySlug } from "@/lib/public-page";
+import { getPaymentMethod, toSafeView } from "@/lib/payments";
 import { PublicProfile } from "@/components/public/PublicProfile";
 import { PublicOffline } from "@/components/public/PublicOffline";
 import { getPublicSlotsAction } from "./actions";
@@ -13,10 +14,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: `${who} — Book a consultation`, description: data.profile.bio || undefined };
 }
 
-export default async function PublicBookingRoute({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PublicBookingRoute({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ demo?: string }> }) {
   const { slug } = await params;
+  const { demo: demoParam } = await searchParams;
   const data = await getActiveOrgBySlug(slug);
   if (!data) return <PublicOffline />;
+  const demo = demoParam === "1" || demoParam === "true";
 
   // Inline server actions bound to this slug — the client calls them with the runtime args.
   async function getSlots(packageId: string, durationMin: number, fromISO: string, toISO: string) {
@@ -26,6 +29,14 @@ export default async function PublicBookingRoute({ params }: { params: Promise<{
   async function onContinue(packageId: string, durationMin: number, startISO: string) {
     "use server";
     return holdSlotAction(slug, packageId, durationMin, startISO);
+  }
+
+  // SP-6.2 demo: read-only payment safe-view for the in-drawer UPI-QR preview. NO write action is bound
+  // (onContinue is omitted), so the demo booking flow cannot persist anything.
+  let paymentPreview: { upiVpa: string | null; qrUrl: string | null } | null = null;
+  if (demo) {
+    const safe = await toSafeView(await getPaymentMethod(data.orgId));
+    paymentPreview = safe ? { upiVpa: safe.upiVpa, qrUrl: safe.qrUrl } : null;
   }
 
   return (
@@ -39,7 +50,9 @@ export default async function PublicBookingRoute({ params }: { params: Promise<{
       confirmedCount={data.confirmedCount}
       legal={data.legal}
       getSlots={getSlots}
-      onContinue={onContinue}
+      onContinue={demo ? undefined : onContinue}
+      demo={demo}
+      paymentPreview={paymentPreview}
     />
   );
 }

@@ -33,6 +33,12 @@ export default async function SettingsPage() {
               <p className="mt-1 text-sm text-muted">UPI QR or your own gateway keys.</p>
             </Card>
           </Link>
+          <Link href="/dashboard/settings/calendar">
+            <Card className="h-full transition hover:border-marigold">
+              <h2 className="font-display text-lg text-ink">Calendar</h2>
+              <p className="mt-1 text-sm text-muted">Connect Google Calendar — auto-block busy time &amp; add Meet links.</p>
+            </Card>
+          </Link>
           <Link href="/dashboard/settings/legal">
             <Card className="h-full transition hover:border-marigold">
               <h2 className="font-display text-lg text-ink">Legal</h2>

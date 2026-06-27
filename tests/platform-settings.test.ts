@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "../lib/db";
-import { getEmailSettingsView, isEmailTypeEnabled, setEmailSetting, MASTER_KEY } from "../lib/platform-settings";
+import { EMAILS_GLOBALLY_PAUSED, getEmailSettingsView, isEmailTypeEnabled, setEmailSetting, MASTER_KEY } from "../lib/platform-settings";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const d = hasDb ? describe : describe.skip;
@@ -28,7 +28,16 @@ d("platform email kill-switch (per-type + master)", () => {
     await prisma.$disconnect();
   });
 
-  it("every type defaults ON when no row exists", async () => {
+  // The hard code-level pause (lib/platform-settings.EMAILS_GLOBALLY_PAUSED) short-circuits everything when on.
+  it.runIf(EMAILS_GLOBALLY_PAUSED)("global pause: nothing sends, view flags it, and the UI write is rejected", async () => {
+    expect(await isEmailTypeEnabled("otp")).toBe(false);
+    expect(await isEmailTypeEnabled("booking_confirmed")).toBe(false);
+    expect((await getEmailSettingsView()).globallyPaused).toBe(true);
+    expect((await setEmailSetting("otp", true, actorId)).ok).toBe(false);
+    expect((await setEmailSetting(MASTER_KEY, true, actorId)).ok).toBe(false);
+  });
+
+  it.skipIf(EMAILS_GLOBALLY_PAUSED)("every type defaults ON when no row exists", async () => {
     expect(await isEmailTypeEnabled("otp")).toBe(true);
     expect(await isEmailTypeEnabled("booking_confirmed")).toBe(true);
     const v = await getEmailSettingsView();
@@ -37,7 +46,7 @@ d("platform email kill-switch (per-type + master)", () => {
     expect(v.types.find((t) => t.key === "otp")?.enabled).toBe(true);
   });
 
-  it("pausing one type is independent + audited; rejects unknown key", async () => {
+  it.skipIf(EMAILS_GLOBALLY_PAUSED)("pausing one type is independent + audited; rejects unknown key", async () => {
     const r = await setEmailSetting("booking_confirmed", false, actorId);
     expect(r.ok).toBe(true);
     expect(await isEmailTypeEnabled("booking_confirmed")).toBe(false);
@@ -52,7 +61,7 @@ d("platform email kill-switch (per-type + master)", () => {
     expect(await isEmailTypeEnabled("booking_confirmed")).toBe(true);
   });
 
-  it("master OFF gates every type even when the type's own row is ON; re-enabling restores", async () => {
+  it.skipIf(EMAILS_GLOBALLY_PAUSED)("master OFF gates every type even when the type's own row is ON; re-enabling restores", async () => {
     await setEmailSetting("otp", true, actorId); // type explicitly ON
     await setEmailSetting(MASTER_KEY, false, actorId);
     expect(await isEmailTypeEnabled("otp")).toBe(false); // master overrides
