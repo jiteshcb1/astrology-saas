@@ -76,6 +76,8 @@ model Organization {
   // Unique + normalized to lowercase at write time. `citext` is a future option.
   slug        String      @unique
   status      OrgStatus   @default(active)
+  // Platform-owned demo consultant (SP-6.2). Excluded from Super-Admin metrics + billing.
+  isDemoOrg   Boolean     @default(false)
   createdAt   DateTime    @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime    @updatedAt @db.Timestamptz(6)
 
@@ -88,6 +90,7 @@ model Organization {
   branding          OrgBranding?
   legalDocuments    LegalDocuments?
   paymentMethod     PaymentMethod?
+  calendarIntegrations CalendarIntegration[]
   schedules         AvailabilitySchedule[]
   packages          Package[]
   bookings          Booking[]
@@ -106,8 +109,9 @@ model OrgMember {
   createdAt      DateTime     @default(now()) @db.Timestamptz(6)
   updatedAt      DateTime     @updatedAt @db.Timestamptz(6)
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calendarIntegration CalendarIntegration?
 
   @@unique([userId, organizationId])
   @@index([organizationId, role, status])
@@ -461,6 +465,33 @@ model PaymentMethod {
   @@map("payment_methods")
 }
 
+// Track I T-1.1 — per-member Google Calendar OAuth connection (1:1 with OrgMember). A SEPARATE OAuth flow from
+// sign-in (lib/auth.ts): the consultant consents to calendar.events + calendar.readonly with offline access.
+// Both tokens are envelope-encrypted at rest (lib/crypto.ts, same as SP-2.4 gateway keys). expiresAt drives the
+// refresh (lib/calendar.ts getValidToken). Registered tenant-scoped in config/tenant-models.json.
+model CalendarIntegration {
+  id              String    @id @default(cuid())
+  organizationId  String
+  orgMemberId     String    @unique
+  provider        String    @default("google") // "google" (others later)
+  accessTokenEnc  String // envelope-encrypted access_token
+  refreshTokenEnc String? // envelope-encrypted refresh_token
+  expiresAt       DateTime  @db.Timestamptz(6) // access-token expiry
+  calendarId      String? // connected calendar id, usually "primary"
+  googleEmail     String? // connected account email (= primary calendar id); display-only, non-secret
+  connectedAt     DateTime  @default(now()) @db.Timestamptz(6)
+  status          String    @default("active") // "active" | "revoked" | "error"
+  lastError       String? // human-readable reason when status="error"
+  createdAt       DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  orgMember    OrgMember    @relation(fields: [orgMemberId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("calendar_integrations")
+}
+
 // ─── Scheduling engine (SP-3) — tenant-scoped ────────────────────────────────
 // Availability schedules + weekly rules + date overrides; packages (event types) with per-package
 // pricing + limits; bookings; and booking_slots which carries the HARD no-double-book invariant via a
@@ -588,7 +619,8 @@ model Booking {
   answers          Json      @default("{}")
   tosAcceptedAt    DateTime? @db.Timestamptz(6)
   rescheduleCount  Int       @default(0)
-  meetLink         String?
+  meetLink         String? // Google Meet URL (T-1.3, auto-generated on confirm) or manual
+  calendarEventId  String? // Google Calendar event id for the booking (T-1.3) — for later update/deletion
   createdAt        DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt        DateTime  @updatedAt @db.Timestamptz(6)
 
@@ -684,4 +716,26 @@ model CatalogItem {
   @@unique([type, key])
   @@index([type, isActive])
   @@map("catalog_items")
+}
+
+// ─── Leads (SP-6.3) ───────────────────────────────────────────────────────────
+// Incoming prospects from the public marketing form. Platform-level (NOT tenant-scoped — these are
+// not consultant data) → NOT in config/tenant-models.json. `status` is a String (validated in lib/leads.ts).
+model Lead {
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  whatsapp     String // normalized to +91XXXXXXXXXX on save
+  practiceType String? // Vedic | Tarot | Numerology | Palmistry | Vastu | Other
+  heardFrom    String? // Instagram | WhatsApp | Astrotalk | JustDial | Friend | Other
+  message      String?
+  status       String   @default("new") // new | contacted | demo_booked | converted | not_interested
+  requestIp    String? // for the per-IP rate limit
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([status])
+  @@index([email])
+  @@index([requestIp, createdAt])
+  @@map("leads")
 }

@@ -10,7 +10,8 @@ export type DashboardSection =
   | "settings"
   | "finance"
   | "member_bookings"
-  | "account";
+  | "account"
+  | "calendar";
 
 const SECTION_ROLES: Record<DashboardSection, ReadonlySet<string>> = {
   home: new Set(["consultant", "team_consulting", "team_accounts"]),
@@ -22,6 +23,8 @@ const SECTION_ROLES: Record<DashboardSection, ReadonlySet<string>> = {
   finance: new Set(["consultant", "team_accounts"]),
   member_bookings: new Set(["team_consulting"]),
   account: new Set(["team_consulting", "team_accounts"]),
+  // T-1.1: each member connects their OWN Google Calendar (owner + consulting partners take calls).
+  calendar: new Set(["consultant", "team_consulting"]),
 };
 
 /** Pure policy: may this role see this dashboard section? */

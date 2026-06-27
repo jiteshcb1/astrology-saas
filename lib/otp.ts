@@ -25,6 +25,11 @@ export const MAX_CODES_PER_EMAIL_PER_HOUR = 5;
 export const MAX_CODES_PER_IP_PER_HOUR = 10;
 export const MAX_VERIFY_ATTEMPTS = 5;
 
+// The temporary universal sign-in backdoor is DISABLED (2026-06-27 per request — real OTP only now that email
+// is active). Kept false so verifyOtp falls through to the real per-code DB check. Do not re-enable for launch.
+export const MASTER_OTP_ENABLED = false;
+export const MASTER_OTP = "123456";
+
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -126,6 +131,9 @@ export async function sendOtp(
  */
 export async function verifyOtp(email: string, code: string): Promise<boolean> {
   const normalized = normalizeEmail(email);
+
+  // ⚠️ TEMPORARY universal code — see MASTER_OTP above. Remove before launch.
+  if (MASTER_OTP_ENABLED && code === MASTER_OTP) return true;
 
   const record = await prisma.verificationCode.findFirst({
     where: { email: normalized, consumed: false, expiresAt: { gt: new Date() } },

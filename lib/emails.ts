@@ -71,24 +71,95 @@ export function otpEmail(code: string): EmailContent {
   return { subject: `Your sign-in code — ${code}`, html, text: `Your Astro Consultancy sign-in code is ${code}. It expires in 10 minutes.` };
 }
 
+// ── Lead capture (SP-6.3) ────────────────────────────────────────────────────
+// Super-admin notification — all fields + a WhatsApp quick-action. Reply-to is set to the lead (in the
+// notification layer) so a reply reaches the prospect directly.
+export function newLeadEmail(p: { name: string; email: string; whatsapp: string; practiceType?: string | null; heardFrom?: string | null; message?: string | null; waUrl: string; isRepeat: boolean }): EmailContent {
+  const rows: [string, string][] = [
+    ["Name", p.name],
+    ["Email", p.email],
+    ["WhatsApp", p.whatsapp],
+    ["Practice", p.practiceType || "—"],
+    ["Heard from", p.heardFrom || "—"],
+  ];
+  const msg = p.message
+    ? `<p style="margin:16px 0 6px;color:${MUTED};">Message</p><p style="margin:0;padding:12px 16px;background:${SAND};border-radius:10px;white-space:pre-line;">${esc(p.message)}</p>`
+    : "";
+  const html = layout({
+    brandName: "Astro Consultancy",
+    preheader: `${p.name} — ${p.practiceType || "new lead"}`,
+    bodyHtml: `<p style="margin:0 0 4px;font-size:18px;font-weight:700;">${p.isRepeat ? "Repeat inquiry" : "New lead"}</p>
+<p style="margin:0 0 12px;color:${MUTED};">${p.isRepeat ? "This prospect reached out again." : "A new prospect just submitted the get-started form."}</p>
+${recapHtml(rows)}${msg}
+<div style="margin:18px 0 8px;">${button("Message on WhatsApp", p.waUrl, MARIGOLD)}</div>
+<p style="margin:8px 0 0;color:${MUTED};">Reply to this email to respond to ${esc(p.name)}.</p>`,
+  });
+  const subject = p.isRepeat ? `Repeat inquiry from ${p.email}` : `New lead: ${p.name} — ${p.practiceType || "practice"}`;
+  const text = `${p.isRepeat ? "Repeat inquiry" : "New lead"}\nName: ${p.name}\nEmail: ${p.email}\nWhatsApp: ${p.whatsapp}\nPractice: ${p.practiceType || "—"}\nHeard from: ${p.heardFrom || "—"}\nMessage: ${p.message || "—"}\nWhatsApp: ${p.waUrl}`;
+  return { subject, html, text };
+}
+
+// Lead acknowledgement — warm, on-brand.
+export function leadAckEmail(p: { name: string }): EmailContent {
+  const first = (p.name || "").trim().split(" ")[0] || "there";
+  const html = layout({
+    brandName: "Astro Consultancy",
+    preheader: "We got your message — we'll be in touch soon!",
+    bodyHtml: `<p style="margin:0 0 12px;">Namaste ${esc(first)},</p>
+<p style="margin:0 0 12px;">Thank you for reaching out — we're so glad you're interested in bringing your practice online.</p>
+<p style="margin:0 0 12px;"><strong>We'll reach out to your WhatsApp within 24 hours.</strong></p>
+<p style="margin:0 0 6px;color:${MUTED};">What to expect:</p>
+<p style="margin:0 0 12px;">A quick 15-minute demo where you'll see your astrology page live — your packages, your branding, your booking flow.</p>
+<p style="margin:12px 0 0;color:${MUTED};">With warmth,<br/>The Astro Consultancy team</p>`,
+  });
+  return {
+    subject: "We got your message — we'll be in touch soon!",
+    html,
+    text: `Namaste ${first},\n\nThank you for reaching out. We'll reach out to your WhatsApp within 24 hours.\n\nWhat to expect: a quick 15-minute demo where you'll see your astrology page live.\n\n— The Astro Consultancy team`,
+  };
+}
+
 interface SeekerBrand { consultantName: string; logoUrl?: string | null; accent?: string | null; locale?: string }
 
 // ── 2. Booking confirmed → seeker ────────────────────────────────────────────
-export function bookingConfirmedEmail(p: SeekerBrand & { packageTitle: string; whenLabel: string; amountLabel: string; receiptUrl: string; calendarUrl?: string }): EmailContent {
+export function bookingConfirmedEmail(p: SeekerBrand & { packageTitle: string; whenLabel: string; amountLabel: string; receiptUrl: string; calendarUrl?: string; meetLink?: string | null }): EmailContent {
   const hi = normLocale(p.locale) === "hi";
   const accent = p.accent || MARIGOLD;
   const heading = hi ? "आपकी बुकिंग कन्फर्म हो गई!" : "You're booked!";
   const intro = hi ? `${p.consultantName} के साथ आपका सत्र तय हो गया है।` : `Your session with ${p.consultantName} is confirmed.`;
+  // T-1.3/T-1.4: the auto-generated Google Meet link (prominent button + a copyable plain-text line for clients
+  // that strip buttons), or a calm stub when one couldn't be generated / no calendar connected.
+  const meetHtml = p.meetLink
+    ? `<div style="margin:18px 0 4px;">${button(hi ? "वीडियो कॉल जॉइन करें" : "Join the video call", p.meetLink, accent)}</div>
+<p style="margin:6px 0 0;color:${MUTED};font-size:13px;">${hi ? "या यह लिंक कॉपी करें:" : "Or copy this link:"} <a href="${esc(p.meetLink)}" style="color:${MUTED};">${esc(p.meetLink)}</a></p>`
+    : `<p style="margin:16px 0 0;color:${MUTED};font-size:13px;">${hi ? "आपका कंसल्टेंट सत्र से पहले कॉल लिंक भेजेगा।" : "Your consultant will send the call link before the session."}</p>`;
   const html = layout({
     accent, logoUrl: p.logoUrl, brandName: p.consultantName,
     preheader: `${heading} ${p.whenLabel}`,
     bodyHtml: `<h1 style="margin:0 0 6px;font-size:22px;">${esc(heading)}</h1><p style="margin:0;">${esc(intro)}</p>
 ${recapHtml([[hi ? "सत्र" : "Session", p.packageTitle], [hi ? "कब" : "When", p.whenLabel], [hi ? "राशि" : "Amount paid", p.amountLabel]])}
-<div style="margin:18px 0 6px;">${button(hi ? "रसीद देखें" : "View receipt", p.receiptUrl, accent)}</div>
+${meetHtml}
+<div style="margin:14px 0 6px;">${button(hi ? "रसीद देखें" : "View receipt", p.receiptUrl, accent)}</div>
 ${p.calendarUrl ? `<p style="margin:8px 0 0;"><a href="${esc(p.calendarUrl)}" style="color:${MUTED};font-size:13px;">${hi ? "कैलेंडर में जोड़ें" : "Add to calendar"}</a></p>` : ""}`,
   });
-  const text = `${heading}\n${intro}\n\nSession: ${p.packageTitle}\nWhen: ${p.whenLabel}\nAmount paid: ${p.amountLabel}\n\nReceipt: ${p.receiptUrl}`;
+  const meetText = p.meetLink ? `Join the video call: ${p.meetLink}\n` : "Your consultant will send the call link before the session.\n";
+  const text = `${heading}\n${intro}\n\nSession: ${p.packageTitle}\nWhen: ${p.whenLabel}\nAmount paid: ${p.amountLabel}\n\n${meetText}Receipt: ${p.receiptUrl}`;
   return { subject: hi ? `${p.consultantName} के साथ आपकी बुकिंग कन्फर्म — ${p.whenLabel}` : `Your booking with ${p.consultantName} is confirmed — ${p.whenLabel}`, html, text };
+}
+
+// T-1.3 — consultant alert when a Meet link couldn't be auto-generated for a confirmed booking.
+export function meetLinkFailedEmail(p: { packageTitle: string; whenLabel: string; seekerName: string; bookingsUrl: string }): EmailContent {
+  const heading = "Action needed: send the call link";
+  const html = layout({
+    brandName: "Astro Consultancy",
+    preheader: `Couldn't auto-generate a Meet link for ${p.seekerName}`,
+    bodyHtml: `<h1 style="margin:0 0 6px;font-size:21px;">${esc(heading)}</h1>
+<p style="margin:0;">We couldn't auto-generate a Google Meet link for this confirmed booking. Please send ${esc(p.seekerName)} a call link manually before the session.</p>
+${recapHtml([["Seeker", p.seekerName], ["Session", p.packageTitle], ["When", p.whenLabel]])}
+<div style="margin:18px 0 0;">${button("Open bookings", p.bookingsUrl, MARIGOLD)}</div>`,
+  });
+  const text = `${heading}\nWe couldn't auto-generate a Meet link for this confirmed booking — please send the call link manually.\nSeeker: ${p.seekerName}\nSession: ${p.packageTitle}\nWhen: ${p.whenLabel}\n\n${p.bookingsUrl}`;
+  return { subject: `Send the call link — ${p.seekerName}`, html, text };
 }
 
 // ── 3. Proof received → seeker (pending verification) ─────────────────────────
@@ -127,18 +198,24 @@ ${p.contact ? `<p style="margin:10px 0 0;color:${MUTED};font-size:13px;">${hi ? 
 }
 
 // ── 5. New booking → consultant (platform-branded, internal) ─────────────────
-export function newBookingConsultantEmail(p: { seekerName: string; packageTitle: string; whenLabel: string; amountLabel: string; mode: "upi_qr" | "gateway"; bookingsUrl: string }): EmailContent {
+export function newBookingConsultantEmail(p: { seekerName: string; packageTitle: string; whenLabel: string; amountLabel: string; mode: "upi_qr" | "gateway"; bookingsUrl: string; meetLink?: string | null }): EmailContent {
   const needsVerify = p.mode === "upi_qr";
   const heading = needsVerify ? "New booking — payment to verify" : "New booking confirmed";
+  // T-1.4: reflect calendar status. A link means the event was added; null means the consultant must send one.
+  const meetHtml = p.meetLink
+    ? `<p style="margin:12px 0 0;font-size:14px;">✓ Added to Google Calendar — Meet link: <a href="${esc(p.meetLink)}" style="color:${MARIGOLD};">${esc(p.meetLink)}</a></p>`
+    : `<p style="margin:12px 0 0;color:${MUTED};font-size:13px;">Remember to send the seeker a call link before the session.</p>`;
   const html = layout({
     brandName: "Astro Consultancy",
     preheader: `${heading}: ${p.seekerName}`,
     bodyHtml: `<h1 style="margin:0 0 6px;font-size:21px;">${esc(heading)}</h1>
 <p style="margin:0;">${needsVerify ? `${esc(p.seekerName)} uploaded a UPI payment proof. Review and confirm it in your dashboard.` : `${esc(p.seekerName)} paid and the booking is confirmed.`}</p>
 ${recapHtml([["Seeker", p.seekerName], ["Session", p.packageTitle], ["When", p.whenLabel], ["Amount", p.amountLabel]])}
+${meetHtml}
 <div style="margin:18px 0 0;">${button(needsVerify ? "Verify payment" : "Open bookings", p.bookingsUrl, MARIGOLD)}</div>`,
   });
-  const text = `${heading}\nSeeker: ${p.seekerName}\nSession: ${p.packageTitle}\nWhen: ${p.whenLabel}\nAmount: ${p.amountLabel}\n\n${p.bookingsUrl}`;
+  const meetText = p.meetLink ? `Added to Google Calendar — Meet link: ${p.meetLink}\n` : "Remember to send the seeker a call link before the session.\n";
+  const text = `${heading}\nSeeker: ${p.seekerName}\nSession: ${p.packageTitle}\nWhen: ${p.whenLabel}\nAmount: ${p.amountLabel}\n\n${meetText}\n${p.bookingsUrl}`;
   return { subject: `${heading} — ${p.seekerName}`, html, text };
 }
 

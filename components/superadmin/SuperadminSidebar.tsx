@@ -21,6 +21,7 @@ const I = (path: ReactNode) => (
 const NAV: NavItem[] = [
   { href: "/superadmin", label: "Dashboard", exact: true, icon: I(<path d="M3 9l7-6 7 6v8a1 1 0 01-1 1h-3v-5H7v5H4a1 1 0 01-1-1z" strokeLinejoin="round" />) },
   { href: "/superadmin/consultants", label: "Consultants", icon: I(<><circle cx="7" cy="7" r="3" /><path d="M2 17c0-3 2-5 5-5s5 2 5 5M13 8l2 2 3-3" strokeLinecap="round" strokeLinejoin="round" /></>) },
+  { href: "/superadmin/leads", label: "Leads", icon: I(<><path d="M3 5h14v10H3z" strokeLinejoin="round" /><path d="M3 6l7 5 7-5" strokeLinecap="round" strokeLinejoin="round" /></>) },
   { href: "/superadmin/plans", label: "Plans", icon: I(<><rect x="3" y="4" width="14" height="12" rx="2" /><path d="M3 8h14" strokeLinecap="round" /></>) },
   { href: "/superadmin/flags", label: "Feature Flags", icon: I(<path d="M5 3v14M5 4h9l-2 3 2 3H5" strokeLinecap="round" strokeLinejoin="round" />) },
   { href: "/superadmin/oversight", label: "Oversight", icon: I(<><circle cx="9" cy="9" r="6" /><path d="M9 6v3l2 2" strokeLinecap="round" /></>) },

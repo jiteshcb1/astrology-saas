@@ -26,6 +26,10 @@ const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 export async function sendEmail(options: SendEmailOptions): Promise<{ ok: boolean; id?: string }> {
   const { to, subject, text, html, from = env.EMAIL_FROM, replyTo, type } = options;
 
+  // Never send real email from the test runner (vitest sets VITEST), even when a RESEND_API_KEY is present
+  // in .env.local — keeps the suite from hitting Resend. No effect on dev/prod runtime.
+  if (process.env.VITEST) return { ok: true };
+
   // Kill-switch (super-admin → Settings → Email Notification Management): a send needs BOTH the master switch
   // and this type enabled. Paused → skip silently; return ok so no flow breaks.
   if (!(await isEmailTypeEnabled(type))) {

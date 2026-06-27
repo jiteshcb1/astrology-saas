@@ -5,6 +5,7 @@ import { resolveBrand } from "@/lib/branding";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PackageCard } from "@/components/public/PackageCard";
 import { BookingDrawer } from "@/components/public/BookingDrawer";
+import { DemoBanner } from "@/components/public/DemoBanner";
 import { SocialIcons } from "@/components/public/SocialIcons";
 import { HeroBackground } from "@/components/public/HeroBackground";
 import type { PublicPackageView } from "@/lib/public-page";
@@ -38,6 +39,8 @@ export function PublicProfile({
   legal,
   getSlots,
   onContinue,
+  demo = false,
+  paymentPreview,
 }: {
   profile: ProfileInfo;
   branding: BrandingInfo;
@@ -49,6 +52,9 @@ export function PublicProfile({
   legal?: { hasPrivacy: boolean; hasTerms: boolean };
   getSlots?: (packageId: string, durationMin: number, fromISO: string, toISO: string) => Promise<string[]>;
   onContinue?: (packageId: string, durationMin: number, startISO: string) => Promise<{ ok: boolean; bookingId?: string; reason?: string }>;
+  // SP-6.2 demo mode — show the banner and run the no-write demo booking flow.
+  demo?: boolean;
+  paymentPreview?: { upiVpa: string | null; qrUrl: string | null } | null;
 }) {
   const { primary, onPrimary, secondary, onSecondary } = resolveBrand(branding.themeColor);
   const name = profile.displayName || orgName || "Your name";
@@ -101,8 +107,11 @@ export function PublicProfile({
 
   return (
     <div className="min-h-screen bg-sand">
-      {/* Sticky mini-header */}
-      <div className={`fixed inset-x-0 top-0 z-30 border-b border-line bg-white/95 backdrop-blur transition-all duration-300 ${showSticky ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}`}>
+      {/* SP-6.2 demo banner — hidden once the booking drawer opens for a clean flow. */}
+      {demo && !drawerOpen && <DemoBanner />}
+
+      {/* Sticky mini-header (suppressed in demo so it doesn't fight the banner). */}
+      <div className={`fixed inset-x-0 top-0 z-30 border-b border-line bg-white/95 backdrop-blur transition-all duration-300 ${!demo && showSticky ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}`}>
         <div className="mx-auto flex h-14 max-w-4xl items-center gap-3 px-4">
           {showPhoto ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -212,7 +221,7 @@ export function PublicProfile({
         </footer>
       </div>
 
-      <BookingDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} pkg={selectedPkg} slug={slug} timezone={timezone} accent={primary} onAccent={onPrimary} getSlots={getSlots} onContinue={onContinue} />
+      <BookingDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} pkg={selectedPkg} slug={slug} timezone={timezone} accent={primary} onAccent={onPrimary} getSlots={getSlots} onContinue={onContinue} demo={demo} paymentPreview={paymentPreview} />
     </div>
   );
 }

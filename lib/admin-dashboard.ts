@@ -27,18 +27,21 @@ export interface DashboardMetrics {
   mrrPaise: number;
   consultantsDelta: Delta | null;
   activeSubsDelta: Delta | null; // MRR intentionally has NO delta (no historical snapshot)
+  newLeadsThisWeek: number; // SP-6.3 dashboard signal
 }
 
 export async function getDashboardMetrics(now: Date = new Date()): Promise<DashboardMetrics> {
   const since = new Date(now.getTime() - 30 * DAY_MS);
-  const [totalConsultants, activeSubscriptions, suspendedOrgs, activeSubs, newConsultants, newActiveSubs, oldest] = await Promise.all([
-    prisma.organization.count(),
+  // SP-6.2 — the platform-owned demo org is excluded from all org counts/trends.
+  const [totalConsultants, activeSubscriptions, suspendedOrgs, activeSubs, newConsultants, newActiveSubs, oldest, newLeadsThisWeek] = await Promise.all([
+    prisma.organization.count({ where: { isDemoOrg: false } }),
     prisma.subscription.count({ where: { status: "active" } }),
-    prisma.organization.count({ where: { status: "suspended" } }),
+    prisma.organization.count({ where: { status: "suspended", isDemoOrg: false } }),
     prisma.subscription.findMany({ where: { status: "active" }, include: { plan: true } }),
-    prisma.organization.count({ where: { createdAt: { gte: since } } }),
+    prisma.organization.count({ where: { createdAt: { gte: since }, isDemoOrg: false } }),
     prisma.subscription.count({ where: { status: "active", createdAt: { gte: since } } }),
-    prisma.organization.findFirst({ orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
+    prisma.organization.findFirst({ where: { isDemoOrg: false }, orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
+    prisma.lead.count({ where: { status: "new", createdAt: { gte: new Date(now.getTime() - 7 * DAY_MS) } } }),
   ]);
   const mrrPaise = activeSubs.reduce((sum, s) => sum + monthlyPaise(s.plan, s.seatCount), 0);
   const platformYoung = !oldest || now.getTime() - oldest.createdAt.getTime() < 30 * DAY_MS;
@@ -49,6 +52,7 @@ export async function getDashboardMetrics(now: Date = new Date()): Promise<Dashb
     mrrPaise,
     consultantsDelta: platformYoung ? null : { value: newConsultants },
     activeSubsDelta: platformYoung ? null : { value: newActiveSubs },
+    newLeadsThisWeek,
   };
 }
 
@@ -109,7 +113,7 @@ export interface TrendBucket {
 // org createdAt — no chart dependency.
 // SP-5.6 — cumulative consultant (org) count by IST month over the last `months` (for the growth area chart).
 export async function getOrgGrowthTrend(months = 12, now: Date = new Date()): Promise<ChartDatum[]> {
-  const orgs = await prisma.organization.findMany({ select: { createdAt: true } });
+  const orgs = await prisma.organization.findMany({ where: { isDemoOrg: false }, select: { createdAt: true } });
   const keys = orgs.map((o) => monthKeyOf(o.createdAt));
   return monthSeries(now, months).map((b) => {
     const value = keys.filter((k) => k <= b.key).length; // "YYYY-MM" compares lexically
@@ -118,7 +122,7 @@ export async function getOrgGrowthTrend(months = 12, now: Date = new Date()): Pr
 }
 
 export async function getSignupTrend(months = 6): Promise<TrendBucket[]> {
-  const orgs = await prisma.organization.findMany({ select: { createdAt: true } });
+  const orgs = await prisma.organization.findMany({ where: { isDemoOrg: false }, select: { createdAt: true } });
 
   const now = new Date();
   const buckets: { key: string; label: string; count: number }[] = [];

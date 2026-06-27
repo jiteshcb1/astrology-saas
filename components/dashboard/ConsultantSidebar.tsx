@@ -31,6 +31,7 @@ const IC = {
   revenue: I(<><path d="M3 17l4-5 3 3 5-7" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 3v14h14" strokeLinecap="round" /></>),
   receipts: I(<><path d="M5 2h8l2 2v14l-2-1.2L11 18l-2-1.2L7 18l-2-1.2z" strokeLinejoin="round" /><path d="M7 6h6M7 9h6" strokeLinecap="round" /></>),
   account: I(<><circle cx="10" cy="6.5" r="3" /><path d="M4 17c0-3.3 2.7-5 6-5s6 1.7 6 5" strokeLinecap="round" /></>),
+  calendar: I(<><rect x="3" y="4" width="14" height="13" rx="2" /><path d="M3 8h14M7 2v4M13 2v4M7.5 12.5l1.5 1.5 3-3.5" strokeLinecap="round" strokeLinejoin="round" /></>),
 };
 
 // Nav is role-scoped (SP-5.3) — hidden, not disabled. Owner mirrors docs/mockups/demo-dashboard.html.
@@ -47,6 +48,7 @@ const OWNER_NAV: NavItem[] = [
 const CONSULTING_NAV: NavItem[] = [
   { href: "/dashboard", label: "My Bookings", exact: true, icon: IC.bookings },
   { href: "/dashboard/availability", label: "My Availability", icon: IC.availability },
+  { href: "/dashboard/settings/calendar", label: "Calendar", icon: IC.calendar },
   { href: "/dashboard/account", label: "My Profile", icon: IC.account },
 ];
 const ACCOUNTS_NAV: NavItem[] = [

@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { MetricCard } from "@/components/superadmin/MetricCard";
 import { ShareLinkButton } from "@/components/dashboard/ShareLinkButton";
+import { JoinCallButton } from "@/components/dashboard/JoinCallButton";
 
 const TZ = "Asia/Kolkata";
 const BASE = env.AUTH_URL.replace(/\/$/, "");
@@ -62,7 +63,8 @@ export async function OwnerUpcoming({ orgId, slug }: { orgId: string; slug: stri
                 <th className="py-2 pr-3 font-medium">When</th>
                 <th className="py-2 pr-3 font-medium">Duration</th>
                 {hasTeam && <th className="py-2 pr-3 font-medium">Host</th>}
-                <th className="py-2 font-medium">Status</th>
+                <th className="py-2 pr-3 font-medium">Status</th>
+                <th className="py-2 font-medium">Call</th>
               </tr>
             </thead>
             <tbody>
@@ -73,7 +75,10 @@ export async function OwnerUpcoming({ orgId, slug }: { orgId: string; slug: stri
                   <td className="py-2.5 pr-3 text-muted">{fmtDateTime(r.startsAt)}</td>
                   <td className="py-2.5 pr-3 text-muted">{r.durationMin} min</td>
                   {hasTeam && <td className="py-2.5 pr-3 text-muted">{r.hostName ?? "—"}</td>}
-                  <td className="py-2.5"><StatusChip label={r.status.replace(/_/g, " ")} tone={statusTone(r.status)} /></td>
+                  <td className="py-2.5 pr-3"><StatusChip label={r.status.replace(/_/g, " ")} tone={statusTone(r.status)} /></td>
+                  <td className="py-2.5">
+                    <JoinCallButton startISO={r.startsAt ? r.startsAt.toISOString() : null} endISO={r.endsAt ? r.endsAt.toISOString() : null} meetLink={r.meetLink} />
+                  </td>
                 </tr>
               ))}
             </tbody>

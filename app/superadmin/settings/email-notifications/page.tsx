@@ -16,10 +16,16 @@ export default async function EmailNotificationsPage() {
       <div className="mx-auto w-full max-w-2xl px-6 py-6">
         <Link href="/superadmin/settings" className="text-sm text-muted hover:text-terra">← Settings</Link>
 
-        {!view.master.enabled && (
+        {view.globallyPaused ? (
           <p className="mt-4 rounded-control border border-terra/40 bg-terra/10 px-4 py-3 text-sm text-ink">
-            <strong>All outbound email is paused.</strong> The master switch is off, so nothing is sent regardless of the per-type switches below.
+            <strong>All outbound email is globally paused.</strong> This is locked in code — the toggles below are read-only and can&apos;t enable sending. Email stays off until it&apos;s turned back on in code.
           </p>
+        ) : (
+          !view.master.enabled && (
+            <p className="mt-4 rounded-control border border-terra/40 bg-terra/10 px-4 py-3 text-sm text-ink">
+              <strong>All outbound email is paused.</strong> The master switch is off, so nothing is sent regardless of the per-type switches below.
+            </p>
+          )
         )}
 
         <div className="mt-4 space-y-6">
@@ -30,6 +36,7 @@ export default async function EmailNotificationsPage() {
             warning="All outbound email is paused."
             initialEnabled={view.master.enabled}
             updatedAtISO={view.master.updatedAtISO}
+            locked={view.globallyPaused}
           />
 
           {GROUPS.map((group) => {
@@ -48,6 +55,7 @@ export default async function EmailNotificationsPage() {
                       warning={t.key === "otp" ? "Email-only sign-in is blocked while this is off (Google sign-in still works)." : undefined}
                       initialEnabled={t.enabled}
                       updatedAtISO={t.updatedAtISO}
+                      locked={view.globallyPaused}
                     />
                   ))}
                 </div>

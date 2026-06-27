@@ -10,6 +10,12 @@ import { totalSeatCount } from "@/lib/checkout";
 // so they're unit-testable; server actions are thin wrappers.
 export { computeEffectivePrice, formatMoney, parseFeatures } from "@/lib/money";
 
+// SP-6.1 — active subscription plans for the PUBLIC pricing page, cheapest first. Plans are platform-level
+// (global, not tenant-scoped), so a bare prisma read is correct here.
+export function listPublicPlans() {
+  return prisma.subscriptionPlan.findMany({ where: { isActive: true }, orderBy: { price: "asc" } });
+}
+
 // ── Cores ─────────────────────────────────────────────────────────────────────
 
 export interface PlanInput {

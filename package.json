@@ -14,6 +14,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "node --env-file=.env.local node_modules/.bin/prisma migrate dev",
     "prisma:seed": "node --env-file=.env.local node_modules/.bin/tsx prisma/seed.ts",
+    "seed:demo": "node --env-file=.env.local node_modules/.bin/tsx prisma/seeds/demo.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "postinstall": "prisma generate"

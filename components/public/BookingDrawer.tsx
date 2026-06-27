@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { CosmicLoader } from "@/components/ui/CosmicLoader";
 import { dateToISO, formatTime } from "@/lib/datetime";
@@ -44,6 +45,8 @@ export function BookingDrawer({
   onAccent,
   getSlots,
   onContinue,
+  demo = false,
+  paymentPreview,
 }: {
   open: boolean;
   onClose: () => void;
@@ -54,6 +57,10 @@ export function BookingDrawer({
   onAccent: string;
   getSlots?: (packageId: string, durationMin: number, fromISO: string, toISO: string) => Promise<string[]>;
   onContinue?: (packageId: string, durationMin: number, startISO: string) => Promise<{ ok: boolean; bookingId?: string; reason?: string }>;
+  // SP-6.2 demo mode: no write action is bound (onContinue is omitted upstream). The flow runs entirely in
+  // client state (details → UPI-QR preview → static success) and persists nothing.
+  demo?: boolean;
+  paymentPreview?: { upiVpa: string | null; qrUrl: string | null } | null;
 }) {
   const router = useRouter();
   const todayISO = dateToISO(new Date());
@@ -69,12 +76,18 @@ export function BookingDrawer({
   const [slotError, setSlotError] = useState<string | null>(null);
   const reqRef = useRef(0);
 
+  // Demo-only client state (no persistence).
+  const [demoStep, setDemoStep] = useState<"slot" | "details" | "pay" | "success">("slot");
+  const [demoName, setDemoName] = useState("");
+  const [demoEmail, setDemoEmail] = useState("");
+
   function resetFor(p: PublicPackageView) {
     const dur = p.defaultDurationMin;
     setDuration(dur);
     setDate(todayISO);
     setSelectedSlot(null);
     setSlotError(null);
+    setDemoStep("slot");
     void load(p.id, dur, todayISO);
   }
 
@@ -141,7 +154,24 @@ export function BookingDrawer({
         </div>
 
         <div className="min-h-0 flex-1 space-y-5 overflow-auto p-5">
-          {!pkg ? null : (
+          {!pkg ? null : demo && demoStep !== "slot" ? (
+            <DemoSteps
+              step={demoStep}
+              pkg={pkg}
+              slotLabel={selectedSlot ? slotLabel(selectedSlot, tz) : ""}
+              tz={tz}
+              accent={accent}
+              onAccent={onAccent}
+              name={demoName}
+              email={demoEmail}
+              setName={setDemoName}
+              setEmail={setDemoEmail}
+              paymentPreview={paymentPreview}
+              onToPay={() => setDemoStep("pay")}
+              onPaid={() => setDemoStep("success")}
+              onBack={() => setDemoStep(demoStep === "pay" ? "details" : "slot")}
+            />
+          ) : (
             <>
               {pkg.allowBookerChooseDuration && pkg.allowedDurations.length > 1 && (
                 <div>
@@ -217,7 +247,98 @@ export function BookingDrawer({
             </Button>
           </div>
         )}
+        {demo && pkg && demoStep === "slot" && (
+          <div className="border-t border-line p-5">
+            <Button type="button" disabled={!selectedSlot} onClick={() => setDemoStep("details")} className="w-full" style={selectedSlot ? { backgroundColor: accent, color: onAccent } : undefined}>
+              {selectedSlot ? `Continue · ${slotLabel(selectedSlot, tz)}` : "Select a time to continue"}
+            </Button>
+          </div>
+        )}
       </aside>
     </>
+  );
+}
+
+// SP-6.2 — the demo-only details → payment → success steps. Pure client state; writes nothing.
+function QrPreview({ url }: { url: string | null }) {
+  const [err, setErr] = useState(false);
+  if (url && !err) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={url} alt="UPI QR code" onError={() => setErr(true)} className="mx-auto h-44 w-44 rounded-card border border-line object-contain" />;
+  }
+  return (
+    <div className="mx-auto grid h-44 w-44 place-items-center rounded-card border border-dashed border-line bg-sand-2/40 text-muted">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z" strokeLinejoin="round" /></svg>
+    </div>
+  );
+}
+
+function DemoSteps({ step, pkg, slotLabel, tz, accent, onAccent, name, email, setName, setEmail, paymentPreview, onToPay, onPaid, onBack }: {
+  step: "details" | "pay" | "success";
+  pkg: PublicPackageView;
+  slotLabel: string;
+  tz: string;
+  accent: string;
+  onAccent: string;
+  name: string;
+  email: string;
+  setName: (v: string) => void;
+  setEmail: (v: string) => void;
+  paymentPreview?: { upiVpa: string | null; qrUrl: string | null } | null;
+  onToPay: () => void;
+  onPaid: () => void;
+  onBack: () => void;
+}) {
+  if (step === "success") {
+    return (
+      <div className="flex flex-col items-center py-10 text-center">
+        <span className="grid h-16 w-16 place-items-center rounded-full" style={{ backgroundColor: accent, color: onAccent }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        </span>
+        <h3 className="mt-5 font-display text-2xl text-ink">This was a demo</h3>
+        <p className="mt-2 max-w-xs text-sm text-muted">No booking was made and nothing was saved — but this is exactly what your seekers would experience on your own page.</p>
+        <Link href="/signin" className="mt-7 inline-flex items-center justify-center rounded-control px-6 py-3 text-sm font-semibold" style={{ backgroundColor: accent, color: onAccent }}>
+          Start your page for free →
+        </Link>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-5">
+      <div className="rounded-control bg-sand-2/50 px-4 py-3 text-sm">
+        <div className="font-medium text-ink">{pkg.title}</div>
+        <div className="text-muted">{slotLabel ? `${slotLabel} · ` : ""}{tz} · {pkg.priceLabel}</div>
+      </div>
+
+      {step === "details" ? (
+        <>
+          <label className="block">
+            <span className="mb-1.5 block text-sm text-muted">Your name</span>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Aarav Sharma" className="w-full rounded-control border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-marigold" />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-sm text-muted">Email</span>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="you@example.com" className="w-full rounded-control border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-marigold" />
+          </label>
+          <Button type="button" disabled={!name.trim() || !email.trim()} onClick={onToPay} className="w-full" style={name.trim() && email.trim() ? { backgroundColor: accent, color: onAccent } : undefined}>
+            Continue to payment
+          </Button>
+          <button type="button" onClick={onBack} className="block w-full text-center text-xs text-muted hover:text-ink">← Back to times</button>
+        </>
+      ) : (
+        <>
+          <div className="text-center">
+            <p className="mb-3 text-sm text-muted">Scan to pay <span className="font-medium text-ink">{pkg.priceLabel}</span></p>
+            <QrPreview url={paymentPreview?.qrUrl ?? null} />
+            {paymentPreview?.upiVpa && <p className="mt-3 text-sm text-ink">UPI: <span className="font-medium">{paymentPreview.upiVpa}</span></p>}
+            <p className="mt-2 text-xs text-muted">Payments go directly to the consultant — never through us.</p>
+          </div>
+          <Button type="button" onClick={onPaid} className="w-full" style={{ backgroundColor: accent, color: onAccent }}>
+            I&apos;ve paid
+          </Button>
+          <button type="button" onClick={onBack} className="block w-full text-center text-xs text-muted hover:text-ink">← Back</button>
+        </>
+      )}
+    </div>
   );
 }

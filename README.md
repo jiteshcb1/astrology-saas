@@ -3,9 +3,11 @@
 Multi-tenant SaaS for astrology consultants in India — booking, scheduling, and
 consultant-managed payments. Organization-based tenancy.
 
-> **Status: scaffold.** This is the project skeleton only. All external clients (DB, auth,
-> email, storage, Sentry, OTP) are wired but **stubbed** and safe to run with empty env vars.
-> No product features are built yet.
+> **Status: Phase 1 complete; production deploy in progress.** Marketing site, demo experience,
+> consultant onboarding/scheduling/payments, Super-Admin console, and lead capture are all built.
+> External clients still fall back to safe stubs when their env vars are empty, so the app runs
+> locally with a blank `.env.local`. Go-live target: **https://astro.hifiai.in** (see
+> [Production deployment](#production-deployment-cloudflare-workers)).
 
 ## Tech stack
 
@@ -92,15 +94,26 @@ npm run prisma:migrate   # create & apply the first migration
 Foundation models: `User`, `Organization`, `OrgMember` (+ `Role` enum), `VerificationCode`
 (OTP), plus the Auth.js models. This is **not** the full product schema.
 
-## Deploy (Cloudflare)
+## Production deployment (Cloudflare Workers)
+
+The platform deploys to Cloudflare Workers via OpenNext. `wrangler.jsonc` sets `nodejs_compat` + a recent
+`compatibility_date` for full Node APIs; there is intentionally no `middleware.ts`/`proxy.ts` and no edge-runtime
+route (Prisma + Neon need full Node).
 
 ```bash
-npm run preview   # build + run locally on the Workers runtime
-npm run deploy    # build + deploy (requires `wrangler login` and configured secrets)
+npm run preview                      # build + run locally on the Workers runtime
+# Production:
+npm run build
+npx opennextjs-cloudflare build
+npx wrangler deploy                  # (or: npm run deploy) — needs `wrangler login` + secrets
 ```
 
-`wrangler.jsonc` sets `nodejs_compat` and a recent compatibility date for full Node APIs.
-Set production secrets with `wrangler secret put <NAME>` (do not commit them).
+Set production secrets with `wrangler secret put <NAME>` (never commit them). The full, ordered go-live procedure —
+every env var, the Google OAuth redirect URIs, Hostinger DNS for **astro.hifiai.in**, Neon/R2 confirmation, Sentry
+verification, and the production checklist — is in **[`docs/6-Deployment-Runbook.md`](docs/6-Deployment-Runbook.md)**.
+
+> Go-live toggles are cleared (runbook §0): email is **active**, the temporary fixed-OTP backdoor is **disabled**
+> (real codes only), and `SUPERADMIN_EMAIL` is a real address.
 
 ## Project layout
 
