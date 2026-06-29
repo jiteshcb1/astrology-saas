@@ -26,6 +26,7 @@ export interface PlanInput {
   includedSeats: number;
   perSeatPrice: number; // paise
   features: Record<string, boolean>;
+  discountedPrice: number | null; // paise — null = no discount, 0 = Free, >0 = amount (display-only)
 }
 
 export type PlanResult = { ok: true; planId: string } | { ok: false; error: string };
@@ -43,6 +44,12 @@ function validatePlan(input: PlanInput): string | null {
   if (input.billingInterval !== "monthly" && input.billingInterval !== "yearly")
     return "Invalid billing interval.";
   if (!input.currency.trim()) return "Currency is required.";
+  if (input.discountedPrice !== null) {
+    if (!Number.isInteger(input.discountedPrice) || input.discountedPrice < 0)
+      return "Discounted price must be a non-negative whole number of paise.";
+    if (input.discountedPrice > input.price)
+      return "Discounted price can't exceed the base price.";
+  }
   return null;
 }
 
@@ -50,6 +57,7 @@ function planData(input: PlanInput) {
   return {
     name: input.name.trim(),
     price: input.price,
+    discountedPrice: input.discountedPrice,
     currency: input.currency.trim().toUpperCase(),
     billingInterval: input.billingInterval,
     includedSeats: input.includedSeats,

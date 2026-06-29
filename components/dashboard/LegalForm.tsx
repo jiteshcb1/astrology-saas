@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { type LegalFormState } from "@/lib/legal";
+import { formatStamp } from "@/lib/datetime";
 import { saveLegalAction } from "@/app/dashboard/settings/legal/actions";
 
 const PRIVACY_POINTS = [
@@ -72,7 +73,7 @@ function removePoint(html: string, point: string): string {
     .replace(/<ol>\s*<\/ol>/gi, "");
 }
 function fmtDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+  return formatStamp(iso, { withYear: true });
 }
 
 function SuggestionRow({ points, value, onAdd, onRemove }: { points: string[]; value: string; onAdd: (p: string) => void; onRemove: (p: string) => void }) {

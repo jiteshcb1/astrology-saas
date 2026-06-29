@@ -21,6 +21,22 @@ async function main() {
   console.log(`Seeded super_admin: ${user.email} (${user.id})`);
 
   await seedCatalogDefaults();
+  await seedStarterPlan();
+}
+
+// SP-7.1: guarantee a free Starter plan exists so self-serve signup always has a plan to attach.
+// Self-serve looks the free plan up by (isActive && price === 0), so this is a floor, not a hard dependency.
+// Idempotent — SubscriptionPlan.name isn't unique, so guard on findFirst rather than upsert.
+async function seedStarterPlan() {
+  const existing = await prisma.subscriptionPlan.findFirst({ where: { name: "Starter" } });
+  if (existing) {
+    console.log(`Starter plan already exists (${existing.id})`);
+    return;
+  }
+  const plan = await prisma.subscriptionPlan.create({
+    data: { name: "Starter", price: 0, includedSeats: 1, perSeatPrice: 0, currency: "INR", billingInterval: "monthly", isActive: true, features: {} },
+  });
+  console.log(`Seeded free Starter plan (${plan.id})`);
 }
 
 // Default platform catalogs (consumed by SP-2). Idempotent upsert by (type, key).

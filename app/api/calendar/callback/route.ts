@@ -5,6 +5,7 @@ import { canSee } from "@/lib/dashboard-policy";
 import { env } from "@/lib/env";
 import { exchangeCode, getPrimaryCalendar } from "@/lib/google-oauth";
 import { saveCalendarConnectionCore, statesMatch } from "@/lib/calendar";
+import { backfillMeetLinksForMember } from "@/lib/calendar-events";
 
 // Track I T-1.1 — Google's redirect after consent. Verifies the CSRF state, exchanges the code for tokens,
 // stores them ENVELOPE-ENCRYPTED, and redirects back. No token value is ever returned to the client.
@@ -52,6 +53,10 @@ export async function GET(req: NextRequest): Promise<Response> {
     session.user.id,
   );
   if (!saved.ok) return back(ret, "error=save");
+
+  // SP-7.1 — now that the calendar is (re)connected, backfill Meet links for any upcoming confirmed bookings
+  // that were confirmed before. Best-effort (never throws) and bounded, so the redirect isn't held up long.
+  await backfillMeetLinksForMember(member.organizationId, member.id);
 
   return back(ret, "connected=true");
 }

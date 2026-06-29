@@ -1,15 +1,21 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { PageHeader } from "@/components/superadmin/PageHeader";
+import { PromoForm } from "@/components/superadmin/PromoForm";
 import { formatMoney } from "@/lib/billing";
+import { getPromo } from "@/lib/promo";
 import { deletePlanAction, setPlanActiveAction } from "./actions";
 
 export default async function PlansPage() {
-  const plans = await prisma.subscriptionPlan.findMany({ orderBy: { createdAt: "desc" } });
+  const [plans, promo] = await Promise.all([
+    prisma.subscriptionPlan.findMany({ orderBy: { createdAt: "desc" } }),
+    getPromo(),
+  ]);
 
   return (
     <>
@@ -19,6 +25,15 @@ export default async function PlansPage() {
         </Link>
       </PageHeader>
       <div className="mx-auto w-full max-w-6xl px-6 py-6">
+        <Card className="mb-6">
+          <h2 className="font-display text-lg text-ink">Promotional banner</h2>
+          <p className="mb-4 mt-1 text-sm text-muted">
+            A site-wide offer line shown on top of the marketing pages. During its window, plans with a discounted
+            price show the base price struck-through on <span className="font-medium">/pricing</span>.
+          </p>
+          <PromoForm promo={promo} />
+        </Card>
+
         {plans.length === 0 ? (
           <div className="rounded-card border border-line bg-white">
             <EmptyState title="No plans yet" message="Create a subscription plan to assign to consultants." />
@@ -46,7 +61,16 @@ export default async function PlansPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-muted">{plan.billingInterval}</td>
-                    <td className="px-4 py-3">{formatMoney(plan.price, plan.currency)}</td>
+                    <td className="px-4 py-3">
+                      {plan.discountedPrice !== null ? (
+                        <span className="inline-flex items-center gap-2">
+                          <span className="text-muted line-through">{formatMoney(plan.price, plan.currency)}</span>
+                          <span className="font-medium text-green">{plan.discountedPrice === 0 ? "Free" : formatMoney(plan.discountedPrice, plan.currency)}</span>
+                        </span>
+                      ) : (
+                        formatMoney(plan.price, plan.currency)
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-muted">{plan.includedSeats}</td>
                     <td className="px-4 py-3">{formatMoney(plan.perSeatPrice, plan.currency)}</td>
                     <td className="px-4 py-3">

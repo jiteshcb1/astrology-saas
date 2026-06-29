@@ -19,6 +19,7 @@ export default async function PlanDetailPage({
   const plan = await prisma.subscriptionPlan.findUnique({ where: { id } });
   if (!plan) notFound();
 
+  const discountMode = plan.discountedPrice === null ? "none" : plan.discountedPrice === 0 ? "free" : "amount";
   const defaults = {
     name: plan.name,
     priceRupees: (plan.price / 100).toString(),
@@ -27,7 +28,9 @@ export default async function PlanDetailPage({
     includedSeats: plan.includedSeats,
     perSeatRupees: (plan.perSeatPrice / 100).toString(),
     features: JSON.stringify(plan.features, null, 2),
-  };
+    discountMode,
+    discountedRupees: plan.discountedPrice && plan.discountedPrice > 0 ? (plan.discountedPrice / 100).toString() : "",
+  } as const;
 
   return (
     <>

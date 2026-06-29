@@ -28,6 +28,7 @@ export interface DateTimeRangeProps {
   minuteStep?: number;
   hour12?: boolean;
   size?: "sm" | "md";
+  tone?: "warm" | "celestial";
   startLabel?: string;
   endLabel?: string;
 }
@@ -41,6 +42,7 @@ export function DateTimeRange({
   minuteStep = 15,
   hour12 = true,
   size = "md",
+  tone = "warm",
   startLabel = "Starts",
   endLabel = "Ends",
 }: DateTimeRangeProps) {
@@ -48,11 +50,12 @@ export function DateTimeRange({
     const v = rangeValidity(start, end, { required });
     onChange({ start, end, valid: v.valid, reason: v.reason });
   };
+  const labelTone = tone === "celestial" ? "text-stardust" : "text-muted";
 
   return (
     <div className="flex flex-wrap items-end gap-4">
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm text-muted">{startLabel}</span>
+        <span className={`text-sm ${labelTone}`}>{startLabel}</span>
         <DateTimePicker
           value={value.start}
           onChange={(s) => emit(s, reconcileEnd(s, value.end))}
@@ -61,11 +64,12 @@ export function DateTimeRange({
           minuteStep={minuteStep}
           hour12={hour12}
           size={size}
+          tone={tone}
           required={required}
         />
       </label>
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm text-muted">{endLabel}</span>
+        <span className={`text-sm ${labelTone}`}>{endLabel}</span>
         <DateTimePicker
           value={value.end}
           onChange={(e) => emit(value.start, e)}
@@ -74,6 +78,7 @@ export function DateTimeRange({
           minuteStep={minuteStep}
           hour12={hour12}
           size={size}
+          tone={tone}
           required={required}
         />
       </label>

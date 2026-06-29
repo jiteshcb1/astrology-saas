@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { PLATFORM_DOC_LABELS, type PlatformDocType } from "@/lib/platform-legal";
+import { formatStamp } from "@/lib/datetime";
 import { savePlatformLegalAction } from "@/app/superadmin/legal/actions";
 
 export interface PlatformDocDefault {
@@ -20,7 +21,7 @@ const PUBLIC_PATH: Record<PlatformDocType, string> = {
 };
 
 function fmtDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+  return formatStamp(iso, { withYear: true });
 }
 
 function DocEditor({ doc }: { doc: PlatformDocDefault }) {

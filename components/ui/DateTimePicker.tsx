@@ -27,6 +27,7 @@ export interface DateTimePickerProps {
   minuteStep?: number;
   hour12?: boolean;
   size?: "sm" | "md";
+  tone?: "warm" | "celestial";
   clearable?: boolean;
   required?: boolean;
   datePlaceholder?: string;
@@ -42,6 +43,7 @@ export function DateTimePicker({
   minuteStep = 15,
   hour12 = true,
   size = "md",
+  tone = "warm",
   clearable = false,
   required = false,
   datePlaceholder,
@@ -79,6 +81,7 @@ export function DateTimePicker({
         max={maxSplit?.date}
         disabledDate={disabledDate}
         size={size}
+        tone={tone}
         clearable={clearable}
         required={required}
         placeholder={datePlaceholder}
@@ -91,6 +94,7 @@ export function DateTimePicker({
         minuteStep={minuteStep}
         hour12={hour12}
         size={size}
+        tone={tone}
         clearable={clearable}
         required={required}
         placeholder={timePlaceholder}

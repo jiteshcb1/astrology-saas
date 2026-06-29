@@ -106,7 +106,7 @@ export async function OwnerChecklist({ orgId, slug }: { orgId: string; slug: str
     );
   }
   return (
-    <Card>
+    <Card data-coach="checklist">
       <h2 className="mb-1 font-display text-lg text-ink">Finish your setup</h2>
       <div className="mb-2 text-sm text-muted">{doneCount} / {total} complete</div>
       <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-sand-2">
@@ -122,7 +122,7 @@ export async function OwnerChecklist({ orgId, slug }: { orgId: string; slug: str
             {it.done ? null : it.href ? (
               <Link href={it.href} className="shrink-0 text-sm text-terra hover:underline">{it.cta} →</Link>
             ) : (
-              <ShareLinkButton url={publicUrl(slug)} label={it.cta} className="shrink-0 text-sm font-medium text-terra hover:underline" />
+              <span data-coach="share"><ShareLinkButton url={publicUrl(slug)} label={it.cta} className="shrink-0 text-sm font-medium text-terra hover:underline" /></span>
             )}
           </li>
         ))}

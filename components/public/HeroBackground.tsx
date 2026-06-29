@@ -12,6 +12,11 @@ const STARS = [
   { t: 74, l: 48, s: 2, d: 0.4 },
 ];
 
+// Round computed SVG coords to 2dp so server (Node/V8) and client (any JS engine) serialize identically —
+// raw Math.cos/Math.sin can differ in the last float digit across engines and trip hydration when this
+// backdrop renders inside a Client Component (e.g. /pricing's PricingView).
+const q = (n: number) => Math.round(n * 100) / 100;
+
 export function HeroBackground({ style, tint }: { style: string; tint: string }) {
   const showStars = style === "stars" || style === "stars_zodiac";
   const showZodiac = style === "zodiac" || style === "stars_zodiac";
@@ -32,14 +37,14 @@ export function HeroBackground({ style, tint }: { style: string; tint: string })
             <circle cx="200" cy="200" r="150" />
             {Array.from({ length: 12 }).map((_, i) => {
               const a = (i * 30 * Math.PI) / 180;
-              return <line key={i} x1={200 + 150 * Math.cos(a)} y1={200 + 150 * Math.sin(a)} x2={200 + 190 * Math.cos(a)} y2={200 + 190 * Math.sin(a)} />;
+              return <line key={i} x1={q(200 + 150 * Math.cos(a))} y1={q(200 + 150 * Math.sin(a))} x2={q(200 + 190 * Math.cos(a))} y2={q(200 + 190 * Math.sin(a))} />;
             })}
           </g>
           <g className="zodiac-ring-rev" strokeWidth="0.7">
             <circle cx="200" cy="200" r="120" />
             {Array.from({ length: 12 }).map((_, i) => {
               const a = (i * 30 * Math.PI) / 180;
-              return <circle key={i} cx={200 + 120 * Math.cos(a)} cy={200 + 120 * Math.sin(a)} r="2" fill="currentColor" stroke="none" />;
+              return <circle key={i} cx={q(200 + 120 * Math.cos(a))} cy={q(200 + 120 * Math.sin(a))} r="2" fill="currentColor" stroke="none" />;
             })}
           </g>
         </svg>

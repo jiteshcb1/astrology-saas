@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { CosmicLoader } from "@/components/ui/CosmicLoader";
 import { DatePicker } from "@/components/ui/DatePicker";
+import { TimeSelect } from "@/components/ui/TimeSelect";
 import { PaymentStep, type PaidOutcome } from "@/components/public/PaymentStep";
 import { resolveBrand } from "@/lib/branding";
 import { validateIntake, validateSeeker } from "@/lib/booking-validate";
@@ -73,6 +74,8 @@ export function BookingFlow({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  // Date questions (e.g. date of birth) can be picked only up to yesterday — never today or the future.
+  const maxDob = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
   const [remaining, setRemaining] = useState(0);
   const [photoError, setPhotoError] = useState(false);
   const [shared, setShared] = useState(false);
@@ -238,7 +241,9 @@ export function BookingFlow({
                             {q.options.map((o) => <option key={o} value={o}>{o}</option>)}
                           </select>
                         ) : q.fieldType === "date" ? (
-                          <DatePicker value={answers[q.id] ?? ""} onChange={(v) => setAnswer(q.id, v)} />
+                          <DatePicker value={answers[q.id] ?? ""} onChange={(v) => setAnswer(q.id, v)} max={maxDob} clearable placeholder="Select date" />
+                        ) : q.fieldType === "time" ? (
+                          <TimeSelect value={answers[q.id] ?? ""} onChange={(v) => setAnswer(q.id, v)} />
                         ) : (
                           <input
                             value={answers[q.id] ?? ""}

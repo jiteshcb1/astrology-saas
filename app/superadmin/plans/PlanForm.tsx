@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -16,6 +16,8 @@ export interface PlanFormDefaults {
   includedSeats: number;
   perSeatRupees: string;
   features: string;
+  discountMode: "none" | "free" | "amount";
+  discountedRupees: string;
 }
 
 export function PlanForm({
@@ -30,6 +32,7 @@ export function PlanForm({
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
+  const [discountMode, setDiscountMode] = useState<string>(defaults?.discountMode ?? "none");
   return (
     <form action={formAction} className="space-y-3">
       {planId && <input type="hidden" name="planId" value={planId} />}
@@ -68,6 +71,18 @@ export function PlanForm({
           defaultValue={defaults?.perSeatRupees ?? "0"}
           required
         />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <Select name="discountMode" label="Discount (display-only)" value={discountMode} onChange={(e) => setDiscountMode(e.target.value)}>
+          <option value="none">No discount</option>
+          <option value="free">Free</option>
+          <option value="amount">Custom amount</option>
+        </Select>
+        {discountMode === "amount" ? (
+          <Input name="discountedPrice" label="Discounted price (₹)" type="number" step="0.01" min="0" defaultValue={defaults?.discountedRupees ?? ""} required />
+        ) : (
+          <div />
+        )}
       </div>
       <Input name="currency" label="Currency" defaultValue={defaults?.currency ?? "INR"} required />
       <label className="block">

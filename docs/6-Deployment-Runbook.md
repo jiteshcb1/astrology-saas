@@ -31,9 +31,22 @@ Also note: `sendEmail` short-circuits under the test runner (`process.env.VITEST
 ```bash
 npm run lint
 npm run build
-npx opennextjs-cloudflare build      # must complete; produces .open-next/worker.js
+npm run cf:build                     # opennextjs-cloudflare build + trim unused Prisma WASM (see §1a)
 wrangler login                       # [manual] interactive — authorizes wrangler to your Cloudflare account
 ```
+
+### 1a. Bundle size — Prisma WASM trim + the Workers plan
+The deploy target is **Cloudflare Workers via OpenNext** (this adapter does **not** support Cloudflare Pages — its
+CLI only does Workers; the build emits `.open-next/worker.js`, not a Pages `_worker.js`. `wrangler pages deploy`
+would ship a server-less, broken site). Cloudflare Workers caps the **gzipped** bundle at **3 MiB (free) / 10 MiB
+(paid)**.
+
+Prisma 7 bundles its query-compiler WASM for *five* databases (~75 MB raw); we use only Postgres.
+`scripts/trim-prisma-wasm.mjs` (run automatically by `npm run cf:build`) empties the four unused providers' WASM:
+**~20 MiB → ~5.5 MiB gzipped**. That's still over the **free 3 MiB** limit (the app server bundle is 3.78 MiB gz on
+its own — free is unreachable for this app), but comfortably under the **Paid 10 MiB** limit. **Production therefore
+requires the Workers Paid plan ($5/mo).** Verify the size anytime with `npx wrangler deploy --dry-run` (look at the
+`gzip:` line).
 
 ---
 
@@ -41,6 +54,8 @@ wrangler login                       # [manual] interactive — authorizes wrang
 
 Set **secrets** with `wrangler secret put <NAME>` (encrypted, never in the repo). Set **plaintext vars** either with
 `wrangler secret put` too (simplest) or as a `"vars": { ... }` block in `wrangler.jsonc`. Sensitive = Secret.
+> This is a **Workers** project, so secrets use **`wrangler secret put`** — **not** `wrangler pages secret put`
+> (that command only applies to Cloudflare Pages projects, which we are not using).
 
 | Variable | Type | Prod value / notes | Differs from dev? |
 | --- | --- | --- | --- |
@@ -170,9 +185,12 @@ Use only if you can't delegate the subdomain.
 
 ```bash
 npm run build
-npx opennextjs-cloudflare build
-npx wrangler deploy                 # or: npm run deploy  (build + deploy)
+npm run cf:build                    # opennextjs-cloudflare build + Prisma WASM trim (§1a)
+npx wrangler deploy                 # Workers — or: npm run deploy  (cf:build + deploy)
 ```
+> If `wrangler deploy` reports the script exceeds the size limit, you're on the **free** plan — upgrade the Worker to
+> **Workers Paid ($5/mo)** (the trimmed ~5.5 MiB gz fits its 10 MiB limit). This is **`wrangler deploy`** (Workers),
+> **not** `wrangler pages deploy`.
 
 ---
 

@@ -5,6 +5,7 @@ import { formatMoney } from "@/lib/money";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { PageHeader } from "@/components/superadmin/PageHeader";
+import { ReceiptDateFilters } from "@/components/dashboard/ReceiptDateFilters";
 
 function fmt(iso: string): string {
   return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }).format(new Date(iso));
@@ -38,14 +39,7 @@ export default async function ReceiptsPage({ searchParams }: { searchParams: Pro
       <PageHeader title="Receipts" subtitle="Payment records & receipts — no seeker details" />
       <div className="mx-auto w-full max-w-5xl px-6 py-6">
         <form method="GET" className="mb-4 flex flex-wrap items-end gap-3">
-          <label className="block text-sm">
-            <span className="mb-1.5 block text-muted">From</span>
-            <input type="date" name="from" defaultValue={effFrom} className="rounded-control border border-line px-3 py-2 text-sm outline-none focus:border-marigold" />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1.5 block text-muted">To</span>
-            <input type="date" name="to" defaultValue={effTo} className="rounded-control border border-line px-3 py-2 text-sm outline-none focus:border-marigold" />
-          </label>
+          <ReceiptDateFilters from={effFrom} to={effTo} />
           <label className="block text-sm">
             <span className="mb-1.5 block text-muted">Status</span>
             <select name="status" defaultValue={status ?? "all"} className="rounded-control border border-line px-3 py-2 text-sm outline-none focus:border-marigold">

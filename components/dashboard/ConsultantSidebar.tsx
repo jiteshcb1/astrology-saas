@@ -81,7 +81,7 @@ export function ConsultantSidebar({ email, role }: { email: string; role: string
         Jyoti
       </div>
 
-      <nav className="flex flex-col gap-0.5">
+      <nav data-coach="nav" className="flex flex-col gap-0.5">
         {NAV.map((item) =>
           item.soon ? (
             <div

@@ -14,9 +14,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: `${who} — Book a consultation`, description: data.profile.bio || undefined };
 }
 
-export default async function PublicBookingRoute({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ demo?: string }> }) {
+export default async function PublicBookingRoute({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ demo?: string; pkg?: string }> }) {
   const { slug } = await params;
-  const { demo: demoParam } = await searchParams;
+  const { demo: demoParam, pkg } = await searchParams;
   const data = await getActiveOrgBySlug(slug);
   if (!data) return <PublicOffline />;
   const demo = demoParam === "1" || demoParam === "true";
@@ -53,6 +53,7 @@ export default async function PublicBookingRoute({ params, searchParams }: { par
       onContinue={demo ? undefined : onContinue}
       demo={demo}
       paymentPreview={paymentPreview}
+      initialPackageSlug={pkg}
     />
   );
 }

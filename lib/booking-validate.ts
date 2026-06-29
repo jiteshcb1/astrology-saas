@@ -10,7 +10,7 @@ export interface IntakeQuestion {
 }
 
 // ─── Intake question shapes (client-safe; used by the builder + the public form + server cores) ──
-export const QUESTION_FIELD_TYPES = ["short_text", "long_text", "select", "date", "email", "phone"] as const;
+export const QUESTION_FIELD_TYPES = ["short_text", "long_text", "select", "date", "time", "email", "phone"] as const;
 export type QuestionFieldType = (typeof QUESTION_FIELD_TYPES)[number];
 export const QUESTION_REQUIREMENTS = ["required", "optional", "hidden"] as const;
 export type QuestionRequirement = (typeof QUESTION_REQUIREMENTS)[number];
@@ -18,10 +18,20 @@ export const QUESTION_TYPE_LABELS: Record<QuestionFieldType, string> = {
   short_text: "Short text",
   long_text: "Paragraph",
   select: "Dropdown",
-  date: "Date",
+  date: "Date (past only)",
+  time: "Time (HH:MM AM/PM)",
   email: "Email",
   phone: "Phone",
 };
+
+// Local "today" as YYYY-MM-DD (ISO-date string compare is chronological). Date answers must be strictly
+// before this — i.e. up to yesterday — so a date of birth can't be today or in the future.
+export function todayISODate(): string {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+}
+// Canonical 24h time "HH:mm" (00:00–23:59).
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export interface QuestionInput {
   label: string;
@@ -72,7 +82,10 @@ export function validateIntake(questions: IntakeQuestion[], answers: Record<stri
     if (q.fieldType === "email" && !isValidEmail(raw)) errors[q.id] = "Enter a valid email address.";
     else if (q.fieldType === "phone" && !isValidPhone(raw)) errors[q.id] = "Enter a valid phone number.";
     else if (q.fieldType === "select" && q.options.length > 0 && !q.options.includes(raw)) errors[q.id] = "Choose one of the options.";
-    else if (q.fieldType === "date" && Number.isNaN(Date.parse(raw))) errors[q.id] = "Enter a valid date.";
+    else if (q.fieldType === "date") {
+      if (Number.isNaN(Date.parse(raw))) errors[q.id] = "Enter a valid date.";
+      else if (raw >= todayISODate()) errors[q.id] = "Please choose a date in the past (up to yesterday).";
+    } else if (q.fieldType === "time" && !TIME_RE.test(raw)) errors[q.id] = "Choose a valid time.";
   }
   return errors;
 }

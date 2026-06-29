@@ -17,7 +17,9 @@ export default async function ConsultantsPage({ searchParams }: { searchParams: 
       ? { status: "suspended", isDemoOrg: false }
       : filter === "active"
         ? { subscription: { is: { status: "active" } }, isDemoOrg: false }
-        : { isDemoOrg: false };
+        : filter === "self_serve"
+          ? { source: "self_serve", isDemoOrg: false } // SP-7.1 — organic signups
+          : { isDemoOrg: false };
   const orgs = await prisma.organization.findMany({
     where,
     orderBy: { createdAt: "desc" },
@@ -26,7 +28,8 @@ export default async function ConsultantsPage({ searchParams }: { searchParams: 
       subscription: { include: { plan: { select: { name: true } } } },
     },
   });
-  const filterLabel = filter === "suspended" ? "Suspended" : filter === "active" ? "Active subscriptions" : null;
+  const filterLabel =
+    filter === "suspended" ? "Suspended" : filter === "active" ? "Active subscriptions" : filter === "self_serve" ? "Self-serve signups" : null;
 
   return (
     <>
@@ -71,6 +74,9 @@ export default async function ConsultantsPage({ searchParams }: { searchParams: 
                           {org.name}
                         </Link>
                         <div className="text-xs text-muted">/{org.slug}</div>
+                        {org.source === "self_serve" && (
+                          <span className="mt-1 inline-block rounded-full bg-marigold/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-marigold">Self-serve</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-muted">{org.owner?.email ?? "—"}</td>
                       <td className="px-4 py-3">

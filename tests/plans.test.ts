@@ -20,6 +20,7 @@ const basePlanInput = (over: Partial<PlanInput> = {}): PlanInput => ({
   includedSeats: 1,
   perSeatPrice: 19900,
   features: { teams: true },
+  discountedPrice: null,
   ...over,
 });
 
@@ -67,6 +68,22 @@ d("Plans + subscriptions (SP-1.4)", () => {
   it("rejects invalid input (negative price)", async () => {
     const result = await createPlanCore(basePlanInput({ price: -1 }), actorId);
     expect(result.ok).toBe(false);
+  });
+
+  it("accepts a valid discountedPrice (and Free), rejects a discount above the base price", async () => {
+    const ok = await createPlanCore(basePlanInput({ name: `${PREFIX}disc`, price: 49900, discountedPrice: 24900 }), actorId);
+    expect(ok.ok).toBe(true);
+    if (ok.ok) {
+      createdPlanIds.push(ok.planId);
+      const plan = await prisma.subscriptionPlan.findUnique({ where: { id: ok.planId } });
+      expect(plan?.discountedPrice).toBe(24900);
+    }
+    const free = await createPlanCore(basePlanInput({ name: `${PREFIX}free`, price: 49900, discountedPrice: 0 }), actorId);
+    expect(free.ok).toBe(true);
+    if (free.ok) createdPlanIds.push(free.planId);
+
+    const bad = await createPlanCore(basePlanInput({ name: `${PREFIX}bad`, price: 49900, discountedPrice: 60000 }), actorId);
+    expect(bad.ok).toBe(false);
   });
 
   it("updates a plan and writes an audit entry", async () => {

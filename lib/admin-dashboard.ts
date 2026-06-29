@@ -28,12 +28,13 @@ export interface DashboardMetrics {
   consultantsDelta: Delta | null;
   activeSubsDelta: Delta | null; // MRR intentionally has NO delta (no historical snapshot)
   newLeadsThisWeek: number; // SP-6.3 dashboard signal
+  selfServeSignupsThisWeek: number; // SP-7.1 — organic self-serve signups in the last 7 days
 }
 
 export async function getDashboardMetrics(now: Date = new Date()): Promise<DashboardMetrics> {
   const since = new Date(now.getTime() - 30 * DAY_MS);
   // SP-6.2 — the platform-owned demo org is excluded from all org counts/trends.
-  const [totalConsultants, activeSubscriptions, suspendedOrgs, activeSubs, newConsultants, newActiveSubs, oldest, newLeadsThisWeek] = await Promise.all([
+  const [totalConsultants, activeSubscriptions, suspendedOrgs, activeSubs, newConsultants, newActiveSubs, oldest, newLeadsThisWeek, selfServeSignupsThisWeek] = await Promise.all([
     prisma.organization.count({ where: { isDemoOrg: false } }),
     prisma.subscription.count({ where: { status: "active" } }),
     prisma.organization.count({ where: { status: "suspended", isDemoOrg: false } }),
@@ -42,6 +43,7 @@ export async function getDashboardMetrics(now: Date = new Date()): Promise<Dashb
     prisma.subscription.count({ where: { status: "active", createdAt: { gte: since } } }),
     prisma.organization.findFirst({ where: { isDemoOrg: false }, orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
     prisma.lead.count({ where: { status: "new", createdAt: { gte: new Date(now.getTime() - 7 * DAY_MS) } } }),
+    prisma.organization.count({ where: { source: "self_serve", isDemoOrg: false, createdAt: { gte: new Date(now.getTime() - 7 * DAY_MS) } } }),
   ]);
   const mrrPaise = activeSubs.reduce((sum, s) => sum + monthlyPaise(s.plan, s.seatCount), 0);
   const platformYoung = !oldest || now.getTime() - oldest.createdAt.getTime() < 30 * DAY_MS;
@@ -53,7 +55,15 @@ export async function getDashboardMetrics(now: Date = new Date()): Promise<Dashb
     consultantsDelta: platformYoung ? null : { value: newConsultants },
     activeSubsDelta: platformYoung ? null : { value: newActiveSubs },
     newLeadsThisWeek,
+    selfServeSignupsThisWeek,
   };
+}
+
+// SP-7.1 — organic self-serve signups in the last 7 days (for the super-admin "N new signups" banner).
+export function countSelfServeSignupsThisWeek(now: Date = new Date()) {
+  return prisma.organization.count({
+    where: { source: "self_serve", isDemoOrg: false, createdAt: { gte: new Date(now.getTime() - 7 * DAY_MS) } },
+  });
 }
 
 export interface NearingRenewalItem { orgId: string; orgName: string; planName: string; currentPeriodEnd: Date | null; amountPaise: number }

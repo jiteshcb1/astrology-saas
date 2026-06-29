@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatMoney } from "@/lib/money";
-import { getDashboardMetrics, getDashboardSignals, getSignupTrend } from "@/lib/admin-dashboard";
+import { getDashboardMetrics, getDashboardSignals, getSignupTrend, countSelfServeSignupsThisWeek } from "@/lib/admin-dashboard";
 import { countNewLeadsThisWeek } from "@/lib/leads";
 import { Card } from "@/components/ui/Card";
 import { StatusChip } from "@/components/ui/StatusChip";
@@ -62,7 +62,7 @@ function SignalCard({ title, rows, hasMore }: { title: string; rows: Row[]; hasM
 
 export async function SignalSection() {
   const now = new Date();
-  const [s, newLeads] = await Promise.all([getDashboardSignals(now), countNewLeadsThisWeek(now)]);
+  const [s, newLeads, selfServe] = await Promise.all([getDashboardSignals(now), countNewLeadsThisWeek(now), countSelfServeSignupsThisWeek(now)]);
 
   // SP-6.3 — "N new leads this week" signal (only when > 0).
   const leadBanner = newLeads > 0 ? (
@@ -72,6 +72,21 @@ export async function SignalSection() {
           <div>
             <h2 className="font-display text-lg text-ink">{newLeads} new lead{newLeads === 1 ? "" : "s"} this week</h2>
             <p className="text-sm text-muted">Fresh inquiries from the get-started form — reach out on WhatsApp.</p>
+          </div>
+          <span className="shrink-0 text-terra">View →</span>
+        </div>
+      </Card>
+    </Link>
+  ) : null;
+
+  // SP-7.1 — "N self-serve signups this week" signal (only when > 0).
+  const selfServeBanner = selfServe > 0 ? (
+    <Link href="/superadmin/consultants?filter=self_serve" className="block">
+      <Card className="border-l-4 border-l-green transition hover:shadow-md">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display text-lg text-ink">{selfServe} self-serve signup{selfServe === 1 ? "" : "s"} this week</h2>
+            <p className="text-sm text-muted">New consultants who signed up on their own and are on the free Starter plan.</p>
           </div>
           <span className="shrink-0 text-terra">View →</span>
         </div>
@@ -91,6 +106,7 @@ export async function SignalSection() {
     return (
       <div className="space-y-4">
         {leadBanner}
+        {selfServeBanner}
         <Card className="border-l-4 border-l-marigold">
           <div className="flex items-center gap-4">
             <svg width="44" height="44" viewBox="0 0 48 48" fill="none" aria-hidden>
@@ -113,6 +129,7 @@ export async function SignalSection() {
   return (
     <div className="space-y-4">
       {leadBanner}
+      {selfServeBanner}
       <div className="grid gap-4 lg:grid-cols-2">
         <SignalCard
           title="Nearing renewal"

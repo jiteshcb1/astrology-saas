@@ -29,17 +29,21 @@ function CheckCircle() {
 
 export function CalendarSettings({
   view,
+  tokenOk = true,
   connectHref,
   disconnectAction,
   notice,
 }: {
   view: SafeCalendarView | null;
+  tokenOk?: boolean;
   connectHref: string;
   disconnectAction: () => Promise<void>;
   notice: { kind: "success" | "error"; text: string } | null;
 }) {
   const connected = Boolean(view?.connected);
   const errored = view?.status === "error";
+  // Connected in the DB but the token failed to validate → prompt a reconnect inline.
+  const unhealthy = connected && !tokenOk;
 
   return (
     <div className="space-y-4">
@@ -54,8 +58,15 @@ export function CalendarSettings({
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <CheckCircle />
-              <h2 className="font-display text-lg text-ink">Connected</h2>
+              <h2 className="font-display text-lg text-ink">{view?.googleEmail ? `Connected as ${view.googleEmail}` : "Connected"}</h2>
             </div>
+            {unhealthy && (
+              <div className="rounded-control border border-terra/40 bg-terra/10 px-3 py-2.5 text-sm text-terra">
+                <p className="font-medium">This connection needs attention.</p>
+                <p className="mt-0.5 text-xs">We couldn&apos;t verify access to your Google Calendar — Meet links and busy-time blocking may not work. Please reconnect.</p>
+                <a href={connectHref} className="mt-2 inline-block rounded-control bg-marigold px-3 py-1.5 text-xs font-semibold text-night transition hover:-translate-y-0.5">Reconnect</a>
+              </div>
+            )}
             <dl className="space-y-2 text-sm">
               {view?.googleEmail && (
                 <div className="flex justify-between gap-4">

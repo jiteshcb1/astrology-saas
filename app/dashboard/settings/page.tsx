@@ -4,6 +4,7 @@ import { requireSection } from "@/lib/rbac";
 import { getProfile } from "@/lib/consultant-profile";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/superadmin/PageHeader";
+import { replayToursAction } from "@/components/dashboard/coaching/actions";
 
 export default async function SettingsPage() {
   const { role, orgId } = await requireSection("settings");
@@ -46,6 +47,17 @@ export default async function SettingsPage() {
             </Card>
           </Link>
         </div>
+
+        {/* SP-7.1 — replay the first-run guided coach marks. */}
+        <form action={replayToursAction} className="mt-4">
+          <Card className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg text-ink">Product tour</h2>
+              <p className="mt-1 text-sm text-muted">New here, or want a refresher? Replay the guided coach marks across your dashboard.</p>
+            </div>
+            <button type="submit" className="shrink-0 rounded-control border border-line px-4 py-2 text-sm text-ink transition hover:border-marigold">Replay product tour</button>
+          </Card>
+        </form>
       </div>
     </>
   );

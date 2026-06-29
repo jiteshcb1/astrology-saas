@@ -57,6 +57,8 @@ model User {
   passwordHash  String?
   emailVerified DateTime?   @db.Timestamptz(6)
   image         String?
+  // SP-7.1 first-run coach marks: per-user "seen" flags keyed by area, e.g. { "dashboard": true }.
+  coachingSeen  Json        @default("{}")
   createdAt     DateTime    @default(now()) @db.Timestamptz(6)
   updatedAt     DateTime    @updatedAt @db.Timestamptz(6)
 
@@ -76,6 +78,9 @@ model Organization {
   // Unique + normalized to lowercase at write time. `citext` is a future option.
   slug        String      @unique
   status      OrgStatus   @default(active)
+  // SP-7.1 provenance: "admin_provisioned" (super-admin wizard) vs "self_serve" (signup). Powers the
+  // organic-signups signal + a Super-Admin list chip/filter.
+  source      String      @default("admin_provisioned")
   // Platform-owned demo consultant (SP-6.2). Excluded from Super-Admin metrics + billing.
   isDemoOrg   Boolean     @default(false)
   createdAt   DateTime    @default(now()) @db.Timestamptz(6)
@@ -140,6 +145,19 @@ model OrgInvite {
   @@index([organizationId, status])
   @@index([email])
   @@map("org_invites")
+}
+
+// SP-7.1 self-serve signup rate-limit ledger (DB-counted, mirrors verification_codes). One row per
+// org-provision attempt; counted per email + per requestIp within a rolling window to cap abuse.
+model SignupAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  requestIp String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([email, createdAt])
+  @@index([requestIp, createdAt])
+  @@map("signup_attempts")
 }
 
 // ─── Auth.js (NextAuth) models ───────────────────────────────────────────────
@@ -244,6 +262,8 @@ model SubscriptionPlan {
   id              String          @id @default(cuid())
   name            String
   price           Int // paise — base price, includes `includedSeats` seats
+  // Optional promo price (display-only). null = no discount, 0 = Free, >0 = discounted paise.
+  discountedPrice Int?
   currency        String          @default("INR")
   billingInterval BillingInterval @default(monthly)
   includedSeats   Int             @default(1)

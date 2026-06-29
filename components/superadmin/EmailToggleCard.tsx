@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { Card } from "@/components/ui/Card";
+import { formatStamp } from "@/lib/datetime";
 import { setEmailSettingAction } from "@/app/superadmin/settings/email-notifications/actions";
 
 function fmtDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+  return formatStamp(iso, { withYear: true });
 }
 
 export function EmailToggleCard({

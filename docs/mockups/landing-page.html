@@ -6,134 +6,197 @@
 <title>Jyoti — Astrology Consulting Platform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet" />
 <style>
-  :root {
-    --night:#14122b; --night-2:#1d1a3d; --ink:#2a2748; --marigold:#e8a33d;
-    --marigold-soft:#f0c074; --sand:#f6efe2; --sand-2:#efe5d2; --terra:#b9543a;
-    --rose:#d98b6f; --star:rgba(240,192,116,0.9);
-    --line-light:rgba(42,39,72,0.12); --line-dark:rgba(240,224,192,0.16);
+  :root{
+    --cosmos:#0b1026; --twilight:#2d1b4e; --aurora:#7c5cff; --aurora-soft:#a78bff;
+    --gold:#ffd66b; --nebula:#ff8fb1; --moonstone:#f4f5ff; --stardust:#a8aac4;
+    --ink2:#1a1530; --line:rgba(244,245,255,0.12);
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   html{scroll-behavior:smooth;}
-  body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--ink);line-height:1.6;overflow-x:hidden;}
-  .display{font-family:'Fraunces',serif;}
-  .dev{font-family:'Noto Sans Devanagari',sans-serif;}
+  body{font-family:'Inter',sans-serif;background:var(--cosmos);color:var(--moonstone);line-height:1.6;overflow-x:hidden;}
+  body.dev{font-family:'Noto Sans Devanagari',sans-serif;}
+  .clash{font-family:'Clash Display','Inter',sans-serif;}
+  .fr{font-family:'Fraunces',serif;}
   a{text-decoration:none;color:inherit;}
+  .cursor-glow{position:fixed;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(124,92,255,0.16),transparent 65%);pointer-events:none;transform:translate(-50%,-50%);z-index:1;opacity:0;transition:opacity .3s;mix-blend-mode:screen;}
 
   /* NAV */
-  nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
-    padding:16px 7vw;background:rgba(20,18,43,0.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line-dark);}
-  .logo{display:flex;align-items:center;gap:10px;color:var(--sand);font-family:'Marcellus',serif;font-size:1.35rem;letter-spacing:.5px;}
-  .logo .mark{color:var(--marigold);display:grid;place-items:center;}
-  .nav-links{display:flex;align-items:center;gap:26px;}
-  .nav-links a.link{color:rgba(246,239,226,0.75);font-size:.92rem;transition:color .2s;}
-  .nav-links a.link:hover{color:var(--marigold-soft);}
-  .lang-toggle{display:flex;border:1px solid var(--line-dark);border-radius:999px;overflow:hidden;}
-  .lang-toggle button{background:transparent;border:none;color:rgba(246,239,226,0.6);padding:5px 12px;font-size:.78rem;cursor:pointer;font-family:inherit;transition:all .2s;}
-  .lang-toggle button.active{background:var(--marigold);color:var(--night);font-weight:600;}
-  .btn-primary{background:var(--marigold);color:var(--night);border:none;padding:11px 22px;border-radius:999px;font-weight:600;font-size:.92rem;cursor:pointer;font-family:inherit;transition:transform .2s,box-shadow .2s;box-shadow:0 6px 20px rgba(232,163,61,.25);}
-  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(232,163,61,.35);}
-  .btn-ghost-light{background:transparent;color:var(--sand);border:1px solid var(--line-dark);padding:11px 22px;border-radius:999px;font-weight:500;font-size:.92rem;cursor:pointer;font-family:inherit;transition:all .2s;}
-  .btn-ghost-light:hover{border-color:var(--marigold);color:var(--marigold-soft);}
-  @media(max-width:860px){.nav-links a.link{display:none;}}
+  nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:15px 7vw;background:rgba(11,16,38,0.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+  .logo{display:flex;align-items:center;gap:9px;color:var(--moonstone);font-family:'Clash Display',sans-serif;font-weight:600;font-size:1.3rem;}
+  .logo .mark{color:var(--aurora);display:grid;place-items:center;}
+  .nav-links{display:flex;align-items:center;gap:22px;}
+  .nav-links a.link{color:var(--stardust);font-size:.9rem;transition:color .2s;}
+  .nav-links a.link:hover{color:var(--moonstone);}
+  .lang-toggle{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;}
+  .lang-toggle button{background:transparent;border:none;color:var(--stardust);padding:5px 12px;font-size:.78rem;cursor:pointer;font-family:inherit;transition:all .2s;}
+  .lang-toggle button.active{background:var(--aurora);color:#fff;font-weight:600;}
+  .btn-primary{background:var(--aurora);color:#fff;border:none;padding:11px 22px;border-radius:999px;font-weight:600;font-size:.9rem;cursor:pointer;font-family:inherit;transition:transform .2s,box-shadow .2s;}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(124,92,255,.4);}
+  .btn-ghost{background:transparent;color:var(--moonstone);border:1px solid var(--line);padding:11px 22px;border-radius:999px;font-weight:500;font-size:.9rem;cursor:pointer;font-family:inherit;transition:all .2s;}
+  .btn-ghost:hover{border-color:var(--aurora);}
+  @media(max-width:980px){.nav-links a.link,.nav-links a.signin{display:none;}}
 
   /* HERO */
-  .hero{position:relative;background:radial-gradient(ellipse at 50% -10%,#26224d 0%,var(--night) 55%,#0f0d22 100%);color:var(--sand);padding:96px 7vw 130px;overflow:hidden;text-align:center;}
-  .sky{position:absolute;top:50%;left:50%;width:820px;height:820px;max-width:160vw;max-height:160vw;pointer-events:none;opacity:.5;will-change:transform;}
+  .hero{position:relative;background:radial-gradient(ellipse at 50% -10%,#2d1b4e 0%,#14122b 45%,#0b1026 100%);padding:96px 7vw 110px;overflow:hidden;text-align:center;}
+  .sky{position:absolute;top:50%;left:50%;width:820px;height:820px;max-width:160vw;max-height:160vw;pointer-events:none;opacity:.6;will-change:transform;}
   .sky .ring{animation:spin 140s linear infinite;transform-origin:50% 50%;}
   .sky .ring.rev{animation:spin 100s linear infinite reverse;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  @media(prefers-reduced-motion:reduce){.sky .ring,.sky .ring.rev{animation:none;}}
-  .stars span{position:absolute;width:3px;height:3px;background:var(--star);border-radius:50%;box-shadow:0 0 6px 1px rgba(240,192,116,.6);animation:twinkle 4s ease-in-out infinite;}
+  .stars span{position:absolute;width:3px;height:3px;background:var(--gold);border-radius:50%;box-shadow:0 0 6px 1px rgba(255,214,107,.6);animation:twinkle 4s ease-in-out infinite;}
   @keyframes twinkle{0%,100%{opacity:.3;}50%{opacity:1;}}
-  .hero-inner{position:relative;z-index:2;max-width:900px;margin:0 auto;}
-  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;letter-spacing:2px;text-transform:uppercase;color:var(--marigold-soft);border:1px solid var(--line-dark);padding:7px 16px;border-radius:999px;margin-bottom:26px;}
-  .hero h1{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(2.6rem,6vw,4.8rem);line-height:1.07;letter-spacing:-.5px;margin-bottom:22px;}
-  .hero h1 em{font-style:italic;color:var(--marigold);}
-  .hero p.sub{font-size:clamp(1.02rem,2vw,1.22rem);color:rgba(246,239,226,.78);max-width:620px;margin:0 auto 36px;}
-  .hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
-  .hero-note{margin-top:18px;font-size:.85rem;color:rgba(246,239,226,.5);}
-
-  /* interactive stat orbits instead of plain row */
-  .orbits{position:relative;z-index:2;margin-top:74px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap;}
-  .orbit{position:relative;background:rgba(246,239,226,0.04);border:1px solid var(--line-dark);border-radius:18px;padding:22px 28px;min-width:150px;transition:transform .3s,border-color .3s,background .3s;cursor:default;}
-  .orbit:hover{transform:translateY(-6px);border-color:var(--marigold);background:rgba(232,163,61,0.08);}
-  .orbit b{color:var(--marigold-soft);font-family:'Fraunces',serif;font-size:2rem;display:block;line-height:1;}
-  .orbit span{font-size:.85rem;color:rgba(246,239,226,.65);}
+  @media(prefers-reduced-motion:reduce){.sky .ring,.sky .ring.rev,.stars span,.float{animation:none!important;}.reveal{opacity:1!important;transform:none!important;}}
+  .hero-inner{position:relative;z-index:2;max-width:820px;margin:0 auto;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--aurora-soft);border:1px solid var(--line);padding:7px 16px;border-radius:999px;margin-bottom:24px;}
+  .hero h1{font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(2.6rem,6vw,4.6rem);line-height:1.07;letter-spacing:-.5px;margin-bottom:20px;}
+  .hero h1 em{font-style:normal;color:var(--aurora);}
+  .hero p.sub{font-size:clamp(1rem,2vw,1.18rem);color:var(--stardust);max-width:600px;margin:0 auto 32px;}
+  .hero-cta{display:flex;gap:13px;justify-content:center;flex-wrap:wrap;}
+  .hero-note{margin-top:16px;font-size:.84rem;color:rgba(168,170,196,.7);}
+  .orbits{position:relative;z-index:2;margin-top:62px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+  .orbit{background:rgba(244,245,255,0.04);border:1px solid var(--line);border-radius:18px;padding:20px 28px;min-width:140px;transition:all .3s;}
+  .orbit:hover{transform:translateY(-6px);border-color:var(--aurora);background:rgba(124,92,255,0.1);}
+  .orbit b{color:var(--gold);font-family:'Clash Display',sans-serif;font-weight:600;font-size:2rem;display:block;line-height:1;}
+  .orbit span{font-size:.85rem;color:var(--stardust);}
 
   /* SECTIONS */
-  section.block{padding:96px 7vw;position:relative;}
+  section.block{padding:88px 7vw;position:relative;}
   .reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease;}
   .reveal.in{opacity:1;transform:none;}
-  .sec-eyebrow{text-align:center;font-size:.78rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--terra);margin-bottom:14px;}
-  .sec-title{text-align:center;font-family:'Fraunces',serif;font-weight:500;font-size:clamp(1.9rem,4vw,3rem);line-height:1.15;margin-bottom:14px;color:var(--ink);}
-  .sec-lead{text-align:center;max-width:580px;margin:0 auto 60px;color:rgba(42,39,72,.7);}
+  .sec-eyebrow{text-align:center;font-size:.74rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--aurora-soft);margin-bottom:12px;}
+  .sec-title{text-align:center;font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(1.8rem,4vw,2.7rem);line-height:1.15;margin-bottom:12px;color:var(--moonstone);}
+  .sec-lead{text-align:center;max-width:560px;margin:0 auto 48px;color:var(--stardust);}
 
-  /* HOW IT WORKS — vertical connected timeline (not cards) */
-  .timeline{max-width:760px;margin:0 auto;position:relative;}
-  .timeline::before{content:"";position:absolute;left:31px;top:10px;bottom:10px;width:2px;background:linear-gradient(var(--marigold),var(--terra));opacity:.35;}
-  .tl-step{display:flex;gap:26px;align-items:flex-start;padding:18px 0;position:relative;}
-  .tl-dot{flex-shrink:0;width:64px;height:64px;border-radius:50%;background:#fff;border:2px solid var(--marigold);display:grid;place-items:center;font-family:'Marcellus',serif;color:var(--terra);font-size:1.3rem;z-index:2;transition:transform .3s,background .3s,color .3s;}
-  .tl-step:hover .tl-dot{transform:scale(1.08);background:var(--marigold);color:var(--night);}
-  .tl-body{padding-top:8px;}
-  .tl-body h3{font-family:'Fraunces',serif;font-weight:500;font-size:1.4rem;margin-bottom:6px;}
-  .tl-body p{color:rgba(42,39,72,.7);}
+  /* MONEY BAND */
+  .money{background:linear-gradient(120deg,#0b1026 0%,#2d1b4e 55%,#7c5cff 140%);text-align:center;}
+  .money .zero{font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(4rem,12vw,7rem);color:var(--gold);line-height:1;}
+  .money .ml{font-size:1.1rem;font-weight:500;margin-top:10px;}
+  .money .mb{max-width:560px;margin:16px auto 0;color:var(--stardust);}
+  .money .mg{font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(1.3rem,3vw,1.8rem);color:var(--gold);margin-top:20px;}
 
-  /* FEATURES — interactive accordion-style selector (not a grid of cards) */
-  .band{background:var(--sand-2);}
-  .feat-split{max-width:1050px;margin:0 auto;display:grid;grid-template-columns:1fr 1.1fr;gap:48px;align-items:center;}
-  @media(max-width:840px){.feat-split{grid-template-columns:1fr;gap:30px;}}
+  /* PAIN/SOLUTION */
+  .compare{max-width:760px;margin:36px auto 0;border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+  .compare .head,.compare .row{display:grid;grid-template-columns:1fr 1fr;}
+  .compare .head>div{padding:13px 20px;font-weight:600;font-size:.86rem;background:rgba(244,245,255,0.03);}
+  .compare .head .c1{color:var(--stardust);}.compare .head .c2{color:var(--aurora-soft);}
+  .compare .row{border-top:1px solid var(--line);font-size:.9rem;}
+  .compare .row>div{padding:14px 20px;display:flex;gap:8px;align-items:flex-start;}
+  .compare .row .c2{border-left:1px solid var(--line);color:var(--moonstone);}
+  .compare .row .c1{color:var(--stardust);}
+  .x{color:var(--nebula);}.ok{color:var(--aurora);}
+
+  /* TIMELINE */
+  .timeline{max-width:680px;margin:48px auto 0;position:relative;}
+  .timeline::before{content:"";position:absolute;left:31px;top:10px;bottom:10px;width:2px;background:linear-gradient(var(--aurora),var(--nebula));opacity:.4;}
+  .tl-step{display:flex;gap:24px;align-items:flex-start;padding:16px 0;}
+  .tl-dot{flex-shrink:0;width:64px;height:64px;border-radius:50%;background:var(--cosmos);border:2px solid var(--aurora);display:grid;place-items:center;font-family:'Clash Display',sans-serif;color:var(--gold);font-size:1.3rem;z-index:2;transition:all .3s;}
+  .tl-step:hover .tl-dot{background:var(--aurora);color:#fff;}
+  .tl-body h3{font-family:'Clash Display',sans-serif;font-weight:500;font-size:1.3rem;margin-bottom:5px;color:var(--moonstone);}
+  .tl-body p{color:var(--stardust);}
+
+  /* FEATURES */
+  .featb{background:linear-gradient(180deg,#0b1026,#16112e);}
+  .feat-split{max-width:1000px;margin:48px auto 0;display:grid;grid-template-columns:1fr 1.1fr;gap:44px;align-items:center;}
+  @media(max-width:840px){.feat-split{grid-template-columns:1fr;gap:28px;}}
   .feat-list{display:flex;flex-direction:column;gap:10px;}
-  .feat-item{border:1px solid var(--line-light);border-radius:16px;padding:20px 22px;background:#fff;cursor:pointer;transition:all .25s;}
-  .feat-item.active{border-color:var(--marigold);box-shadow:0 14px 34px rgba(20,18,43,.08);}
-  .feat-item h4{font-family:'Fraunces',serif;font-weight:500;font-size:1.15rem;display:flex;align-items:center;gap:12px;}
-  .feat-item h4 .fic{color:var(--terra);transition:color .25s;}
-  .feat-item.active h4 .fic{color:var(--marigold);}
-  .feat-item p{color:rgba(42,39,72,.68);font-size:.92rem;max-height:0;overflow:hidden;opacity:0;transition:all .3s;}
+  .feat-item{border:1px solid var(--line);border-radius:16px;padding:18px 20px;background:transparent;cursor:pointer;transition:all .25s;}
+  .feat-item.active{border-color:var(--aurora);background:rgba(244,245,255,0.05);box-shadow:0 14px 34px rgba(124,92,255,.15);}
+  .feat-item h4{font-family:'Clash Display',sans-serif;font-weight:500;font-size:1.1rem;display:flex;align-items:center;gap:11px;color:var(--moonstone);}
+  .feat-item h4 .fic{color:var(--stardust);}.feat-item.active h4 .fic{color:var(--aurora);}
+  .feat-item p{color:var(--stardust);font-size:.9rem;max-height:0;overflow:hidden;opacity:0;transition:all .3s;}
   .feat-item.active p{max-height:120px;opacity:1;margin-top:10px;}
-  .feat-visual{background:var(--night);border-radius:24px;padding:30px;min-height:340px;display:grid;place-items:center;position:relative;overflow:hidden;}
-  .feat-visual .vstars span{position:absolute;width:2px;height:2px;background:var(--star);border-radius:50%;}
-  .vcard{background:rgba(246,239,226,0.06);border:1px solid var(--line-dark);border-radius:16px;padding:24px;width:100%;max-width:300px;color:var(--sand);position:relative;z-index:2;transition:opacity .3s;}
-  .vcard .vic{color:var(--marigold);margin-bottom:14px;}
-  .vcard h5{font-family:'Fraunces',serif;font-weight:500;font-size:1.25rem;margin-bottom:8px;}
-  .vcard p{color:rgba(246,239,226,.7);font-size:.9rem;}
+  .feat-visual{background:var(--cosmos);border:1px solid var(--line);border-radius:22px;padding:30px;min-height:320px;display:grid;place-items:center;position:relative;overflow:hidden;}
+  .feat-visual .vstars span{position:absolute;width:2px;height:2px;background:var(--gold);border-radius:50%;opacity:.6;}
+  .vcard{background:rgba(244,245,255,0.05);border:1px solid var(--line);border-radius:16px;padding:24px;width:100%;max-width:290px;position:relative;z-index:2;transition:opacity .3s;}
+  .vcard .vic{color:var(--aurora);margin-bottom:12px;}
+  .vcard h5{font-family:'Clash Display',sans-serif;font-weight:500;font-size:1.2rem;margin-bottom:7px;color:var(--moonstone);}
+  .vcard p{color:var(--stardust);font-size:.9rem;}
 
-  /* SCHEDULE A CALL band */
-  .call-band{background:radial-gradient(ellipse at 20% 20%,#2a2552,var(--night));color:var(--sand);}
-  .call-wrap{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center;}
+  /* TESTIMONIALS */
+  .testi-grid{max-width:1080px;margin:48px auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  @media(max-width:900px){.testi-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:600px){.testi-grid{grid-template-columns:1fr;}}
+  .tcard{border:1px solid var(--line);background:rgba(244,245,255,0.04);border-radius:16px;padding:24px;display:flex;flex-direction:column;}
+  .tcard blockquote{font-family:'Fraunces',serif;font-style:italic;color:rgba(244,245,255,.9);flex:1;line-height:1.55;}
+  .tcap{display:flex;align-items:center;gap:12px;margin-top:18px;}
+  .mono{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;font-family:'Clash Display',sans-serif;font-weight:600;color:var(--cosmos);flex-shrink:0;}
+  .tcap .nm{font-weight:500;color:var(--moonstone);}.tcap .sp{font-size:.78rem;color:var(--stardust);}
+  .testi-foot{text-align:center;margin-top:28px;font-size:.78rem;color:rgba(168,170,196,.6);}
+
+  /* SCHEDULE */
+  .callb{background:radial-gradient(ellipse at 20% 20%,#2d1b4e,#0b1026);}
+  .call-wrap{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;}
   @media(max-width:840px){.call-wrap{grid-template-columns:1fr;}}
-  .call-copy h2{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(1.8rem,4vw,2.7rem);line-height:1.15;margin-bottom:16px;}
-  .call-copy p{color:rgba(246,239,226,.75);margin-bottom:24px;}
-  .call-points{display:flex;flex-direction:column;gap:12px;}
-  .call-points div{display:flex;gap:10px;align-items:center;font-size:.95rem;color:rgba(246,239,226,.85);}
-  .call-points svg{color:var(--marigold);flex-shrink:0;}
-  .call-form{background:rgba(246,239,226,0.05);border:1px solid var(--line-dark);border-radius:22px;padding:32px;}
-  .call-form h3{font-family:'Fraunces',serif;font-weight:500;font-size:1.4rem;margin-bottom:6px;}
-  .call-form .small{font-size:.85rem;color:rgba(246,239,226,.6);margin-bottom:22px;}
-  .field{margin-bottom:14px;}
-  .field label{display:block;font-size:.8rem;color:rgba(246,239,226,.7);margin-bottom:6px;}
-  .field input,.field select{width:100%;background:rgba(20,18,43,.5);border:1px solid var(--line-dark);border-radius:10px;padding:11px 14px;color:var(--sand);font-family:inherit;font-size:.92rem;}
-  .field input:focus,.field select:focus{outline:none;border-color:var(--marigold);}
-  .call-form .btn-primary{width:100%;margin-top:8px;}
+  .call-copy h2{font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(1.7rem,4vw,2.5rem);margin:12px 0 14px;color:var(--moonstone);}
+  .call-copy p{color:var(--stardust);margin-bottom:22px;}
+  .call-points{display:flex;flex-direction:column;gap:11px;}
+  .call-points div{display:flex;gap:10px;align-items:center;font-size:.92rem;color:rgba(244,245,255,.9);}
+  .call-points svg{color:var(--aurora);flex-shrink:0;}
+  .call-form{background:rgba(244,245,255,0.05);border:1px solid var(--line);border-radius:22px;padding:30px;}
+  .call-form h3{font-family:'Clash Display',sans-serif;font-weight:500;font-size:1.3rem;margin-bottom:5px;color:var(--moonstone);}
+  .call-form .small{font-size:.84rem;color:var(--stardust);margin-bottom:20px;}
+  .field{margin-bottom:13px;}
+  .field label{display:block;font-size:.78rem;color:var(--stardust);margin-bottom:5px;}
+  .field input,.field select{width:100%;background:rgba(11,16,38,.6);border:1px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--moonstone);font-family:inherit;font-size:.9rem;}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--aurora);}
+  .call-form .btn-primary{width:100%;margin-top:6px;}
 
-  /* DEMO band */
-  .demo-band{text-align:center;}
-  .demo-card{max-width:760px;margin:0 auto;background:linear-gradient(145deg,#fff,var(--sand-2));border:1px solid var(--line-light);border-radius:28px;padding:48px 40px;position:relative;overflow:hidden;}
-  .demo-card .glow{position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(var(--marigold),transparent 70%);opacity:.25;border-radius:50%;}
-  .demo-card h2{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:14px;position:relative;}
-  .demo-card p{color:rgba(42,39,72,.7);max-width:480px;margin:0 auto 28px;position:relative;}
+  /* MODALITIES */
+  .mod-grid{max-width:820px;margin:40px auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media(max-width:600px){.mod-grid{grid-template-columns:repeat(2,1fr);}}
+  .mod{border:1px solid var(--line);border-radius:16px;padding:24px;text-align:center;transition:transform .2s;}
+  .mod:hover{transform:translateY(-4px);}
+  .mod .dot{width:36px;height:36px;border-radius:50%;margin:0 auto 12px;}
+  .mod .nm{font-family:'Clash Display',sans-serif;font-weight:500;font-size:1.1rem;color:var(--moonstone);}
+
+  /* PRICING TEASER */
+  .pr-grid{max-width:1000px;margin:40px auto 0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  @media(max-width:900px){.pr-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:520px){.pr-grid{grid-template-columns:1fr;}}
+  .pcard{border:1px solid var(--line);background:rgba(244,245,255,0.04);border-radius:16px;padding:24px;}
+  .pcard.feat{border-color:var(--aurora);box-shadow:0 18px 44px rgba(124,92,255,.2);}
+  .pcard h3{font-family:'Clash Display',sans-serif;font-weight:600;font-size:1.1rem;color:var(--moonstone);}
+  .pcard .amt{font-family:'Clash Display',sans-serif;font-weight:600;font-size:1.9rem;color:var(--moonstone);margin-top:8px;}
+  .pcard .amt small{font-size:.85rem;color:var(--stardust);font-family:'Inter';font-weight:400;}
+  .pcard .tg{font-size:.78rem;color:var(--stardust);margin-top:8px;}
+  .pr-see{text-align:center;margin-top:30px;}
+  .btn-outline{display:inline-block;border:1px solid var(--aurora);color:var(--aurora-soft);padding:11px 24px;border-radius:999px;font-weight:600;font-size:.9rem;transition:all .2s;cursor:pointer;}
+  .btn-outline:hover{background:var(--aurora);color:#fff;}
+
+  /* DEMO */
+  .demo-card{max-width:680px;margin:0 auto;background:rgba(244,245,255,0.05);border:1px solid var(--line);border-radius:24px;padding:48px 40px;position:relative;overflow:hidden;text-align:center;}
+  .demo-card .glow{position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(var(--aurora),transparent 70%);opacity:.35;border-radius:50%;}
+  .demo-card h2{font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(1.7rem,4vw,2.4rem);margin-bottom:12px;position:relative;color:var(--moonstone);}
+  .demo-card p{color:var(--stardust);max-width:460px;margin:0 auto 26px;position:relative;}
   .demo-card .btn-primary{position:relative;}
-  .demo-card .demo-note{margin-top:14px;font-size:.82rem;color:rgba(42,39,72,.5);position:relative;}
+  .demo-card .dn{margin-top:13px;font-size:.8rem;color:rgba(168,170,196,.7);position:relative;}
+
+  /* FAQ */
+  .faq{max-width:680px;margin:36px auto 0;}
+  .qa{border:1px solid var(--line);background:rgba(244,245,255,0.04);border-radius:14px;padding:17px 20px;margin-bottom:11px;cursor:pointer;}
+  .qa h4{font-size:.95rem;display:flex;justify-content:space-between;gap:12px;align-items:center;color:var(--moonstone);}
+  .qa .plus{color:var(--aurora);font-size:1.3rem;transition:transform .2s;}
+  .qa.open .plus{transform:rotate(45deg);}
+  .qa p{color:var(--stardust);font-size:.9rem;max-height:0;overflow:hidden;transition:all .3s;opacity:0;}
+  .qa.open p{max-height:200px;opacity:1;margin-top:11px;}
+
+  /* FINAL CTA */
+  .final{background:radial-gradient(ellipse at 50% 120%,#7c5cff 0%,#2d1b4e 45%,#0b1026 100%);text-align:center;position:relative;overflow:hidden;}
+  .final h2{font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(1.9rem,5vw,3.2rem);color:var(--moonstone);position:relative;}
+  .final p{color:var(--stardust);max-width:460px;margin:14px auto 0;position:relative;}
+  .btn-gold{display:inline-block;background:var(--gold);color:var(--cosmos);padding:14px 32px;border-radius:999px;font-weight:700;font-size:.92rem;margin-top:26px;position:relative;transition:transform .2s,box-shadow .2s;}
+  .btn-gold:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(255,214,107,.4);}
+  .final .fm{margin-top:14px;font-size:.8rem;color:rgba(168,170,196,.7);position:relative;}
 
   /* FOOTER */
-  footer{background:var(--night);color:rgba(246,239,226,.6);padding:54px 7vw 36px;}
-  .foot-top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:30px;border-bottom:1px solid var(--line-dark);padding-bottom:28px;margin-bottom:24px;}
-  .foot-col h6{color:var(--sand);font-family:'Marcellus',serif;font-size:.95rem;margin-bottom:12px;letter-spacing:.5px;}
-  .foot-col a{display:block;color:rgba(246,239,226,.55);font-size:.86rem;margin-bottom:7px;}
-  .foot-col a:hover{color:var(--marigold-soft);}
-  .foot-bottom{font-size:.8rem;color:rgba(246,239,226,.4);}
-  .cursor-glow{position:fixed;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(232,163,61,0.10),transparent 65%);pointer-events:none;transform:translate(-50%,-50%);z-index:1;transition:opacity .3s;mix-blend-mode:screen;}
+  footer{background:var(--cosmos);border-top:1px solid var(--line);padding:50px 7vw 34px;}
+  .foot-top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:28px;border-bottom:1px solid var(--line);padding-bottom:26px;margin-bottom:22px;}
+  .foot-col h6{color:var(--moonstone);font-family:'Clash Display',sans-serif;font-weight:500;font-size:.92rem;margin-bottom:11px;}
+  .foot-col a{display:block;color:var(--stardust);font-size:.85rem;margin-bottom:7px;}
+  .foot-col a:hover{color:var(--aurora-soft);}
+  .foot-bottom{font-size:.8rem;color:rgba(168,170,196,.5);}
 </style>
 </head>
 <body>
@@ -141,31 +204,32 @@
 
 <!-- NAV -->
 <nav>
-  <div class="logo"><span class="mark"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M20 4l-2 2M6 18l-2 2" stroke-linecap="round"/></svg></span>Jyoti</div>
+  <div class="logo"><span class="mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M20 4l-2 2M6 18l-2 2" stroke-linecap="round"/></svg></span>Jyoti</div>
   <div class="nav-links">
-    <a class="link" href="how-it-works.html">How it works</a>
-    <a class="link" href="features.html">Features</a>
-    <a class="link" href="pricing.html">Pricing</a>
+    <a class="link" href="how-it-works.html" data-i18n="nav-how">How it works</a>
+    <a class="link" href="features.html" data-i18n="nav-feat">Features</a>
+    <a class="link" href="pricing.html" data-i18n="nav-price">Pricing</a>
+    <a class="link" href="for-astrologers.html" data-i18n="nav-astro">For Astrologers</a>
     <div class="lang-toggle">
       <button class="active" onclick="setLang('en',this)">EN</button>
-      <button onclick="setLang('hi',this)">हि</button>
+      <button onclick="setLang('hi',this)">हिं</button>
       <button onclick="setLang('hinglish',this)">Hi-En</button>
     </div>
-    <a href="demo-login.html"><button class="btn-ghost-light" data-i18n="nav-demo">Try demo</button></a>
-    <button class="btn-primary" data-i18n="nav-cta">Get started</button>
+    <a class="signin" href="signin.html" style="color:var(--stardust);font-size:.9rem" data-i18n="nav-signin">Sign in</a>
+    <button class="btn-primary" data-i18n="nav-start">Start free →</button>
   </div>
 </nav>
 
 <!-- HERO -->
 <header class="hero">
   <svg class="sky" id="sky" viewBox="0 0 400 400" fill="none">
-    <g class="ring" stroke="rgba(240,192,116,0.32)" stroke-width="0.6">
+    <g class="ring" stroke="rgba(167,139,255,0.4)" stroke-width="0.6">
       <circle cx="200" cy="200" r="190"/><circle cx="200" cy="200" r="150"/>
       <g><line x1="200" y1="10" x2="200" y2="50"/><line x1="200" y1="350" x2="200" y2="390"/><line x1="10" y1="200" x2="50" y2="200"/><line x1="350" y1="200" x2="390" y2="200"/><line x1="60" y1="60" x2="88" y2="88"/><line x1="312" y1="312" x2="340" y2="340"/><line x1="340" y1="60" x2="312" y2="88"/><line x1="88" y1="312" x2="60" y2="340"/></g>
     </g>
-    <g class="ring rev" stroke="rgba(232,163,61,0.4)" stroke-width="0.7">
+    <g class="ring rev" stroke="rgba(255,214,107,0.45)" stroke-width="0.7">
       <circle cx="200" cy="200" r="120"/>
-      <circle cx="200" cy="80" r="2" fill="rgba(240,192,116,0.9)"/><circle cx="320" cy="200" r="2" fill="rgba(240,192,116,0.9)"/><circle cx="200" cy="320" r="2" fill="rgba(240,192,116,0.9)"/><circle cx="80" cy="200" r="2" fill="rgba(240,192,116,0.9)"/><circle cx="285" cy="115" r="1.6" fill="rgba(240,192,116,0.7)"/><circle cx="115" cy="285" r="1.6" fill="rgba(240,192,116,0.7)"/>
+      <circle cx="200" cy="80" r="2" fill="#ffd66b"/><circle cx="320" cy="200" r="2" fill="#ffd66b"/><circle cx="200" cy="320" r="2" fill="#ffd66b"/><circle cx="80" cy="200" r="2" fill="#ffd66b"/>
     </g>
   </svg>
   <div class="stars" id="stars"></div>
@@ -175,7 +239,7 @@
     <p class="sub" data-i18n="sub">A branded booking home for your consultations — schedule calls, take payments your way, and guide your seekers. You keep every rupee; we just power the experience.</p>
     <div class="hero-cta">
       <button class="btn-primary" data-i18n="cta1">Start free with Google</button>
-      <a href="demo-login.html"><button class="btn-ghost-light" data-i18n="cta2">Try the demo dashboard</button></a>
+      <a href="demo-login.html"><button class="btn-ghost" data-i18n="cta2">Try the demo dashboard</button></a>
     </div>
     <p class="hero-note" data-i18n="note">No commission on your earnings · Set up in minutes</p>
   </div>
@@ -187,7 +251,29 @@
   </div>
 </header>
 
-<!-- HOW IT WORKS — timeline -->
+<!-- MONEY BAND -->
+<section class="block money">
+  <p class="sec-eyebrow" data-i18n="m-eye">The honest math</p>
+  <div class="zero">₹0</div>
+  <p class="ml" data-i18n="m-zero">The commission we take from your consultations.</p>
+  <p class="mb"><span id="m-lost">On marketplaces a consultant earning ₹1,00,000/month loses up to ₹30,000. Here you keep all of it.</span></p>
+  <p class="mg" id="m-gold" data-gold="That's ₹3,60,000 more in your pocket every year.">That's ₹3,60,000 more in your pocket every year.</p>
+</section>
+
+<!-- PAIN / SOLUTION -->
+<section class="block">
+  <h2 class="sec-title reveal" data-i18n="pain-title">Stop losing your earnings to middlemen.</h2>
+  <div class="compare reveal">
+    <div class="head"><div class="c1" data-i18n="pain-c1">Marketplace apps</div><div class="c2" data-i18n="pain-c2">Your own page</div></div>
+    <div class="row"><div class="c1"><span class="x">✕</span><span data-i18n="p1a">Up to 30% commission on every booking</span></div><div class="c2"><span class="ok">✓</span><span data-i18n="p1b">0% commission — you keep it all</span></div></div>
+    <div class="row"><div class="c1"><span class="x">✕</span><span data-i18n="p2a">One of 50,000 listings</span></div><div class="c2"><span class="ok">✓</span><span data-i18n="p2b">Your own branded home, found by your name</span></div></div>
+    <div class="row"><div class="c1"><span class="x">✕</span><span data-i18n="p3a">They own your clients</span></div><div class="c2"><span class="ok">✓</span><span data-i18n="p3b">Your clients and records are yours</span></div></div>
+    <div class="row"><div class="c1"><span class="x">✕</span><span data-i18n="p4a">A generic, identical profile</span></div><div class="c2"><span class="ok">✓</span><span data-i18n="p4b">Your photo, colours, font &amp; language</span></div></div>
+    <div class="row"><div class="c1"><span class="x">✕</span><span data-i18n="p5a">Payouts on a 30-day cycle</span></div><div class="c2"><span class="ok">✓</span><span data-i18n="p5b">Money hits your account directly</span></div></div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
 <section class="block" id="how">
   <p class="sec-eyebrow reveal" data-i18n="how-eye">The path</p>
   <h2 class="sec-title reveal" data-i18n="how-title">Three steps to your own consulting page</h2>
@@ -199,8 +285,8 @@
   </div>
 </section>
 
-<!-- FEATURES — interactive selector -->
-<section class="block band" id="features">
+<!-- FEATURES -->
+<section class="block featb" id="features">
   <p class="sec-eyebrow reveal" data-i18n="f-eye">Everything in one place</p>
   <h2 class="sec-title reveal" data-i18n="f-title">Built for the way you already work</h2>
   <p class="sec-lead reveal" data-i18n="f-lead">Tap a capability to see what it does.</p>
@@ -213,17 +299,21 @@
     </div>
     <div class="feat-visual">
       <div class="vstars" id="vstars"></div>
-      <div class="vcard" id="vcard">
-        <div class="vic" id="vic"></div>
-        <h5 id="vtitle">Smart scheduling</h5>
-        <p id="vtext">Your availability, buffers and booking limits — all respected automatically.</p>
-      </div>
+      <div class="vcard" id="vcard"><div class="vic" id="vic"></div><h5 id="vtitle">Smart scheduling</h5><p id="vtext">Your availability, buffers and booking limits — all respected automatically.</p></div>
     </div>
   </div>
 </section>
 
+<!-- TESTIMONIALS -->
+<section class="block">
+  <p class="sec-eyebrow reveal" data-i18n="testi-eye">Early members</p>
+  <h2 class="sec-title reveal" data-i18n="testi-title">Early astrologers love it.</h2>
+  <div class="testi-grid" id="testi"></div>
+  <p class="testi-foot" data-i18n="testi-foot">Illustrative of typical early-member experiences.</p>
+</section>
+
 <!-- SCHEDULE A CALL -->
-<section class="block call-band" id="schedule">
+<section class="block callb" id="schedule">
   <div class="call-wrap">
     <div class="call-copy reveal">
       <p class="sec-eyebrow" style="text-align:left" data-i18n="call-eye">See it for yourself</p>
@@ -237,172 +327,190 @@
     </div>
     <div class="call-form reveal">
       <h3 data-i18n="cf-title">Book your free walkthrough</h3>
-      <p class="small" data-i18n="cf-sub">Pick a slot and we'll send a Google Meet link.</p>
+      <p class="small" data-i18n="cf-sub">Pick a slot and we'll reach out on WhatsApp.</p>
       <div class="field"><label data-i18n="cf-name">Your name</label><input type="text" placeholder="Pandit Ravi Sharma"></div>
+      <div class="field"><label data-i18n="cf-email">Email</label><input type="email" placeholder="you@example.com"></div>
       <div class="field"><label data-i18n="cf-phone">WhatsApp number</label><input type="tel" placeholder="+91 98XXX XXXXX"></div>
       <div class="field"><label data-i18n="cf-lang">Preferred language</label><select><option>Hindi</option><option>English</option><option>Hinglish</option></select></div>
       <div class="field"><label data-i18n="cf-slot">Choose a slot</label><select><option>Tomorrow, 11:00 AM</option><option>Tomorrow, 4:00 PM</option><option>Sat, 12:00 PM</option></select></div>
-      <button class="btn-primary" onclick="alert('Demo only — this would book a walkthrough call.')" data-i18n="cf-btn">Schedule my call</button>
+      <button class="btn-primary" onclick="alert('Demo only — wired to the lead-capture action on the live site.')" data-i18n="cf-btn">Schedule my call</button>
     </div>
   </div>
 </section>
 
-<!-- DEMO DASHBOARD -->
-<section class="block demo-band">
+<!-- MODALITIES -->
+<section class="block">
+  <p class="sec-eyebrow reveal" data-i18n="mod-eye">Every tradition welcome</p>
+  <h2 class="sec-title reveal" data-i18n="mod-title">For every kind of practice.</h2>
+  <div class="mod-grid" id="mods"></div>
+</section>
+
+<!-- PRICING TEASER -->
+<section class="block">
+  <p class="sec-eyebrow reveal" data-i18n="pr-eye">Pricing</p>
+  <h2 class="sec-title reveal" data-i18n="pr-title">Simple pricing. No commission. Ever.</h2>
+  <p class="sec-lead reveal" data-i18n="pr-lead">Start free forever. Upgrade only when you're ready.</p>
+  <div class="pr-grid reveal">
+    <div class="pcard"><h3>Starter</h3><div class="amt" data-i18n="pr-free">Free</div><p class="tg" data-i18n="pr-tg1">For solo astrologers getting started</p></div>
+    <div class="pcard"><h3>Pro</h3><div class="amt">₹799<small data-i18n="pr-mo">/mo</small></div><p class="tg" data-i18n="pr-tg2">For serious, active practitioners</p></div>
+    <div class="pcard feat"><h3>Max</h3><div class="amt">₹1,999<small data-i18n="pr-mo2">/mo</small></div><p class="tg" data-i18n="pr-tg3">For growing practices with a team</p></div>
+    <div class="pcard"><h3>Enterprise</h3><div class="amt" style="color:var(--aurora-soft);font-size:1.4rem" data-i18n="pr-contact">Contact us</div><p class="tg" data-i18n="pr-tg4">For institutes &amp; large practices</p></div>
+  </div>
+  <div class="pr-see"><a href="pricing.html"><span class="btn-outline" data-i18n="pr-see">See full pricing →</span></a></div>
+</section>
+
+<!-- DEMO -->
+<section class="block">
   <div class="demo-card reveal">
     <div class="glow"></div>
     <p class="sec-eyebrow" data-i18n="d-eye">Kick the tyres</p>
     <h2 data-i18n="d-title">Explore the consultant dashboard</h2>
     <p data-i18n="d-lead">Want to look inside before signing up? Open a fully interactive demo dashboard with realistic data — packages, bookings, payments, your team, and seeker records.</p>
     <a href="demo-login.html"><button class="btn-primary" data-i18n="d-btn">Try the demo dashboard →</button></a>
-    <p class="demo-note" data-i18n="d-note">Quick verify with email &amp; OTP · No commitment</p>
+    <p class="dn" data-i18n="d-note">Quick verify with email &amp; OTP · No commitment</p>
   </div>
+</section>
+
+<!-- FAQ -->
+<section class="block">
+  <h2 class="sec-title reveal" data-i18n="faq-title">Pricing questions</h2>
+  <div class="faq" id="faq"></div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="block final">
+  <div class="stars" id="fstars"></div>
+  <h2 data-i18n="final-title">Your stars are aligned. Start your practice today.</h2>
+  <p data-i18n="final-sub">A branded booking home, your own payments, and every rupee you earn.</p>
+  <a href="signin.html"><span class="btn-gold" data-i18n="final-btn">Start free →</span></a>
+  <p class="fm" data-i18n="final-micro">Join the founding astrologers · Free forever</p>
 </section>
 
 <!-- FOOTER -->
 <footer>
   <div class="foot-top">
-    <div class="logo" style="font-size:1.2rem"><span class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M20 4l-2 2M6 18l-2 2" stroke-linecap="round"/></svg></span>Jyoti</div>
-    <div class="foot-col"><h6 data-i18n="fc1">Product</h6><a href="how-it-works.html">How it works</a><a href="features.html">Features</a><a href="pricing.html">Pricing</a></div>
-    <div class="foot-col"><h6 data-i18n="fc2">For astrologers</h6><a href="for-astrologers.html">Get started</a><a href="for-astrologers.html">Examples</a><a href="for-astrologers.html">Support</a></div>
-    <div class="foot-col"><h6 data-i18n="fc3">Company</h6><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
+    <div class="logo" style="font-size:1.15rem"><span class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="4.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M20 4l-2 2M6 18l-2 2" stroke-linecap="round"/></svg></span>Jyoti</div>
+    <div class="foot-col"><h6 data-i18n="fc1">Product</h6><a href="how-it-works.html" data-i18n="nav-how">How it works</a><a href="features.html" data-i18n="nav-feat">Features</a><a href="pricing.html" data-i18n="nav-price">Pricing</a></div>
+    <div class="foot-col"><h6 data-i18n="fc2">For astrologers</h6><a href="for-astrologers.html" data-i18n="fl-start">Get started</a><a href="for-astrologers.html" data-i18n="fl-ex">Examples</a><a href="for-astrologers.html" data-i18n="fl-sup">Support</a></div>
+    <div class="foot-col"><h6 data-i18n="fc3">Company</h6><a href="about.html" data-i18n="fl-about">About</a><a href="privacy.html" data-i18n="fl-priv">Privacy</a><a href="terms.html" data-i18n="fl-terms">Terms</a></div>
   </div>
-  <div class="foot-bottom">© 2026 Jyoti · A space to grow your practice. <span data-i18n="foot-note">Payments go directly to you — we never hold your money.</span></div>
+  <div class="foot-bottom">© 2026 Jyoti · <span data-i18n="foot-note">Payments go directly to you — we never hold your money.</span></div>
 </footer>
 
 <script>
-  function makeStars(id,n,scaleMax){const c=document.getElementById(id);if(!c)return;for(let i=0;i<n;i++){const s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.animationDelay=Math.random()*4+'s';s.style.transform=`scale(${0.5+Math.random()*(scaleMax||1)})`;c.appendChild(s);}}
-  makeStars('stars',70);
-  // feature visual stars
-  (function(){const c=document.getElementById('vstars');if(c)for(let i=0;i<30;i++){const s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.opacity=0.3+Math.random()*0.5;c.appendChild(s);}})();
+  function makeStars(id,n){const c=document.getElementById(id);if(!c)return;for(let i=0;i<n;i++){const s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.animationDelay=Math.random()*4+'s';c.appendChild(s);}}
+  makeStars('stars',70);makeStars('fstars',30);
+  (function(){const c=document.getElementById('vstars');if(c)for(let i=0;i<26;i++){const s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';c.appendChild(s);}})();
 
-  // cursor glow
-  const cg=document.getElementById('cglow');
-  window.addEventListener('mousemove',e=>{cg.style.left=e.clientX+'px';cg.style.top=e.clientY+'px';});
-
-  // hero parallax — sky follows cursor subtly
-  const sky=document.getElementById('sky');
-  const hero=document.querySelector('.hero');
-  hero.addEventListener('mousemove',e=>{
-    const r=hero.getBoundingClientRect();
-    const dx=(e.clientX-r.width/2)/r.width;
-    const dy=(e.clientY-r.height/2)/r.height;
-    sky.style.transform=`translate(calc(-50% + ${dx*30}px), calc(-50% + ${dy*30}px))`;
-  });
-  hero.addEventListener('mouseleave',()=>{sky.style.transform='translate(-50%,-50%)';});
+  // cursor glow + hero parallax
+  const cg=document.getElementById('cglow'),sky=document.getElementById('sky'),hero=document.querySelector('.hero');
+  if(window.matchMedia('(pointer:fine)').matches){
+    hero.addEventListener('mousemove',e=>{const r=hero.getBoundingClientRect();const dx=(e.clientX-r.width/2)/r.width;const dy=(e.clientY-r.top-r.height/2)/r.height;sky.style.transform=`translate(calc(-50% + ${dx*30}px), calc(-50% + ${dy*30}px))`;cg.style.left=e.clientX+'px';cg.style.top=e.clientY+'px';cg.style.opacity=1;});
+    hero.addEventListener('mouseleave',()=>{sky.style.transform='translate(-50%,-50%)';});
+  }
 
   // scroll reveal
-  const io=new IntersectionObserver((entries)=>{entries.forEach(en=>{if(en.isIntersecting)en.target.classList.add('in');});},{threshold:0.15});
+  const io=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting)en.target.classList.add('in');});},{threshold:0.15});
   document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-  // feature selector
-  const featData={
-    0:{t:"Smart scheduling",p:"Your availability, buffers and booking limits — all respected automatically, with a Meet link on every call.",ic:'<svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="20" height="18" rx="2"/><path d="M3 9h20M8 2v4M18 2v4" stroke-linecap="round"/></svg>'},
-    1:{t:"Your own payments",p:"UPI QR or your own gateway. Money reaches your account directly — never ours. Receipts under your name and GST.",ic:'<svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h20v12H3zM3 11h20" stroke-linecap="round"/><circle cx="7" cy="15" r="1.2" fill="currentColor" stroke="none"/></svg>'},
-    2:{t:"Bring your team",p:"Add consulting or accounts helpers. Bookings auto-distribute fairly across your team — no manual juggling.",ic:'<svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3.5"/><path d="M3 21c0-4 3-6 6-6s6 2 6 6M17 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>'},
-    3:{t:"Seeker records",p:"Reading notes and uploaded charts for every client. Share a private link or print a clean PDF.",ic:'<svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v14H7l-3 3z" stroke-linejoin="round"/><path d="M8 9h8M8 13h5" stroke-linecap="round"/></svg>'}
-  };
-  // translations for feature visual (filled per-lang)
-  let featTrans=null;
-  function selFeat(i,el){
-    document.querySelectorAll('.feat-item').forEach(x=>x.classList.remove('active'));
-    el.classList.add('active');
-    const d=(featTrans&&featTrans[i])?featTrans[i]:featData[i];
-    const vc=document.getElementById('vcard');
-    vc.style.opacity=0;
-    setTimeout(()=>{
-      document.getElementById('vic').innerHTML=featData[i].ic;
-      document.getElementById('vtitle').textContent=d.t;
-      document.getElementById('vtext').textContent=d.p;
-      vc.style.opacity=1;
-    },180);
+  // money count-up
+  const moneyIO=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){countUp();moneyIO.disconnect();}});},{threshold:0.4});
+  moneyIO.observe(document.querySelector('.money'));
+  function countUp(){
+    if(window.matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+    const fmt=n=>n.toLocaleString('en-IN');
+    animate(30000,1200,v=>{document.getElementById('m-lost').textContent=lostTpl().replace('₹30,000','₹'+fmt(v));});
+    animate(360000,1200,v=>{document.getElementById('m-gold').textContent=goldTpl().replace('₹3,60,000','₹'+fmt(v));});
   }
-  // init visual
-  document.getElementById('vic').innerHTML=featData[0].ic;
+  function animate(to,ms,cb){const start=performance.now();(function tick(t){const p=Math.min(1,(t-start)/ms);cb(Math.round(to*(1-Math.pow(1-p,3))));if(p<1)requestAnimationFrame(tick);})(performance.now());}
+  function lostTpl(){return i18n[curLang]['m-body'];}
+  function goldTpl(){return i18n[curLang]['m-gold'];}
 
-  // i18n
+  // feature selector
+  const featIcons={0:'<svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="20" height="18" rx="2"/><path d="M3 9h20M8 2v4M18 2v4" stroke-linecap="round"/></svg>',1:'<svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h20v12H3zM3 11h20" stroke-linecap="round"/><circle cx="7" cy="15" r="1.2" fill="currentColor" stroke="none"/></svg>',2:'<svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3.5"/><path d="M3 21c0-4 3-6 6-6s6 2 6 6M17 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>',3:'<svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v14H7l-3 3z" stroke-linejoin="round"/><path d="M8 9h8M8 13h5" stroke-linecap="round"/></svg>'};
+  let activeFeat=0;
+  function selFeat(i,el){document.querySelectorAll('.feat-item').forEach(x=>x.classList.remove('active'));el.classList.add('active');activeFeat=i;paintFeat();}
+  function paintFeat(){const f=i18n[curLang]['feat'][activeFeat];const vc=document.getElementById('vcard');vc.style.opacity=0;setTimeout(()=>{document.getElementById('vic').innerHTML=featIcons[activeFeat];document.getElementById('vtitle').textContent=f.t;document.getElementById('vtext').textContent=f.p;vc.style.opacity=1;},180);}
+
+  // monogram avatars + testimonials
+  const TESTI=[["Rakesh Sharma","Vedic Astrology · Jaipur","I used to manage everything on WhatsApp. Now seekers just book, pay, and join — it finally feels like a real practice."],["Meenakshi Iyer","Tarot · Chennai","No more chasing payments. The money lands straight in my account, and my page looks exactly like my brand."],["Vikram Joshi","Numerology · Pune","Setting up took twenty minutes. My availability, my prices, my language — and double-bookings can't happen."],["Sunita Deshpande","Vastu · Nagpur","Clients find me by my own name, not buried in a marketplace. And I keep every rupee I earn."],["Anil Kumar","Palmistry · Lucknow","The notes and chart uploads for each seeker are a quiet superpower — I walk into every call prepared."],["Lakshmi Narayanan","Prashna · Kochi","I added a helper for accounts and the bookings just share out fairly. It grows with me."]];
+  const GRADS=[["#7c5cff","#ff8fb1"],["#ffd66b","#7c5cff"],["#ff8fb1","#a78bff"],["#a78bff","#ffd66b"],["#7c5cff","#2d1b4e"],["#ffd66b","#ff8fb1"]];
+  function initials(n){return n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();}
+  document.getElementById('testi').innerHTML=TESTI.map((t,i)=>`<div class="tcard"><blockquote>&ldquo;${t[2]}&rdquo;</blockquote><div class="tcap"><div class="mono" style="background:linear-gradient(135deg,${GRADS[i%6][0]},${GRADS[i%6][1]})">${initials(t[0])}</div><div><div class="nm">${t[0]}</div><div class="sp">${t[1]}</div></div></div></div>`).join('');
+
+  // modalities
+  const MODGRAD=[["#7c5cff","#ff8fb1"],["#ffd66b","#7c5cff"],["#ff8fb1","#a78bff"],["#a78bff","#7c5cff"],["#ffd66b","#ff8fb1"],["#7c5cff","#2d1b4e"]];
+  function paintMods(){const items=i18n[curLang]['mods'];document.getElementById('mods').innerHTML=items.map((m,i)=>`<div class="mod"><div class="dot" style="background:linear-gradient(135deg,${MODGRAD[i][0]},${MODGRAD[i][1]})"></div><div class="nm">${m}</div></div>`).join('');}
+
+  // faq
+  function paintFaq(){const items=i18n[curLang]['faq'];document.getElementById('faq').innerHTML=items.map(q=>`<div class="qa" onclick="this.classList.toggle('open')"><h4>${q.q} <span class="plus">+</span></h4><p>${q.a}</p></div>`).join('');}
+
+  // ── i18n ──
   const i18n={
-    en:{ "nav-demo":"Try demo","nav-cta":"Get started",
-      eyebrow:"✦ For astrologers, palmists & Vedic consultants",
-      h1:'Your practice, beautifully <em>online</em>.',
-      sub:"A branded booking home for your consultations — schedule calls, take payments your way, and guide your seekers. You keep every rupee; we just power the experience.",
-      cta1:"Start free with Google",cta2:"Try the demo dashboard",note:"No commission on your earnings · Set up in minutes",
-      t1:"your earnings",t2:"languages & scripts",t3:"double-bookings",t4:"your branding",
-      "how-eye":"The path","how-title":"Three steps to your own consulting page","how-lead":"No tech skills needed. Bring your craft; we handle the rest.",
-      s1t:"Make it yours",s1p:"Add your photo, story, and experience. Pick your colours, your font, and your language — Hindi, English, or Hinglish.",
-      s2t:"Set your offerings",s2p:"Create consultation packages with your own prices and durations. Choose when you're available; we prevent clashes automatically.",
-      s3t:"Share & consult",s3p:"Share your link on Instagram or WhatsApp. Seekers book and pay; you get the call link, receipts go out on their own.",
-      "f-eye":"Everything in one place","f-title":"Built for the way you already work","f-lead":"Tap a capability to see what it does.",
-      f1t:"Smart scheduling",f1p:"Availability, buffers, and limits — calls land on your calendar with a Meet link, and double-bookings simply can't happen.",
-      f2t:"Your own payments",f2p:"UPI QR or your own gateway. Money reaches your account directly — never ours. Receipts go out under your name and GST.",
-      f3t:"Bring your team",f3p:"Add helpers to take calls or manage accounts. Bookings share out fairly and automatically across your team.",
-      f4t:"Seeker records",f4p:"Keep reading notes and upload charts for each client. Share a private link or print a clean PDF.",
-      "call-eye":"See it for yourself","call-title":"Schedule a call with us","call-lead":"Not sure if it fits your practice? Book a free 20-minute walkthrough. We'll show you how astrologers set up their page, take payments, and run consultations.",
-      cp1:"A live tour of the consultant dashboard",cp2:"Help choosing UPI QR vs. your own gateway",cp3:"Answers in Hindi, English, or Hinglish",
-      "cf-title":"Book your free walkthrough","cf-sub":"Pick a slot and we'll send a Google Meet link.","cf-name":"Your name","cf-phone":"WhatsApp number","cf-lang":"Preferred language","cf-slot":"Choose a slot","cf-btn":"Schedule my call",
-      "d-eye":"Kick the tyres","d-title":"Explore the consultant dashboard","d-lead":"Want to look inside before signing up? Open a fully interactive demo dashboard with realistic data — packages, bookings, payments, your team, and seeker records.","d-btn":"Try the demo dashboard →","d-note":"Quick verify with email & OTP · No commitment",
-      fc1:"Product",fc2:"For astrologers",fc3:"Company","foot-note":"Payments go directly to you — we never hold your money."
+    en:{ 'nav-how':'How it works','nav-feat':'Features','nav-price':'Pricing','nav-astro':'For Astrologers','nav-signin':'Sign in','nav-start':'Start free →',
+      eyebrow:'✦ For astrologers, palmists & Vedic consultants',h1:'Your practice, beautifully <em>online</em>.',sub:'A branded booking home for your consultations — schedule calls, take payments your way, and guide your seekers. You keep every rupee; we just power the experience.',cta1:'Start free with Google',cta2:'Try the demo dashboard',note:'No commission on your earnings · Set up in minutes',
+      t1:'your earnings',t2:'languages & scripts',t3:'double-bookings',t4:'your branding',
+      'm-eye':'The honest math','m-zero':'The commission we take from your consultations.','m-body':'On marketplaces a consultant earning ₹1,00,000/month loses up to ₹30,000. Here you keep all of it.','m-gold':"That's ₹3,60,000 more in your pocket every year.",
+      'pain-title':'Stop losing your earnings to middlemen.','pain-c1':'Marketplace apps','pain-c2':'Your own page',p1a:'Up to 30% commission on every booking',p1b:'0% commission — you keep it all',p2a:'One of 50,000 listings',p2b:'Your own branded home, found by your name',p3a:'They own your clients',p3b:'Your clients and records are yours',p4a:'A generic, identical profile',p4b:'Your photo, colours, font & language',p5a:'Payouts on a 30-day cycle',p5b:'Money hits your account directly',
+      'how-eye':'The path','how-title':'Three steps to your own consulting page','how-lead':'No tech skills needed. Bring your craft; we handle the rest.',s1t:'Make it yours',s1p:'Add your photo, story, and experience. Pick your colours, your font, and your language — Hindi, English, or Hinglish.',s2t:'Set your offerings',s2p:"Create consultation packages with your own prices and durations. Choose when you're available; we prevent clashes automatically.",s3t:'Share & consult',s3p:'Share your link on Instagram or WhatsApp. Seekers book and pay; you get the call link, receipts go out on their own.',
+      'f-eye':'Everything in one place','f-title':'Built for the way you already work','f-lead':'Tap a capability to see what it does.',f1t:'Smart scheduling',f1p:"Availability, buffers, and limits — calls land on your calendar with a Meet link, and double-bookings simply can't happen.",f2t:'Your own payments',f2p:'UPI QR or your own gateway. Money reaches your account directly — never ours. Receipts go out under your name and GST.',f3t:'Bring your team',f3p:'Add helpers to take calls or manage accounts. Bookings share out fairly and automatically across your team.',f4t:'Seeker records',f4p:'Keep reading notes and upload charts for each client. Share a private link or print a clean PDF.',
+      feat:[{t:'Smart scheduling',p:'Your availability, buffers and booking limits — all respected automatically, with a Meet link on every call.'},{t:'Your own payments',p:'UPI QR or your own gateway. Money reaches your account directly — never ours.'},{t:'Bring your team',p:'Add consulting or accounts helpers. Bookings auto-distribute fairly across your team.'},{t:'Seeker records',p:'Reading notes and uploaded charts for every client. Share a private link or print a PDF.'}],
+      'testi-eye':'Early members','testi-title':'Early astrologers love it.','testi-foot':'Illustrative of typical early-member experiences.',
+      'call-eye':'See it for yourself','call-title':'Schedule a call with us','call-lead':"Not sure if it fits your practice? Book a free 20-minute walkthrough. We'll show you how astrologers set up their page, take payments, and run consultations.",cp1:'A live tour of the consultant dashboard',cp2:'Help choosing UPI QR vs. your own gateway',cp3:'Answers in Hindi, English, or Hinglish','cf-title':'Book your free walkthrough','cf-sub':"Pick a slot and we'll reach out on WhatsApp.",'cf-name':'Your name','cf-email':'Email','cf-phone':'WhatsApp number','cf-lang':'Preferred language','cf-slot':'Choose a slot','cf-btn':'Schedule my call',
+      'mod-eye':'Every tradition welcome','mod-title':'For every kind of practice.',mods:['Vedic','Tarot','Numerology','Vastu','Palmistry','Prashna'],
+      'pr-eye':'Pricing','pr-title':'Simple pricing. No commission. Ever.','pr-lead':"Start free forever. Upgrade only when you're ready.",'pr-free':'Free','pr-mo':'/mo','pr-mo2':'/mo','pr-contact':'Contact us','pr-tg1':'For solo astrologers getting started','pr-tg2':'For serious, active practitioners','pr-tg3':'For growing practices with a team','pr-tg4':'For institutes & large practices','pr-see':'See full pricing →',
+      'd-eye':'Kick the tyres','d-title':'Explore the consultant dashboard','d-lead':'Want to look inside before signing up? Open a fully interactive demo dashboard with realistic data — packages, bookings, payments, your team, and seeker records.','d-btn':'Try the demo dashboard →','d-note':'Quick verify with email & OTP · No commitment',
+      'faq-title':'Pricing questions',faq:[{q:'Do you take a cut of my consultation fees?',a:'Never. We charge only a flat subscription. Every rupee a seeker pays goes directly to your own UPI ID or Razorpay account — we never touch your money.'},{q:'How is this different from Topmate or Astrotalk?',a:'They take 10–30% of every booking. We charge a flat subscription regardless of how much you earn.'},{q:'Can I start completely free?',a:'Yes. Starter is free forever — no credit card, no expiry. A real branded page with UPI payments and up to 30 bookings/month.'},{q:'How do clients pay me?',a:'On all plans, UPI QR with proof. On paid plans, connect your own Razorpay for instant confirmation.'},{q:'Can I cancel anytime?',a:'Absolutely. No lock-ins, no fees — your page just returns to the free Starter limits.'}],
+      'final-title':'Your stars are aligned. Start your practice today.','final-sub':'A branded booking home, your own payments, and every rupee you earn.','final-btn':'Start free →','final-micro':'Join the founding astrologers · Free forever',
+      fc1:'Product',fc2:'For astrologers',fc3:'Company','fl-start':'Get started','fl-ex':'Examples','fl-sup':'Support','fl-about':'About','fl-priv':'Privacy','fl-terms':'Terms','foot-note':'Payments go directly to you — we never hold your money.'
     },
-    hi:{ "nav-demo":"डेमो देखें","nav-cta":"शुरू करें",
-      eyebrow:"✦ ज्योतिषियों, हस्तरेखा एवं वैदिक सलाहकारों के लिए",
-      h1:'आपका कार्य, अब सुंदर रूप में <em>ऑनलाइन</em>।',
-      sub:"आपके परामर्श के लिए एक ब्रांडेड बुकिंग पृष्ठ — कॉल शेड्यूल करें, अपने तरीके से भुगतान लें, और जिज्ञासुओं का मार्गदर्शन करें। हर रुपया आपका; हम बस अनुभव को संचालित करते हैं।",
-      cta1:"Google से निःशुल्क शुरू करें",cta2:"डेमो डैशबोर्ड आज़माएँ",note:"आपकी कमाई पर कोई कमीशन नहीं · कुछ ही मिनटों में तैयार",
-      t1:"आपकी कमाई",t2:"भाषाएँ व लिपियाँ",t3:"दोहरी बुकिंग नहीं",t4:"आपकी ब्रांडिंग",
-      "how-eye":"मार्ग","how-title":"अपने परामर्श पृष्ठ तक तीन चरण","how-lead":"किसी तकनीकी ज्ञान की आवश्यकता नहीं। आप अपनी विद्या लाएँ; बाकी हम संभालते हैं।",
-      s1t:"इसे अपना बनाएँ",s1p:"अपनी फ़ोटो, कहानी और अनुभव जोड़ें। अपने रंग, फ़ॉन्ट और भाषा चुनें — हिंदी, अंग्रेज़ी या हिंग्लिश।",
-      s2t:"अपनी सेवाएँ तय करें",s2p:"अपनी कीमतों और अवधि के साथ परामर्श पैकेज बनाएँ। तय करें कि आप कब उपलब्ध हैं; टकराव हम स्वयं रोकते हैं।",
-      s3t:"साझा करें और परामर्श दें",s3p:"अपना लिंक इंस्टाग्राम या व्हाट्सएप पर साझा करें। जिज्ञासु बुक करके भुगतान करते हैं; आपको कॉल लिंक मिलता है, रसीदें स्वयं चली जाती हैं।",
-      "f-eye":"सब कुछ एक जगह","f-title":"आपके काम करने के तरीके के अनुसार","f-lead":"देखने के लिए किसी सुविधा पर टैप करें।",
-      f1t:"स्मार्ट शेड्यूलिंग",f1p:"उपलब्धता, अंतराल और सीमाएँ — कॉल आपके कैलेंडर पर Meet लिंक के साथ आती हैं, और दोहरी बुकिंग कभी नहीं होती।",
-      f2t:"आपका अपना भुगतान",f2p:"UPI QR या आपका अपना गेटवे। पैसा सीधे आपके खाते में — कभी हमारे नहीं। रसीदें आपके नाम और GST पर।",
-      f3t:"अपनी टीम जोड़ें",f3p:"कॉल लेने या खाते संभालने के लिए सहायक जोड़ें। बुकिंग स्वयं समान रूप से बँटती हैं।",
-      f4t:"जिज्ञासु रिकॉर्ड",f4p:"हर ग्राहक के लिए नोट्स रखें और कुंडली अपलोड करें। निजी लिंक साझा करें या PDF प्रिंट करें।",
-      "call-eye":"स्वयं देखें","call-title":"हमारे साथ कॉल शेड्यूल करें","call-lead":"क्या यह आपके कार्य के लिए उपयुक्त है? एक निःशुल्क 20-मिनट का वॉकथ्रू बुक करें। हम दिखाएँगे कि ज्योतिषी अपना पृष्ठ कैसे बनाते हैं।",
-      cp1:"सलाहकार डैशबोर्ड का लाइव दौरा",cp2:"UPI QR बनाम अपना गेटवे चुनने में मदद",cp3:"हिंदी, अंग्रेज़ी या हिंग्लिश में उत्तर",
-      "cf-title":"अपना निःशुल्क वॉकथ्रू बुक करें","cf-sub":"एक स्लॉट चुनें और हम Google Meet लिंक भेजेंगे।","cf-name":"आपका नाम","cf-phone":"व्हाट्सएप नंबर","cf-lang":"पसंदीदा भाषा","cf-slot":"स्लॉट चुनें","cf-btn":"मेरी कॉल शेड्यूल करें",
-      "d-eye":"आज़माकर देखें","d-title":"सलाहकार डैशबोर्ड देखें","d-lead":"साइन अप से पहले अंदर देखना चाहते हैं? वास्तविक डेटा के साथ एक इंटरैक्टिव डेमो डैशबोर्ड खोलें।","d-btn":"डेमो डैशबोर्ड आज़माएँ →","d-note":"ईमेल और OTP से त्वरित सत्यापन · कोई बाध्यता नहीं",
-      fc1:"उत्पाद",fc2:"ज्योतिषियों के लिए",fc3:"कंपनी","foot-note":"भुगतान सीधे आपको — हम आपका पैसा कभी नहीं रखते।"
+    hi:{ 'nav-how':'कैसे काम करता है','nav-feat':'सुविधाएँ','nav-price':'मूल्य','nav-astro':'ज्योतिषियों के लिए','nav-signin':'साइन इन','nav-start':'निःशुल्क शुरू करें →',
+      eyebrow:'✦ ज्योतिषियों, हस्तरेखा एवं वैदिक सलाहकारों के लिए',h1:'आपका कार्य, अब सुंदर रूप में <em>ऑनलाइन</em>।',sub:'आपके परामर्श के लिए एक ब्रांडेड बुकिंग पृष्ठ — कॉल शेड्यूल करें, अपने तरीके से भुगतान लें, और जिज्ञासुओं का मार्गदर्शन करें। हर रुपया आपका; हम बस अनुभव को संचालित करते हैं।',cta1:'Google से निःशुल्क शुरू करें',cta2:'डेमो डैशबोर्ड आज़माएँ',note:'आपकी कमाई पर कोई कमीशन नहीं · कुछ ही मिनटों में तैयार',
+      t1:'आपकी कमाई',t2:'भाषाएँ व लिपियाँ',t3:'दोहरी बुकिंग नहीं',t4:'आपकी ब्रांडिंग',
+      'm-eye':'सच्चा गणित','m-zero':'आपके परामर्श पर हम जितना कमीशन लेते हैं।','m-body':'मार्केटप्लेस पर ₹1,00,000/माह कमाने वाला सलाहकार ₹30,000 तक खो देता है। यहाँ वह पूरा आपका रहता है।','m-gold':'यानी हर साल ₹3,60,000 अधिक आपकी जेब में।',
+      'pain-title':'अपनी कमाई बिचौलियों को देना बंद करें।','pain-c1':'मार्केटप्लेस ऐप','pain-c2':'आपका अपना पृष्ठ',p1a:'हर बुकिंग पर 30% तक कमीशन',p1b:'0% कमीशन — पूरा आपका',p2a:'50,000 लिस्टिंग में से एक',p2b:'आपके नाम से मिलने वाला अपना पृष्ठ',p3a:'आपके ग्राहक उनके',p3b:'आपके ग्राहक और रिकॉर्ड आपके',p4a:'एक जैसा सामान्य प्रोफ़ाइल',p4b:'आपकी फ़ोटो, रंग, फ़ॉन्ट व भाषा',p5a:'30 दिन के भुगतान चक्र',p5b:'पैसा सीधे आपके खाते में',
+      'how-eye':'मार्ग','how-title':'अपने परामर्श पृष्ठ तक तीन चरण','how-lead':'किसी तकनीकी ज्ञान की आवश्यकता नहीं। आप अपनी विद्या लाएँ; बाकी हम संभालते हैं।',s1t:'इसे अपना बनाएँ',s1p:'अपनी फ़ोटो, कहानी और अनुभव जोड़ें। अपने रंग, फ़ॉन्ट और भाषा चुनें — हिंदी, अंग्रेज़ी या हिंग्लिश।',s2t:'अपनी सेवाएँ तय करें',s2p:'अपनी कीमतों और अवधि के साथ परामर्श पैकेज बनाएँ। तय करें कि आप कब उपलब्ध हैं; टकराव हम स्वयं रोकते हैं।',s3t:'साझा करें और परामर्श दें',s3p:'अपना लिंक इंस्टाग्राम या व्हाट्सएप पर साझा करें। जिज्ञासु बुक करके भुगतान करते हैं; रसीदें स्वयं चली जाती हैं।',
+      'f-eye':'सब कुछ एक जगह','f-title':'आपके काम करने के तरीके के अनुसार','f-lead':'देखने के लिए किसी सुविधा पर टैप करें।',f1t:'स्मार्ट शेड्यूलिंग',f1p:'उपलब्धता, अंतराल और सीमाएँ — कॉल आपके कैलेंडर पर Meet लिंक के साथ आती हैं, और दोहरी बुकिंग कभी नहीं होती।',f2t:'आपका अपना भुगतान',f2p:'UPI QR या आपका अपना गेटवे। पैसा सीधे आपके खाते में — कभी हमारे नहीं। रसीदें आपके नाम और GST पर।',f3t:'अपनी टीम जोड़ें',f3p:'कॉल लेने या खाते संभालने के लिए सहायक जोड़ें। बुकिंग स्वयं समान रूप से बँटती हैं।',f4t:'जिज्ञासु रिकॉर्ड',f4p:'हर ग्राहक के लिए नोट्स रखें और कुंडली अपलोड करें। निजी लिंक साझा करें या PDF प्रिंट करें।',
+      feat:[{t:'स्मार्ट शेड्यूलिंग',p:'आपकी उपलब्धता, अंतराल और सीमाएँ — सब स्वतः, हर कॉल पर Meet लिंक के साथ।'},{t:'आपका अपना भुगतान',p:'UPI QR या आपका अपना गेटवे। पैसा सीधे आपके खाते में — कभी हमारे नहीं।'},{t:'अपनी टीम जोड़ें',p:'सहायक जोड़ें। बुकिंग टीम में स्वयं समान रूप से बँटती हैं।'},{t:'जिज्ञासु रिकॉर्ड',p:'हर ग्राहक के लिए नोट्स और कुंडली। निजी लिंक या PDF।'}],
+      'testi-eye':'शुरुआती सदस्य','testi-title':'शुरुआती ज्योतिषियों को यह पसंद है।','testi-foot':'शुरुआती सदस्यों के सामान्य अनुभव का उदाहरण।',
+      'call-eye':'स्वयं देखें','call-title':'हमारे साथ कॉल शेड्यूल करें','call-lead':'क्या यह आपके कार्य के लिए उपयुक्त है? एक निःशुल्क 20-मिनट का वॉकथ्रू बुक करें।',cp1:'सलाहकार डैशबोर्ड का लाइव दौरा',cp2:'UPI QR बनाम अपना गेटवे चुनने में मदद',cp3:'हिंदी, अंग्रेज़ी या हिंग्लिश में उत्तर','cf-title':'अपना निःशुल्क वॉकथ्रू बुक करें','cf-sub':'एक स्लॉट चुनें और हम व्हाट्सएप पर संपर्क करेंगे।','cf-name':'आपका नाम','cf-email':'ईमेल','cf-phone':'व्हाट्सएप नंबर','cf-lang':'पसंदीदा भाषा','cf-slot':'स्लॉट चुनें','cf-btn':'मेरी कॉल शेड्यूल करें',
+      'mod-eye':'हर परंपरा का स्वागत','mod-title':'हर तरह की विद्या के लिए।',mods:['वैदिक','टैरो','अंकशास्त्र','वास्तु','हस्तरेखा','प्रश्न'],
+      'pr-eye':'मूल्य','pr-title':'सरल मूल्य। कोई कमीशन नहीं। कभी नहीं।','pr-lead':'हमेशा के लिए निःशुल्क शुरू करें।','pr-free':'निःशुल्क','pr-mo':'/माह','pr-mo2':'/माह','pr-contact':'संपर्क करें','pr-tg1':'शुरुआत करने वाले एकल ज्योतिषियों के लिए','pr-tg2':'गंभीर, सक्रिय अभ्यासियों के लिए','pr-tg3':'टीम के साथ बढ़ते अभ्यास के लिए','pr-tg4':'संस्थानों व बड़े अभ्यास के लिए','pr-see':'पूरा मूल्य देखें →',
+      'd-eye':'आज़माकर देखें','d-title':'सलाहकार डैशबोर्ड देखें','d-lead':'साइन अप से पहले अंदर देखना चाहते हैं? वास्तविक डेटा के साथ एक इंटरैक्टिव डेमो डैशबोर्ड खोलें।','d-btn':'डेमो डैशबोर्ड आज़माएँ →','d-note':'ईमेल और OTP से त्वरित सत्यापन · कोई बाध्यता नहीं',
+      'faq-title':'मूल्य संबंधी प्रश्न',faq:[{q:'क्या आप मेरी परामर्श फीस में से हिस्सा लेते हैं?',a:'कभी नहीं। हम केवल एक निश्चित सदस्यता शुल्क लेते हैं। हर रुपया सीधे आपके UPI या Razorpay खाते में।'},{q:'यह Topmate या Astrotalk से कैसे अलग है?',a:'वे हर बुकिंग पर 10–30% लेते हैं। हम आपकी कमाई चाहे जितनी हो, एक निश्चित शुल्क लेते हैं।'},{q:'क्या मैं पूरी तरह निःशुल्क शुरू कर सकता हूँ?',a:'हाँ। Starter हमेशा के लिए निःशुल्क है — UPI भुगतान और 30 बुकिंग/माह के साथ।'},{q:'ग्राहक मुझे भुगतान कैसे करते हैं?',a:'सभी प्लान पर UPI QR। पेड प्लान पर अपना Razorpay जोड़ें।'},{q:'क्या मैं कभी भी रद्द कर सकता हूँ?',a:'बिलकुल। कोई लॉक-इन नहीं — आपका पृष्ठ बस निःशुल्क सीमा पर लौट आता है।'}],
+      'final-title':'आपके सितारे अनुकूल हैं। आज ही अपना अभ्यास शुरू करें।','final-sub':'एक ब्रांडेड बुकिंग पृष्ठ, आपका अपना भुगतान, और हर कमाया रुपया।','final-btn':'निःशुल्क शुरू करें →','final-micro':'संस्थापक ज्योतिषियों में शामिल हों · हमेशा के लिए निःशुल्क',
+      fc1:'उत्पाद',fc2:'ज्योतिषियों के लिए',fc3:'कंपनी','fl-start':'शुरू करें','fl-ex':'उदाहरण','fl-sup':'सहायता','fl-about':'हमारे बारे में','fl-priv':'गोपनीयता','fl-terms':'शर्तें','foot-note':'भुगतान सीधे आपको — हम आपका पैसा कभी नहीं रखते।'
     },
-    hinglish:{ "nav-demo":"Demo dekhein","nav-cta":"Shuru karein",
-      eyebrow:"✦ Astrologers, palmists & Vedic consultants ke liye",
-      h1:'Aapki practice, ab khoobsurat <em>online</em>.',
-      sub:"Aapke consultations ke liye ek branded booking page — calls schedule karein, apne tarike se payment lein, aur seekers ko guide karein. Har rupaya aapka; hum bas experience power karte hain.",
-      cta1:"Google se free shuru karein",cta2:"Demo dashboard try karein",note:"Aapki earnings par koi commission nahi · Minutes mein ready",
-      t1:"aapki earnings",t2:"languages & scripts",t3:"double-booking nahi",t4:"aapki branding",
-      "how-eye":"Raasta","how-title":"Apne consulting page tak teen steps","how-lead":"Koi tech knowledge nahi chahiye. Aap apni vidya laayein; baaki hum sambhaalte hain.",
-      s1t:"Ise apna banayein",s1p:"Apni photo, story aur experience add karein. Apne colours, font aur language chunein — Hindi, English ya Hinglish.",
-      s2t:"Apni offerings set karein",s2p:"Apni prices aur duration ke saath packages banayein. Decide karein kab available hain; clashes hum khud rokte hain.",
-      s3t:"Share & consult karein",s3p:"Apna link Instagram ya WhatsApp par share karein. Seekers book karke pay karte hain; receipts khud chali jaati hain.",
-      "f-eye":"Sab kuch ek jagah","f-title":"Aapke kaam ke tarike ke hisaab se","f-lead":"Dekhne ke liye kisi capability par tap karein.",
-      f1t:"Smart scheduling",f1p:"Availability, buffers aur limits — calls Meet link ke saath aati hain, aur double-booking kabhi nahi hoti.",
-      f2t:"Aapka apna payment",f2p:"UPI QR ya aapka apna gateway. Paisa seedha aapke account mein — kabhi hamare nahi. Receipts aapke naam aur GST par.",
-      f3t:"Apni team layein",f3p:"Calls lene ya accounts ke liye helpers add karein. Bookings khud fairly bant-ti hain.",
-      f4t:"Seeker records",f4p:"Har client ke liye notes rakhein aur kundali upload karein. Private link share karein ya PDF print karein.",
-      "call-eye":"Khud dekhein","call-title":"Hamare saath call schedule karein","call-lead":"Sure nahi ki practice ke liye fit hai? Free 20-min walkthrough book karein. Hum dikhayenge astrologers page kaise banate hain.",
-      cp1:"Consultant dashboard ka live tour",cp2:"UPI QR vs apna gateway chunne mein madad",cp3:"Hindi, English ya Hinglish mein answers",
-      "cf-title":"Apna free walkthrough book karein","cf-sub":"Slot chunein aur hum Google Meet link bhejenge.","cf-name":"Aapka naam","cf-phone":"WhatsApp number","cf-lang":"Preferred language","cf-slot":"Slot chunein","cf-btn":"Meri call schedule karein",
-      "d-eye":"Try karke dekhein","d-title":"Consultant dashboard explore karein","d-lead":"Sign up se pehle andar dekhna chahte hain? Realistic data ke saath interactive demo dashboard kholein.","d-btn":"Demo dashboard try karein →","d-note":"Email & OTP se quick verify · Koi commitment nahi",
-      fc1:"Product",fc2:"Astrologers ke liye",fc3:"Company","foot-note":"Payment seedha aapko — hum aapka paisa kabhi nahi rakhte."
+    hinglish:{ 'nav-how':'How it works','nav-feat':'Features','nav-price':'Pricing','nav-astro':'Astrologers ke liye','nav-signin':'Sign in','nav-start':'Free shuru karein →',
+      eyebrow:'✦ Astrologers, palmists & Vedic consultants ke liye',h1:'Aapki practice, ab khoobsurat <em>online</em>.',sub:'Aapke consultations ke liye ek branded booking page — calls schedule karein, apne tarike se payment lein, aur seekers ko guide karein. Har rupaya aapka; hum bas experience power karte hain.',cta1:'Google se free shuru karein',cta2:'Demo dashboard try karein',note:'Aapki earnings par koi commission nahi · Minutes mein ready',
+      t1:'aapki earnings',t2:'languages & scripts',t3:'double-booking nahi',t4:'aapki branding',
+      'm-eye':'Honest math','m-zero':'Aapke consultations par hum jitna commission lete hain.','m-body':'Marketplaces par ₹1,00,000/month kamane wala consultant ₹30,000 tak khota hai. Yahan woh poora aapka rehta hai.','m-gold':'Matlab har saal ₹3,60,000 zyada aapki jeb mein.',
+      'pain-title':'Apni earnings middlemen ko dena band karein.','pain-c1':'Marketplace apps','pain-c2':'Aapka apna page',p1a:'Har booking par 30% tak commission',p1b:'0% commission — poora aapka',p2a:'50,000 listings mein se ek',p2b:'Aapke naam se milne wala apna page',p3a:'Aapke clients unke',p3b:'Aapke clients aur records aapke',p4a:'Ek jaisa generic profile',p4b:'Aapki photo, colours, font & language',p5a:'30-din ke payout cycles',p5b:'Paisa seedha aapke account mein',
+      'how-eye':'Raasta','how-title':'Apne consulting page tak teen steps','how-lead':'Koi tech knowledge nahi chahiye. Aap apni vidya laayein; baaki hum sambhaalte hain.',s1t:'Ise apna banayein',s1p:'Apni photo, story aur experience add karein. Apne colours, font aur language chunein — Hindi, English ya Hinglish.',s2t:'Apni offerings set karein',s2p:'Apni prices aur duration ke saath packages banayein. Decide karein kab available hain; clashes hum khud rokte hain.',s3t:'Share & consult karein',s3p:'Apna link Instagram ya WhatsApp par share karein. Seekers book karke pay karte hain; receipts khud chali jaati hain.',
+      'f-eye':'Sab kuch ek jagah','f-title':'Aapke kaam ke tarike ke hisaab se','f-lead':'Dekhne ke liye kisi capability par tap karein.',f1t:'Smart scheduling',f1p:'Availability, buffers aur limits — calls Meet link ke saath aati hain, aur double-booking kabhi nahi hoti.',f2t:'Aapka apna payment',f2p:'UPI QR ya aapka apna gateway. Paisa seedha aapke account mein — kabhi hamare nahi. Receipts aapke naam aur GST par.',f3t:'Apni team layein',f3p:'Calls lene ya accounts ke liye helpers add karein. Bookings khud fairly bant-ti hain.',f4t:'Seeker records',f4p:'Har client ke liye notes aur kundali. Private link share karein ya PDF print karein.',
+      feat:[{t:'Smart scheduling',p:'Aapki availability, buffers aur limits — sab automatic, har call par Meet link.'},{t:'Aapka apna payment',p:'UPI QR ya apna gateway. Paisa seedha aapke account mein — kabhi hamare nahi.'},{t:'Apni team layein',p:'Helpers add karein. Bookings team mein khud fairly bant-ti hain.'},{t:'Seeker records',p:'Har client ke liye notes aur kundali. Private link ya PDF.'}],
+      'testi-eye':'Early members','testi-title':'Early astrologers ko yeh pasand hai.','testi-foot':'Typical early-member experiences ka illustration.',
+      'call-eye':'Khud dekhein','call-title':'Hamare saath call schedule karein','call-lead':'Sure nahi ki practice ke liye fit hai? Free 20-min walkthrough book karein.',cp1:'Consultant dashboard ka live tour',cp2:'UPI QR vs apna gateway chunne mein madad',cp3:'Hindi, English ya Hinglish mein answers','cf-title':'Apna free walkthrough book karein','cf-sub':'Slot chunein aur hum WhatsApp par reach out karenge.','cf-name':'Aapka naam','cf-email':'Email','cf-phone':'WhatsApp number','cf-lang':'Preferred language','cf-slot':'Slot chunein','cf-btn':'Meri call schedule karein',
+      'mod-eye':'Har tradition welcome','mod-title':'Har tarah ki practice ke liye.',mods:['Vedic','Tarot','Numerology','Vastu','Palmistry','Prashna'],
+      'pr-eye':'Pricing','pr-title':'Simple pricing. No commission. Ever.','pr-lead':'Free forever shuru karein.','pr-free':'Free','pr-mo':'/mo','pr-mo2':'/mo','pr-contact':'Contact us','pr-tg1':'Shuru karne wale solo astrologers ke liye','pr-tg2':'Serious, active practitioners ke liye','pr-tg3':'Team ke saath badhti practice ke liye','pr-tg4':'Institutes & badi practice ke liye','pr-see':'Full pricing dekhein →',
+      'd-eye':'Try karke dekhein','d-title':'Consultant dashboard explore karein','d-lead':'Sign up se pehle andar dekhna chahte hain? Realistic data ke saath interactive demo dashboard kholein.','d-btn':'Demo dashboard try karein →','d-note':'Email & OTP se quick verify · Koi commitment nahi',
+      'faq-title':'Pricing questions',faq:[{q:'Kya aap meri consultation fees mein se cut lete hain?',a:'Kabhi nahi. Hum sirf ek flat subscription lete hain. Har rupaya seedha aapke UPI ya Razorpay account mein.'},{q:'Yeh Topmate ya Astrotalk se kaise alag hai?',a:'Woh har booking par 10–30% lete hain. Hum flat subscription lete hain.'},{q:'Kya main poori tarah free shuru kar sakta hoon?',a:'Haan. Starter forever free hai — UPI payments aur 30 bookings/month ke saath.'},{q:'Clients mujhe pay kaise karte hain?',a:'Sabhi plans par UPI QR. Paid plans par apna Razorpay connect karein.'},{q:'Kya main kabhi bhi cancel kar sakta hoon?',a:'Bilkul. Koi lock-in nahi — aapka page bas free Starter limits par laut aata hai.'}],
+      'final-title':'Aapke sitare aligned hain. Aaj hi apni practice shuru karein.','final-sub':'Ek branded booking page, aapka apna payment, aur har kamaya rupaya.','final-btn':'Free shuru karein →','final-micro':'Founding astrologers mein shaamil hon · Forever free',
+      fc1:'Product',fc2:'Astrologers ke liye',fc3:'Company','fl-start':'Get started','fl-ex':'Examples','fl-sup':'Support','fl-about':'About','fl-priv':'Privacy','fl-terms':'Terms','foot-note':'Payment seedha aapko — hum aapka paisa kabhi nahi rakhte.'
     }
   };
-  const featTransAll={
-    en:{0:{t:"Smart scheduling",p:"Your availability, buffers and booking limits — all respected automatically, with a Meet link on every call."},1:{t:"Your own payments",p:"UPI QR or your own gateway. Money reaches your account directly — never ours."},2:{t:"Bring your team",p:"Add consulting or accounts helpers. Bookings auto-distribute fairly across your team."},3:{t:"Seeker records",p:"Reading notes and uploaded charts for every client. Share a private link or print a PDF."}},
-    hi:{0:{t:"स्मार्ट शेड्यूलिंग",p:"आपकी उपलब्धता, अंतराल और सीमाएँ — सब स्वतः, हर कॉल पर Meet लिंक के साथ।"},1:{t:"आपका अपना भुगतान",p:"UPI QR या आपका अपना गेटवे। पैसा सीधे आपके खाते में — कभी हमारे नहीं।"},2:{t:"अपनी टीम जोड़ें",p:"सहायक जोड़ें। बुकिंग टीम में स्वयं समान रूप से बँटती हैं।"},3:{t:"जिज्ञासु रिकॉर्ड",p:"हर ग्राहक के लिए नोट्स और कुंडली। निजी लिंक या PDF।"}},
-    hinglish:{0:{t:"Smart scheduling",p:"Aapki availability, buffers aur limits — sab automatic, har call par Meet link."},1:{t:"Aapka apna payment",p:"UPI QR ya apna gateway. Paisa seedha aapke account mein — kabhi hamare nahi."},2:{t:"Apni team layein",p:"Helpers add karein. Bookings team mein khud fairly bant-ti hain."},3:{t:"Seeker records",p:"Har client ke liye notes aur kundali. Private link ya PDF."}}
-  };
 
+  let curLang='en';
   function setLang(lang,btn){
-    document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    const dict=i18n[lang];
-    document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(dict[k]!==undefined)el.innerHTML=dict[k];});
-    featTrans=featTransAll[lang];
-    // refresh active feature visual text
-    const active=document.querySelector('.feat-item.active');
-    if(active){const idx=[...document.querySelectorAll('.feat-item')].indexOf(active);const d=featTrans[idx];document.getElementById('vtitle').textContent=d.t;document.getElementById('vtext').textContent=d.p;}
-    if(lang==='hi')document.body.classList.add('dev');else document.body.classList.remove('dev');
+    curLang=lang;
+    document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+    const d=i18n[lang];
+    document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(d[k]!==undefined)el.innerHTML=d[k];});
+    paintFeat();paintMods();paintFaq();
+    document.body.classList.toggle('dev',lang==='hi');
   }
+  // init
+  document.getElementById('vic').innerHTML=featIcons[0];paintFeat();paintMods();paintFaq();
 </script>
 </body>
 </html>

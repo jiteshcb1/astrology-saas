@@ -75,6 +75,22 @@ export async function ensureMeetLink(orgId: string, bookingId: string): Promise<
   }
 }
 
+// SP-7.1 — after a (re)connect, create Meet links for the member's recent UPCOMING confirmed bookings that
+// don't have one yet (e.g. bookings confirmed BEFORE the calendar was connected). Best-effort; never throws.
+export async function backfillMeetLinksForMember(orgId: string, memberId: string): Promise<void> {
+  try {
+    const bookings = await tenantDb(orgId).booking.findMany({
+      where: { assignedMemberId: memberId, status: "confirmed", calendarEventId: null, slot: { is: { startsAt: { gt: new Date() } } } },
+      orderBy: { createdAt: "desc" },
+      take: 25,
+      select: { id: true },
+    });
+    for (const b of bookings) await ensureMeetLink(orgId, b.id);
+  } catch (e) {
+    await captureError(e, { orgId, memberId, where: "backfillMeetLinksForMember" });
+  }
+}
+
 // Best-effort delete of a confirmed booking's calendar event (for a future confirmed-cancel/refund/reschedule flow).
 // Clears calendarEventId but KEEPS meetLink so past records stay readable.
 export async function deleteBookingCalendarEvent(orgId: string, bookingId: string, actorUserId: string | null = null): Promise<void> {

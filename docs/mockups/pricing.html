@@ -21,51 +21,112 @@
   .nav-links a:hover,.nav-links a.cur{color:var(--marigold-soft);}
   .btn-primary{background:var(--marigold);color:var(--night);border:none;padding:10px 20px;border-radius:999px;font-weight:600;font-size:.9rem;cursor:pointer;font-family:inherit;}
   @media(max-width:860px){.nav-links a:not(.btnlink){display:none;}}
-  .phead{background:radial-gradient(ellipse at 50% -20%,#26224d,var(--night) 60%,#0f0d22);color:var(--sand);padding:80px 7vw 70px;text-align:center;position:relative;overflow:hidden;}
+
+  /* Hero */
+  .phead{background:radial-gradient(ellipse at 50% -20%,#26224d,var(--night) 60%,#0f0d22);color:var(--sand);padding:78px 7vw 64px;text-align:center;position:relative;overflow:hidden;}
   .phead .stars span{position:absolute;width:3px;height:3px;background:var(--star);border-radius:50%;animation:tw 4s infinite;}
   @keyframes tw{0%,100%{opacity:.3}50%{opacity:1}}
   .phead .eyebrow{display:inline-block;font-size:.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--marigold-soft);border:1px solid var(--line-dark);padding:6px 15px;border-radius:999px;margin-bottom:20px;position:relative;}
   .phead h1{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(2.3rem,5vw,3.6rem);line-height:1.1;position:relative;}
-  .phead p{color:rgba(246,239,226,.75);max-width:560px;margin:16px auto 0;position:relative;}
+  .phead .sub{color:rgba(246,239,226,.75);max-width:620px;margin:16px auto 0;position:relative;}
   .pills{display:inline-flex;background:rgba(246,239,226,0.06);border:1px solid var(--line-dark);border-radius:999px;padding:4px;margin-top:24px;position:relative;}
   .pills button{background:transparent;border:none;color:rgba(246,239,226,0.7);padding:8px 20px;border-radius:999px;cursor:pointer;font-family:inherit;font-size:.88rem;transition:all .2s;}
   .pills button.active{background:var(--marigold);color:var(--night);font-weight:600;}
   .pills .save{font-size:.7rem;color:var(--green);margin-left:6px;}
-  .plans{max-width:1000px;margin:0 auto;padding:60px 7vw;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
-  @media(max-width:880px){.plans{grid-template-columns:1fr;max-width:420px;}}
-  .plan{background:#fff;border:1px solid var(--line-light);border-radius:20px;padding:30px 26px;position:relative;display:flex;flex-direction:column;}
+  .pills button.active .save{color:rgba(20,18,43,.7);}
+  .savings{position:relative;max-width:430px;margin:20px auto 0;border:1px solid var(--line-dark);background:rgba(246,239,226,0.05);border-radius:16px;padding:12px 18px;font-size:.9rem;}
+  .savings .green{color:var(--green);font-weight:600;}
+  .savings .muted{color:rgba(246,239,226,.6);}
+
+  /* Plans */
+  .plans{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;max-width:1200px;margin:0 auto;padding:54px 7vw 10px;}
+  @media(max-width:1100px){.plans{grid-template-columns:repeat(2,1fr);max-width:760px;}}
+  @media(max-width:640px){.plans{grid-template-columns:1fr;max-width:420px;}.plan.featured{order:-1;}}
+  .plan{background:#fff;border:1px solid var(--line-light);border-radius:20px;padding:32px 28px;position:relative;display:flex;flex-direction:column;}
   .plan.featured{border-color:var(--marigold);box-shadow:0 20px 50px rgba(232,163,61,0.15);}
+  .plan.enterprise{border-style:dashed;border-color:rgba(232,163,61,0.45);}
   .plan .ribbon{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--marigold);color:var(--night);font-size:.72rem;font-weight:700;padding:5px 14px;border-radius:999px;letter-spacing:.5px;}
   .plan h3{font-family:'Fraunces',serif;font-weight:500;font-size:1.4rem;margin-bottom:6px;}
-  .plan .tagline{color:var(--muted);font-size:.86rem;margin-bottom:20px;min-height:40px;}
-  .plan .price{font-family:'Fraunces',serif;font-size:2.4rem;font-weight:500;}
-  .plan .price small{font-size:.9rem;color:var(--muted);font-family:'Inter';}
-  .plan .per{color:var(--muted);font-size:.82rem;margin-bottom:22px;}
-  .plan ul{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:26px;flex:1;}
-  .plan li{display:flex;gap:10px;align-items:flex-start;font-size:.9rem;}
-  .plan li svg{color:var(--green);flex-shrink:0;margin-top:3px;}
-  .plan li.off{color:rgba(42,39,72,0.4);}
-  .plan li.off svg{color:rgba(42,39,72,0.3);}
-  .plan .cta{width:100%;padding:12px;border-radius:11px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.92rem;border:1px solid var(--marigold);background:#fff;color:var(--terra);transition:all .2s;}
+  .plan .tagline{color:var(--muted);font-size:.86rem;margin-bottom:16px;min-height:40px;}
+  .price-block{margin-bottom:6px;min-height:96px;}
+  .price-block .strike{color:var(--muted);font-size:.85rem;text-decoration:line-through;height:1.2em;}
+  .price-block .price{font-family:'Fraunces',serif;font-size:2.8rem;font-weight:500;line-height:1;}
+  .price-block .price .rs{font-size:2rem;vertical-align:top;}
+  .price-block .price small{font-size:1rem;color:var(--muted);font-family:'Inter';}
+  .price-block.contact .price{font-size:1.8rem;color:var(--terra);}
+  .price-block .per{color:var(--muted);font-size:.82rem;margin-top:8px;}
+  .price-block .save-pill{display:none;margin-top:8px;font-size:.72rem;color:var(--green);background:rgba(79,157,105,.14);border-radius:999px;padding:3px 10px;}
+  .seats{font-size:.8rem;font-weight:500;color:var(--ink);margin-bottom:14px;}
+  .plan ul{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:24px;flex:1;}
+  .feat{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;}
+  .feat .tick{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;margin-top:2px;background:var(--marigold);color:var(--night);}
+  .feat.off{color:var(--muted);}
+  .feat.off .tick{background:var(--line-light);color:var(--muted);}
+  .feat .fsub{display:block;color:var(--muted);font-size:.78rem;margin-top:2px;}
+  .cta{width:100%;padding:12px;border-radius:999px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.92rem;border:1px solid var(--marigold);background:#fff;color:var(--terra);transition:all .2s;text-align:center;display:block;}
   .plan.featured .cta{background:var(--marigold);color:var(--night);border:none;}
-  .plan .cta:hover{transform:translateY(-2px);}
-  .addon{max-width:760px;margin:10px auto 0;padding:0 7vw;}
-  .addon-card{background:var(--sand-2);border:1px solid var(--line-light);border-radius:16px;padding:24px 28px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+  .plan.enterprise .cta{border-color:var(--line-light);color:var(--ink);}
+  .cta:hover{transform:translateY(-2px);}
+  .seat-note{text-align:center;color:var(--muted);font-size:.78rem;margin-top:10px;}
+
+  /* Extra seats + note */
+  .addon{max-width:780px;margin:24px auto 0;padding:0 7vw;}
+  .addon-card{background:var(--sand-2);border:1px solid var(--line-light);border-radius:16px;padding:22px 26px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
   .addon-card .ic{color:var(--terra);}
   .addon-card h4{font-family:'Fraunces',serif;font-weight:500;font-size:1.15rem;}
-  .addon-card p{color:var(--muted);font-size:.88rem;}
-  .addon-card .price{margin-left:auto;font-family:'Fraunces',serif;font-size:1.4rem;color:var(--terra);}
-  .note{max-width:760px;margin:24px auto 0;padding:0 7vw;text-align:center;color:var(--muted);font-size:.86rem;}
-  .faq{max-width:760px;margin:0 auto;padding:70px 7vw;}
-  .faq h2{font-family:'Fraunces',serif;font-weight:500;font-size:1.9rem;text-align:center;margin-bottom:32px;}
+  .addon-card p{color:var(--muted);font-size:.86rem;}
+  .addon-card .seatprices{margin-left:auto;text-align:right;font-size:.9rem;}
+  .addon-card .seatprices b{color:var(--terra);}
+  .note{max-width:760px;margin:22px auto 0;padding:0 7vw;text-align:center;color:var(--muted);font-size:.84rem;}
+
+  /* Comparison strip */
+  .compare{background:radial-gradient(ellipse at 50% -20%,#26224d,var(--night) 60%,#0f0d22);color:var(--sand);padding:60px 7vw;margin-top:50px;}
+  .compare h2{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(1.6rem,4vw,2.2rem);text-align:center;max-width:760px;margin:0 auto;}
+  .compare-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:920px;margin:36px auto 0;}
+  @media(max-width:760px){.compare-grid{grid-template-columns:1fr;max-width:380px;}}
+  .ccard{border:1px solid var(--line-dark);background:rgba(246,239,226,0.05);border-radius:16px;padding:24px;text-align:center;}
+  .ccard .earned{font-family:'Fraunces',serif;font-size:1.25rem;color:var(--marigold-soft);}
+  .ccard .rows{margin-top:14px;font-size:.88rem;color:rgba(246,239,226,.75);display:flex;flex-direction:column;gap:5px;}
+  .ccard .save{margin-top:14px;font-family:'Fraunces',serif;font-size:1.5rem;color:var(--marigold);}
+  .ccard .save .arr{color:var(--green);}
+
+  /* FAQ */
+  .faq{max-width:760px;margin:0 auto;padding:60px 7vw;}
+  .faq h2{font-family:'Fraunces',serif;font-weight:500;font-size:1.9rem;text-align:center;margin-bottom:28px;}
   .qa{background:#fff;border:1px solid var(--line-light);border-radius:14px;padding:18px 22px;margin-bottom:12px;cursor:pointer;}
-  .qa h4{font-size:.98rem;display:flex;justify-content:space-between;align-items:center;}
-  .qa .plus{color:var(--marigold);font-size:1.3rem;transition:transform .2s;}
+  .qa h4{font-size:.96rem;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  .qa .plus{color:var(--marigold);font-size:1.3rem;transition:transform .2s;flex-shrink:0;}
   .qa.open .plus{transform:rotate(45deg);}
   .qa p{color:var(--muted);font-size:.9rem;max-height:0;overflow:hidden;transition:all .3s;opacity:0;}
-  .qa.open p{max-height:160px;opacity:1;margin-top:12px;}
+  .qa.open p{max-height:200px;opacity:1;margin-top:12px;}
+
   footer{background:var(--night);color:rgba(246,239,226,.55);padding:40px 7vw;text-align:center;font-size:.85rem;}
   footer a{color:var(--marigold-soft);}
+
+  /* Enterprise modal */
+  .backdrop{position:fixed;inset:0;background:rgba(20,18,43,.55);backdrop-filter:blur(4px);z-index:60;display:none;align-items:center;justify-content:center;}
+  .backdrop.open{display:flex;}
+  @media(max-width:640px){.backdrop{align-items:flex-end;}}
+  .modal{background:var(--sand);border-radius:20px;width:100%;max-width:520px;max-height:92vh;overflow:auto;position:relative;}
+  @media(max-width:640px){.modal{border-radius:20px 20px 0 0;}}
+  .modal .x{position:absolute;top:14px;right:14px;width:34px;height:34px;border:none;background:transparent;border-radius:50%;cursor:pointer;color:var(--muted);font-size:1.1rem;}
+  .modal .x:hover{background:var(--sand-2);}
+  .mbody{padding:26px 28px;}
+  .mbody h3{font-family:'Fraunces',serif;font-weight:500;font-size:1.6rem;}
+  .mbody .msub{color:var(--muted);font-size:.9rem;margin-top:4px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px;}
+  .grid2 .full{grid-column:1/-1;}
+  @media(max-width:480px){.grid2{grid-template-columns:1fr;}}
+  .field label{display:block;font-size:.82rem;font-weight:500;margin-bottom:5px;}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--line-light);border-radius:11px;padding:10px 12px;font-family:inherit;font-size:.9rem;background:#fff;color:var(--ink);outline:none;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--marigold);}
+  .req{color:var(--terra);}
+  .send{width:100%;margin-top:18px;background:var(--marigold);color:var(--night);border:none;border-radius:999px;padding:13px;font-weight:600;font-family:inherit;font-size:.95rem;cursor:pointer;}
+  .success{text-align:center;padding:44px 28px;}
+  .success .ok{width:56px;height:56px;border-radius:50%;background:rgba(79,157,105,.15);color:var(--green);display:grid;place-items:center;margin:0 auto;}
+  .success h3{font-family:'Fraunces',serif;font-weight:500;font-size:1.5rem;margin-top:16px;}
+  .success p{color:var(--muted);font-size:.9rem;margin-top:6px;}
+  .success button{margin-top:22px;border:1px solid var(--line-light);background:transparent;border-radius:999px;padding:10px 24px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--ink);}
 </style>
 </head>
 <body>
@@ -83,92 +144,210 @@
   <div class="stars" id="stars"></div>
   <span class="eyebrow">Simple, honest pricing</span>
   <h1>Pay for the tool.<br>Keep all your earnings.</h1>
-  <p>Jyoti charges a flat subscription — never a commission on your consultations. Your income is yours, always.</p>
+  <p class="sub">A flat subscription — never a commission cut on your consultations. A consultant earning ₹50,000/month saves ₹6,500 every month vs commission-based platforms. Your income is yours, always.</p>
   <div class="pills">
     <button class="active" onclick="setCycle('monthly',this)">Monthly</button>
-    <button onclick="setCycle('yearly',this)">Yearly<span class="save">Save 20%</span></button>
+    <button onclick="setCycle('yearly',this)">Yearly<span class="save">Save 17%</span></button>
   </div>
+  <div class="savings">₹50,000/month earned → you keep <span class="green">₹50,000</span><br><span class="muted">On Topmate: you'd lose <span class="green">₹6,500</span> every month</span></div>
 </header>
 
 <div class="plans">
+  <!-- STARTER -->
   <div class="plan">
     <h3>Starter</h3>
     <div class="tagline">For solo astrologers just getting started.</div>
-    <div class="price">₹<span class="amt" data-m="0" data-y="0">0</span></div>
-    <div class="per">free forever</div>
+    <div class="price-block fixed"><div class="price"><span class="rs">₹</span>0</div><div class="per">free forever · No credit card required</div></div>
     <ul>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>Your branded booking page</li>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>Up to 2 packages</li>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>UPI QR payments</li>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>Email receipts &amp; call links</li>
-      <li class="off"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4l9 9M13 4l-9 9" stroke-linecap="round"/></svg>Own payment gateway</li>
-      <li class="off"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4l9 9M13 4l-9 9" stroke-linecap="round"/></svg>Team members</li>
+      <li class="feat"><span class="tick">✓</span>Your branded public booking page</li>
+      <li class="feat"><span class="tick">✓</span>Up to 3 active packages</li>
+      <li class="feat"><span class="tick">✓</span>UPI QR + manual payment proof</li>
+      <li class="feat"><span class="tick">✓</span>Booking confirmation emails</li>
+      <li class="feat"><span class="tick">✓</span>Basic profile (bio, photo, specialities)</li>
+      <li class="feat"><span class="tick">✓</span>Up to 30 bookings/month</li>
+      <li class="feat off"><span class="tick">✕</span>Custom branding &amp; theme colors</li>
+      <li class="feat off"><span class="tick">✕</span>Your own payment gateway</li>
+      <li class="feat off"><span class="tick">✕</span>AI profile &amp; package setup</li>
+      <li class="feat off"><span class="tick">✕</span>Team members</li>
+      <li class="feat off"><span class="tick">✕</span>Google Calendar sync</li>
+      <li class="feat off"><span class="tick">✕</span>Analytics &amp; charts</li>
     </ul>
-    <button class="cta" onclick="alert('Demo only.')">Start free</button>
+    <a href="signin.html" class="cta">Start free →</a>
   </div>
 
+  <!-- PRO -->
+  <div class="plan">
+    <h3>Pro</h3>
+    <div class="tagline">For active practitioners who are serious about their practice.</div>
+    <div class="price-block" data-m="799" data-y="7,999" data-eq="666" data-save="1,589">
+      <div class="strike"></div>
+      <div class="price"><span class="rs">₹</span><span class="amt">799</span><small class="per-unit">/mo</small></div>
+      <div class="per">billed monthly</div>
+      <div class="save-pill">Save ₹<span class="save-amt"></span></div>
+    </div>
+    <div class="seats">1 owner + 1 team seat included</div>
+    <ul>
+      <li class="feat"><span class="tick">✓</span>Everything in Starter</li>
+      <li class="feat"><span class="tick">✓</span>Unlimited active packages</li>
+      <li class="feat"><span class="tick">✓</span>Unlimited bookings</li>
+      <li class="feat"><span class="tick">✓</span>Full custom branding</li>
+      <li class="feat"><span class="tick">✓</span>Your own Razorpay gateway</li>
+      <li class="feat"><span class="tick">✓</span>AI-assisted profile &amp; package setup ✨</li>
+      <li class="feat"><span class="tick">✓</span>Google Calendar sync</li>
+      <li class="feat"><span class="tick">✓</span>Auto-generated Google Meet links</li>
+      <li class="feat"><span class="tick">✓</span>Basic analytics (bookings &amp; earnings)</li>
+      <li class="feat"><span class="tick">✓</span>PDF receipts with your GST number</li>
+      <li class="feat"><span class="tick">✓</span>1 additional team member included</li>
+      <li class="feat off"><span class="tick">✕</span>Round-robin scheduling</li>
+      <li class="feat off"><span class="tick">✕</span>Accounts role (financial team member)</li>
+      <li class="feat off"><span class="tick">✕</span>Advanced analytics &amp; charts</li>
+      <li class="feat off"><span class="tick">✕</span>Priority support</li>
+    </ul>
+    <a href="signin.html" class="cta">Start Pro →</a>
+    <div class="seat-note">+ ₹299/seat/month for additional members</div>
+  </div>
+
+  <!-- MAX -->
   <div class="plan featured">
     <div class="ribbon">MOST POPULAR</div>
-    <h3>Professional</h3>
-    <div class="tagline">For established practices ready to grow.</div>
-    <div class="price">₹<span class="amt" data-m="499" data-y="399">499</span><small>/mo</small></div>
-    <div class="per" id="pro-per">billed monthly</div>
+    <h3>Max</h3>
+    <div class="tagline">For growing practices with a team.</div>
+    <div class="price-block" data-m="1,999" data-y="19,999" data-eq="1,666" data-save="3,989">
+      <div class="strike"></div>
+      <div class="price"><span class="rs">₹</span><span class="amt">1,999</span><small class="per-unit">/mo</small></div>
+      <div class="per">billed monthly</div>
+      <div class="save-pill">Save ₹<span class="save-amt"></span></div>
+    </div>
+    <div class="seats">1 owner + 3 team seats included</div>
     <ul>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>Everything in Starter</li>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>Unlimited packages</li>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>Connect your own gateway (instant confirm)</li>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>Discounts, coupons &amp; GST receipts</li>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>Seeker profiles &amp; PDF export</li>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>1 team seat included</li>
+      <li class="feat"><span class="tick">✓</span>Everything in Pro</li>
+      <li class="feat"><span class="tick">✓</span>3 additional team members</li>
+      <li class="feat"><span class="tick">✓</span>Round-robin auto-assignment</li>
+      <li class="feat"><span class="tick">✓</span>Accounts role</li>
+      <li class="feat"><span class="tick">✓</span>Advanced analytics &amp; charts</li>
+      <li class="feat"><span class="tick">✓</span>Real-time earnings dashboard</li>
+      <li class="feat"><span class="tick">✓</span>Seeker intake questions per package</li>
+      <li class="feat"><span class="tick">✓</span>Date overrides &amp; holiday blocking</li>
+      <li class="feat"><span class="tick">✓</span>Booking frequency limits</li>
+      <li class="feat"><span class="tick">✓</span>Priority email support (&lt; 24hr response)</li>
+      <li class="feat"><span class="tick">✓</span>Early access to new features</li>
     </ul>
-    <button class="cta" onclick="alert('Demo only.')">Start free trial</button>
+    <a href="signin.html" class="cta">Start Max →</a>
+    <div class="seat-note">+ ₹499/seat/month for additional members</div>
   </div>
 
-  <div class="plan">
-    <h3>Studio</h3>
-    <div class="tagline">For consultants running a full team.</div>
-    <div class="price">₹<span class="amt" data-m="999" data-y="799">999</span><small>/mo</small></div>
-    <div class="per" id="studio-per">billed monthly</div>
+  <!-- ENTERPRISE -->
+  <div class="plan enterprise">
+    <h3>Enterprise</h3>
+    <div class="tagline">For astrology institutes, spiritual centres &amp; large practices.</div>
+    <div class="price-block contact"><div class="price">Contact us</div><div class="per">Custom pricing · starts at 10 seats</div></div>
     <ul>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>Everything in Professional</li>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>3 team seats included</li>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>Round-robin call distribution</li>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>Accounts role &amp; reconciliation</li>
-      <li><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8l3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg>Priority support</li>
+      <li class="feat"><span class="tick">✓</span>Everything in Max</li>
+      <li class="feat"><span class="tick">✓</span>Custom seat count</li>
+      <li class="feat"><span class="tick">✓</span>White-label option</li>
+      <li class="feat"><span class="tick">✓</span>Dedicated account manager</li>
+      <li class="feat"><span class="tick">✓</span>Onboarding &amp; setup assistance</li>
+      <li class="feat"><span class="tick">✓</span>SLA guarantees (99.9% uptime)</li>
+      <li class="feat"><span class="tick">✓</span>GST invoice for enterprise billing</li>
+      <li class="feat"><span class="tick">✓</span>Priority WhatsApp + phone support</li>
+      <li class="feat"><span class="tick">✓</span>Custom contract terms</li>
+      <li class="feat"><span class="tick">✓</span>Volume pricing</li>
     </ul>
-    <button class="cta" onclick="alert('Demo only.')">Choose Studio</button>
+    <button class="cta" onclick="openModal()">Contact us →</button>
   </div>
 </div>
 
 <div class="addon">
   <div class="addon-card">
     <span class="ic"><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="9" r="4"/><path d="M3 23c0-4.5 3.5-7 8-7s8 2.5 8 7M20 12l3 3 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-    <div><h4>Extra team seats</h4><p>Add more consulting or accounts members anytime.</p></div>
-    <div class="price">₹<span class="seat-amt" data-m="199" data-y="159">199</span><small style="font-size:.8rem;color:var(--muted)">/seat/mo</small></div>
+    <div><h4>Need extra team seats?</h4><p>Add consulting or accounts members to your plan anytime.</p></div>
+    <div class="seatprices">
+      <div>Pro · <b><span class="seat-pro" data-m="₹299/seat/month" data-y="₹2,870/seat/year">₹299/seat/month</span></b></div>
+      <div>Max · <b><span class="seat-max" data-m="₹499/seat/month" data-y="₹4,790/seat/year">₹499/seat/month</span></b></div>
+    </div>
   </div>
 </div>
-<p class="note">All plans: no commission on your earnings · money goes directly to you · cancel anytime. Prices shown are placeholders for this demo.</p>
+<p class="note">All plans: no commission on your earnings · money goes directly to you · cancel anytime.</p>
+
+<section class="compare">
+  <h2>How much do you save vs commission platforms?</h2>
+  <div class="compare-grid">
+    <div class="ccard"><div class="earned">₹30,000/month earned</div><div class="rows"><span>Topmate: lose ₹3,900/month</span><span>Jyoti: Pro at ₹799/month</span></div><div class="save"><span class="arr">↑</span> You save ₹3,101/mo</div></div>
+    <div class="ccard"><div class="earned">₹75,000/month earned</div><div class="rows"><span>Topmate: lose ₹9,750/month</span><span>Jyoti: Max at ₹1,999/month</span></div><div class="save"><span class="arr">↑</span> You save ₹7,751/mo</div></div>
+    <div class="ccard"><div class="earned">₹1,50,000/month earned</div><div class="rows"><span>Topmate: lose ₹19,500/month</span><span>Jyoti: Max at ₹1,999/month</span></div><div class="save"><span class="arr">↑</span> You save ₹17,501/mo</div></div>
+  </div>
+</section>
 
 <section class="faq">
   <h2>Pricing questions</h2>
-  <div class="qa" onclick="this.classList.toggle('open')"><h4>Do you take a cut of my consultation fees? <span class="plus">+</span></h4><p>Never. Jyoti charges only a flat subscription. Every rupee a seeker pays goes directly to your own account — we never touch your money.</p></div>
-  <div class="qa" onclick="this.classList.toggle('open')"><h4>How do team seats work? <span class="plus">+</span></h4><p>Professional includes 1 seat and Studio includes 3. Need more helpers? Add extra seats at a flat per-seat monthly rate. Each seat is one consulting or accounts member.</p></div>
-  <div class="qa" onclick="this.classList.toggle('open')"><h4>Can I start for free? <span class="plus">+</span></h4><p>Yes. The Starter plan is free forever and lets you publish a branded page with UPI QR payments. Upgrade only when you're ready for your own gateway or a team.</p></div>
-  <div class="qa" onclick="this.classList.toggle('open')"><h4>What payment methods can my seekers use? <span class="plus">+</span></h4><p>On any plan, UPI QR with payment proof. On Professional and above, connect your own gateway (like Razorpay) for instant confirmation — funds settle straight to your bank.</p></div>
-  <div class="qa" onclick="this.classList.toggle('open')"><h4>Can I cancel anytime? <span class="plus">+</span></h4><p>Absolutely. There are no lock-ins. Cancel whenever you like and your page simply returns to the free tier limits.</p></div>
+  <div class="qa" onclick="this.classList.toggle('open')"><h4>Do you take a cut of my consultation fees? <span class="plus">+</span></h4><p>Never. We charge only a flat subscription. Every rupee a seeker pays goes directly to your own UPI ID or Razorpay account — we never touch your money. That's the whole point.</p></div>
+  <div class="qa" onclick="this.classList.toggle('open')"><h4>How is this different from Topmate or Astrotalk? <span class="plus">+</span></h4><p>Topmate takes 10-13% of every booking. Astrotalk takes 20-30% from marketplace bookings. We charge a flat subscription regardless of how much you earn. The more you earn, the more you save with us.</p></div>
+  <div class="qa" onclick="this.classList.toggle('open')"><h4>How do team seats work? <span class="plus">+</span></h4><p>Pro includes 1 extra seat, Max includes 3. Each seat is one team member — either a Consulting member (takes sessions) or an Accounts member (sees revenue only). Add more seats anytime at ₹299/seat (Pro) or ₹499/seat (Max) per month.</p></div>
+  <div class="qa" onclick="this.classList.toggle('open')"><h4>Can I start completely free? <span class="plus">+</span></h4><p>Yes. Starter is free forever — no credit card, no trial period, no expiry. You get a real branded booking page with UPI payments and up to 30 bookings/month. Upgrade when you're ready.</p></div>
+  <div class="qa" onclick="this.classList.toggle('open')"><h4>What payment methods can seekers use? <span class="plus">+</span></h4><p>On all plans: UPI QR with payment proof (the consultant verifies manually). On Pro and above: connect your own Razorpay account for instant payment confirmation — funds settle directly to your bank within 2 business days.</p></div>
+  <div class="qa" onclick="this.classList.toggle('open')"><h4>Can I cancel anytime? <span class="plus">+</span></h4><p>Absolutely. No lock-ins, no cancellation fees. Cancel from your dashboard anytime — your page returns to the free Starter limits.</p></div>
+  <div class="qa" onclick="this.classList.toggle('open')"><h4>Is there a setup fee or onboarding cost? <span class="plus">+</span></h4><p>No. You can set up your page, create packages, and go live in under 30 minutes — completely on your own. Enterprise customers get dedicated onboarding assistance included.</p></div>
+  <div class="qa" onclick="this.classList.toggle('open')"><h4>Do you offer a yearly discount? <span class="plus">+</span></h4><p>Yes. Pay yearly and save 17% — that's roughly 2 months free. Pro yearly: ₹7,999 (vs ₹9,588 monthly). Max yearly: ₹19,999 (vs ₹23,988 monthly).</p></div>
 </section>
 
 <footer>© 2026 Jyoti · <a href="landing-page.html">Home</a> · <a href="how-it-works.html">How it works</a> · <a href="features.html">Features</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></footer>
 
+<!-- Enterprise contact modal -->
+<div class="backdrop" id="backdrop" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="x" onclick="closeModal()">✕</button>
+    <div class="mbody" id="ent-form">
+      <h3>Tell us about your practice</h3>
+      <div class="msub">We'll get back to you on WhatsApp within 24 hours.</div>
+      <div class="grid2">
+        <div class="field full"><label>Your name <span class="req">*</span></label><input type="text" required></div>
+        <div class="field full"><label>Organisation / practice name <span class="req">*</span></label><input type="text" required></div>
+        <div class="field"><label>Email <span class="req">*</span></label><input type="email" required></div>
+        <div class="field"><label>WhatsApp number <span class="req">*</span></label><input type="tel" placeholder="+91 98XXX XXXXX" required></div>
+        <div class="field"><label>Team members</label><select><option>10-20</option><option>20-50</option><option>50+</option></select></div>
+        <div class="field"><label>Type of practice</label><select><option>Astrology Institute</option><option>Spiritual Centre</option><option>Multi-astrologer Practice</option><option>Other</option></select></div>
+        <div class="field full"><label>Anything else</label><textarea rows="2" placeholder="Tell us about your needs…"></textarea></div>
+      </div>
+      <button class="send" onclick="submitEnt()">Send enquiry</button>
+    </div>
+    <div class="success" id="ent-success" style="display:none;">
+      <div class="ok"><svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h3>We got it!</h3>
+      <p>Expect a message on your WhatsApp shortly.</p>
+      <button onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
+  // Star particles
   const sc=document.getElementById('stars');for(let i=0;i<40;i++){const s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.animationDelay=Math.random()*4+'s';sc.appendChild(s);}
+
+  // Monthly / yearly toggle
   function setCycle(c,btn){
     document.querySelectorAll('.pills button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
-    document.querySelectorAll('.amt').forEach(el=>{el.textContent=el.getAttribute(c==='monthly'?'data-m':'data-y');});
-    document.querySelectorAll('.seat-amt').forEach(el=>{el.textContent=el.getAttribute(c==='monthly'?'data-m':'data-y');});
-    const lbl=c==='monthly'?'billed monthly':'billed yearly (20% off)';
-    document.getElementById('pro-per').textContent=lbl;document.getElementById('studio-per').textContent=lbl;
+    document.querySelectorAll('.price-block[data-m]').forEach(pb=>{
+      const amt=pb.querySelector('.amt'), per=pb.querySelector('.per'), unit=pb.querySelector('.per-unit'),
+            strike=pb.querySelector('.strike'), pill=pb.querySelector('.save-pill'), saveAmt=pb.querySelector('.save-amt');
+      if(c==='yearly'){
+        amt.textContent=pb.dataset.y; unit.textContent='/yr';
+        per.textContent='₹'+pb.dataset.eq+'/mo billed yearly';
+        strike.textContent='₹'+pb.dataset.m+'/mo';
+        saveAmt.textContent=pb.dataset.save; pill.style.display='inline-block';
+      }else{
+        amt.textContent=pb.dataset.m; unit.textContent='/mo';
+        per.textContent='billed monthly'; strike.textContent='';
+        pill.style.display='none';
+      }
+    });
+    document.querySelectorAll('.seat-pro,.seat-max').forEach(el=>{el.textContent=el.dataset[c==='yearly'?'y':'m'];});
   }
+
+  // Enterprise modal
+  function openModal(){document.getElementById('backdrop').classList.add('open');document.body.style.overflow='hidden';}
+  function closeModal(){document.getElementById('backdrop').classList.remove('open');document.body.style.overflow='';document.getElementById('ent-form').style.display='';document.getElementById('ent-success').style.display='none';}
+  function submitEnt(){document.getElementById('ent-form').style.display='none';document.getElementById('ent-success').style.display='block';}
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 </script>
 </body>
 </html>

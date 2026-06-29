@@ -90,7 +90,7 @@ export function ProfileForm({ defaults, aiEnabled = false }: { defaults: Profile
         <div className="flex items-start justify-between gap-3">
           <SectionHeader title="Personal details" hint="What seekers see on your public booking page." />
           {aiEnabled && (
-            <Button type="button" variant="ghost" className="shrink-0" onClick={() => setAiOpen(true)}>Generate with AI ✨</Button>
+            <Button type="button" data-coach="ai-profile" variant="ghost" className="shrink-0" onClick={() => setAiOpen(true)}>Generate with AI ✨</Button>
           )}
         </div>
         {aiNotice && <p className="mb-3 rounded-control bg-marigold/10 px-3 py-2 text-sm text-ink">✓ Generated — review and edit before saving.</p>}

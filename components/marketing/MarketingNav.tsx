@@ -13,8 +13,9 @@ const LINKS = [
   { href: "/about", label: "About" },
 ];
 
-// SP-6.1 — sticky public nav: transparent over the (dark) page header, frosted-night after scrolling; mobile
-// hamburger opens a full-screen menu. Client component only for the scroll + menu state.
+// SP-6.1 — sticky public nav. At the top it sits over the light page body, so its content is dark (ink/terra);
+// once scrolled it gets a frosted-night bar, so its content flips to light (sand). Mobile hamburger opens a
+// full-screen dark menu. Client component only for the scroll + menu state.
 export function MarketingNav() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
@@ -32,16 +33,22 @@ export function MarketingNav() {
   return (
     <header className={`sticky top-0 z-50 transition-colors ${scrolled ? "border-b border-line-dark bg-night/85 backdrop-blur-md" : "border-b border-transparent bg-transparent"}`}>
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-3.5">
-        <Logo />
+        <Logo dark={scrolled} />
         <div className="hidden items-center gap-7 md:flex">
-          {LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className={`text-sm transition ${pathname === l.href ? "text-marigold-soft" : "text-sand/75 hover:text-sand"}`}>
-              {l.label}
-            </Link>
-          ))}
+          {LINKS.map((l) => {
+            const active = pathname === l.href;
+            const cls = scrolled
+              ? active ? "text-marigold-soft" : "text-sand/75 hover:text-sand"
+              : active ? "text-terra" : "text-ink/70 hover:text-ink";
+            return (
+              <Link key={l.href} href={l.href} className={`text-sm transition ${cls}`}>
+                {l.label}
+              </Link>
+            );
+          })}
           <CtaLink href="/signin" variant="primary" className="px-5 py-2">Sign in</CtaLink>
         </div>
-        <button type="button" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="text-sand md:hidden">
+        <button type="button" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} className={`md:hidden ${scrolled ? "text-sand" : "text-ink"}`}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d={open ? "M6 6l12 12M6 18L18 6" : "M3 6h18M3 12h18M3 18h18"} strokeLinecap="round" />
           </svg>

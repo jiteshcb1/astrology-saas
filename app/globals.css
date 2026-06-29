@@ -23,6 +23,21 @@
   --font-sans: var(--font-inter), Inter, system-ui, sans-serif;
   --font-display: var(--font-fraunces), Georgia, serif;
   --font-logo: var(--font-marcellus), serif;
+
+  /* "Celestial Modern" — marketing HOMEPAGE only (new names → never override the warm dashboard tokens). */
+  --color-cosmos: #0b1026;
+  --color-twilight: #2d1b4e;
+  --color-aurora: #7c5cff;
+  --color-aurora-soft: #a78bff;
+  --color-gold: #e8a33d; /* unified to the brand marigold so there is ONE platform yellow (was #ffd66b) */
+  --color-nebula: #ff8fb1;
+  --color-moonstone: #f4f5ff;
+  --color-stardust: #a8aac4;
+  --color-ink2: #1a1530;
+  --color-line-cosmos: rgba(244, 245, 255, 0.12);
+
+  --font-clash: "Clash Display", "General Sans", var(--font-inter), system-ui, sans-serif;
+  --font-deva: var(--font-noto-deva), var(--font-inter), sans-serif;
 }
 
 body {
@@ -67,4 +82,30 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .shimmer { animation: none !important; }
+}
+
+/* ── "Celestial Modern" homepage (scoped to .celestial; no leak to the dashboard) ─────────────────── */
+.celestial { background: var(--color-cosmos); color: var(--color-moonstone); }
+.celestial.font-deva, .celestial .font-deva { font-family: var(--font-deva); }
+
+/* Hero zodiac sky: 140s/100s spin (matches the mockup), cursor-parallax via the --px/--py vars. */
+@keyframes sky-spin { to { transform: rotate(360deg); } }
+.sky-ring { animation: sky-spin 140s linear infinite; transform-origin: 50% 50%; }
+.sky-ring-rev { animation: sky-spin 100s linear infinite reverse; transform-origin: 50% 50%; }
+
+/* Scroll-reveal fade-up (IntersectionObserver toggles .in). */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.in { opacity: 1; transform: none; }
+
+/* Float for optional hero UI cards. */
+@keyframes float-card { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.float-card { animation: float-card 6s ease-in-out infinite; }
+
+/* Hero aurora veil: vertical lens glow, gentle opacity/scale pulse. Keeps its centering when motion is reduced. */
+@keyframes veil-pulse { 0%, 100% { opacity: 0.34; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.06); } }
+.hero-veil { transform: translate(-50%, -50%); opacity: 0.4; animation: veil-pulse 7s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sky-ring, .sky-ring-rev, .float-card, .hero-veil { animation: none !important; }
+  .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
 }

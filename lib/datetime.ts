@@ -85,6 +85,18 @@ export function formatDateLabel(dateISO: string): string {
   }).format(new Date(Date.UTC(y, mo - 1, d)));
 }
 
+// Deterministic "DD Mon[, YYYY], HH:mm" stamp for an ISO timestamp. Formats date and time SEPARATELY so no
+// locale connector word ("at" vs ",") is inserted — that connector differs between Node's ICU and the
+// browser's and breaks SSR hydration when rendered in a client component. timeZone is pinned (default IST).
+export function formatStamp(iso: string, opts: { withYear?: boolean; tz?: string } = {}): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const tz = opts.tz ?? "Asia/Kolkata";
+  const date = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", ...(opts.withYear ? { year: "numeric" } : {}), timeZone: tz }).format(d);
+  const time = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz }).format(d);
+  return `${date}, ${time}`;
+}
+
 // ── ISO ↔ Date (calendar-only; constructed in local time, day-accurate) ─────────
 export function isoToDate(dateISO: string): Date | undefined {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return undefined;

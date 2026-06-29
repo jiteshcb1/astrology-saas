@@ -13,6 +13,7 @@ import { normalizeSlug } from "@/lib/slug";
 
 export interface PublicPackageView {
   id: string;
+  slug: string;
   title: string;
   durationLabel: string;
   priceLabel: string;
@@ -79,6 +80,7 @@ export async function getActiveOrgBySlug(slugRaw: string): Promise<PublicPageDat
 
   const packages: PublicPackageView[] = pkgs.map((p) => ({
     id: p.id,
+    slug: p.slug,
     title: p.title,
     durationLabel: durationLabel(p),
     priceLabel: formatMoney(p.price),

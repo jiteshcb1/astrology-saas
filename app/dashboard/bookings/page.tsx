@@ -32,6 +32,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
     paymentMode: b.payment?.mode ?? null,
     utr: b.payment?.utrReference ?? null,
     hasProof: Boolean(b.payment?.proofImageKey),
+    meetLink: b.meetLink ?? null,
   }));
 
   return (

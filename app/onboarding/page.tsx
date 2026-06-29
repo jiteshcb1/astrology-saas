@@ -11,7 +11,10 @@ import { OnboardingWizard } from "@/components/dashboard/OnboardingWizard";
 // Focused, full-screen onboarding (outside the dashboard shell). Guarded to the consultant app.
 export default async function OnboardingPage() {
   const { session } = await requireRole("access:dashboard");
-  const orgId = session.user.orgId;
+  // Resolve the org from the LIVE membership (not the possibly-stale JWT) so a just-self-served user
+  // (SP-7.1) sees their brand-new org immediately rather than "No organization linked".
+  const member = await findActiveMembershipByUser(session.user.id);
+  const orgId = member?.organizationId;
 
   if (!orgId) {
     return (
@@ -24,10 +27,9 @@ export default async function OnboardingPage() {
     );
   }
 
-  const [org, profile, member] = await Promise.all([
+  const [org, profile] = await Promise.all([
     prisma.organization.findUnique({ where: { id: orgId }, select: { slug: true, name: true } }),
     getProfile(orgId),
-    findActiveMembershipByUser(session.user.id),
   ]);
   if (profile?.onboardedAt) redirect("/dashboard");
   // Reflect the per-member calendar connection (Step 2) — same membership the OAuth flow connects.

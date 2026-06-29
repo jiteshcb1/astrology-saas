@@ -77,7 +77,7 @@ export default async function PackagesPage() {
           branding={{ themeColor: branding?.themeColor ?? null, logoUrl }}
           packages={wsPackages}
         />
-        <Link href="/dashboard/packages/new" className="rounded-control bg-marigold px-4 py-2.5 text-sm font-semibold text-night transition hover:-translate-y-0.5">
+        <Link href="/dashboard/packages/new" data-coach="packages-new" className="rounded-control bg-marigold px-4 py-2.5 text-sm font-semibold text-night transition hover:-translate-y-0.5">
           Create package
         </Link>
       </PageHeader>

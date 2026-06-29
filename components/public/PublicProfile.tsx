@@ -41,6 +41,7 @@ export function PublicProfile({
   onContinue,
   demo = false,
   paymentPreview,
+  initialPackageSlug,
 }: {
   profile: ProfileInfo;
   branding: BrandingInfo;
@@ -55,13 +56,17 @@ export function PublicProfile({
   // SP-6.2 demo mode — show the banner and run the no-write demo booking flow.
   demo?: boolean;
   paymentPreview?: { upiVpa: string | null; qrUrl: string | null } | null;
+  // SP-7.1 deep link: /<slug>/<packageSlug> (or ?pkg=) opens this package's booking drawer on load.
+  initialPackageSlug?: string;
 }) {
   const { primary, onPrimary, secondary, onSecondary } = resolveBrand(branding.themeColor);
   const name = profile.displayName || orgName || "Your name";
   const initial = (name.trim()[0] ?? "A").toUpperCase();
 
-  const [selectedPkg, setSelectedPkg] = useState<PublicPackageView | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  // Seed the drawer open from the deep link (derived initial state → no effect, no flicker).
+  const deepLinked = initialPackageSlug ? packages.find((p) => p.slug === initialPackageSlug) ?? null : null;
+  const [selectedPkg, setSelectedPkg] = useState<PublicPackageView | null>(deepLinked);
+  const [drawerOpen, setDrawerOpen] = useState(Boolean(deepLinked));
   const [showSticky, setShowSticky] = useState(false);
   const [imgError, setImgError] = useState(false);
   const heroRef = useRef<HTMLElement>(null);

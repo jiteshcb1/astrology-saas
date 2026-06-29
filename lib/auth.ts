@@ -77,6 +77,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.userId = user.id;
         token.role = dbUser?.role ?? "seeker";
         token.orgId = dbUser?.memberships[0]?.organizationId ?? null;
+      } else if (token.userId && token.role !== "super_admin" && !token.orgId) {
+        // SP-7.1 self-heal: a just-self-served user (org created AFTER this token was minted) gets their
+        // role/org refreshed on the next request, so session.user.* matches the live membership. Only runs
+        // while orgId is missing (every consultant has one post-provision), so it's a one-shot extra query.
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.userId },
+          select: {
+            role: true,
+            memberships: { where: { status: "active" }, orderBy: { createdAt: "asc" }, take: 1, select: { organizationId: true } },
+          },
+        });
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.orgId = dbUser.memberships[0]?.organizationId ?? null;
+        }
       }
       return token;
     },

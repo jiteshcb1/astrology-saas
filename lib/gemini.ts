@@ -112,15 +112,30 @@ async function callGemini(prompt: string): Promise<unknown | null> {
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: "application/json", temperature: 0.7, maxOutputTokens: 2048 },
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+          maxOutputTokens: 4096,
+          // gemini-2.5-flash is a "thinking" model: reasoning tokens are billed against the output budget and
+          // can truncate the JSON (→ empty/invalid output → silent failure). These are structured-output tasks
+          // that don't need chain-of-thought, so disable thinking for reliable, full JSON responses.
+          thinkingConfig: { thinkingBudget: 0 },
+        },
       }),
     });
-    if (!res.ok) return null;
-    const body = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+    if (!res.ok) {
+      if (process.env.NODE_ENV !== "production") console.warn(`[gemini] HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
+      return null;
+    }
+    const body = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }> };
     const text = body.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) return null;
+    if (!text) {
+      if (process.env.NODE_ENV !== "production") console.warn(`[gemini] no text (finishReason=${body.candidates?.[0]?.finishReason ?? "?"})`);
+      return null;
+    }
     return safeParseJson(text);
-  } catch {
+  } catch (e) {
+    if (process.env.NODE_ENV !== "production") console.warn(`[gemini] fetch failed: ${String(e)}`);
     return null;
   }
 }

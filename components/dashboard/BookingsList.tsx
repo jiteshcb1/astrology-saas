@@ -4,7 +4,45 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusChip } from "@/components/ui/StatusChip";
-import { verifyBookingAction, getProofUrlAction } from "@/app/dashboard/bookings/actions";
+import { formatStamp } from "@/lib/datetime";
+import { verifyBookingAction, getProofUrlAction, generateMeetLinkAction } from "@/app/dashboard/bookings/actions";
+
+const MEET_REASON: Record<string, string> = {
+  no_calendar: "Connect Google Calendar first.",
+  not_confirmed: "Confirm the booking first.",
+  no_host: "No host assigned.",
+  failed: "Couldn't generate — try reconnecting your calendar.",
+};
+
+// Confirmed booking with no Meet link yet → let the consultant generate one on demand (calls the idempotent
+// ensureMeetLink). Covers bookings confirmed before the calendar was connected.
+function MeetLinkButton({ bookingId, link }: { bookingId: string; link: string | null }) {
+  const [current, setCurrent] = useState<string | null>(link);
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  if (current) {
+    return <a href={current} target="_blank" rel="noreferrer" className="rounded-control border border-line px-3 py-1.5 text-xs font-medium text-terra transition hover:border-marigold">Meet link →</a>;
+  }
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        disabled={loading}
+        onClick={async () => {
+          setLoading(true); setMsg(null);
+          const res = await generateMeetLinkAction(bookingId);
+          setLoading(false);
+          if (res.ok && res.meetLink) setCurrent(res.meetLink);
+          else setMsg(MEET_REASON[res.reason ?? "failed"] ?? MEET_REASON.failed);
+        }}
+        className="rounded-control border border-line px-3 py-1.5 text-xs text-ink transition hover:border-marigold disabled:opacity-50"
+      >
+        {loading ? "…" : "Generate meeting link"}
+      </button>
+      {msg && <span className="text-right text-xs text-terra">{msg}</span>}
+    </div>
+  );
+}
 
 export interface BookingRow {
   id: string;
@@ -18,6 +56,7 @@ export interface BookingRow {
   paymentMode: string | null;
   utr: string | null;
   hasProof: boolean;
+  meetLink: string | null;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -33,8 +72,7 @@ function tone(status: string): "success" | "warning" | "danger" | "neutral" {
   return "neutral";
 }
 function fmt(iso: string | null): string {
-  if (!iso) return "—";
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+  return iso ? formatStamp(iso) : "—";
 }
 
 export function BookingsList({ rows }: { rows: BookingRow[] }) {
@@ -112,6 +150,7 @@ export function BookingsList({ rows }: { rows: BookingRow[] }) {
                       </button>
                     </>
                   )}
+                  {r.status === "confirmed" && <MeetLinkButton bookingId={r.id} link={r.meetLink} />}
                 </div>
               </td>
             </tr>

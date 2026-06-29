@@ -81,6 +81,7 @@ export function LandingPreviewWorkspace({
     .filter((p) => p.isActive)
     .map((p) => ({
       id: p.id,
+      slug: p.slug,
       title: p.title,
       durationLabel: durationLabel(p),
       priceLabel: priceLabel(p),

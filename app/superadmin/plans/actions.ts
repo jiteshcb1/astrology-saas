@@ -36,6 +36,14 @@ function readPlanInput(formData: FormData): { input?: PlanInput; error?: string 
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Invalid features." };
   }
+  // Discount: none → null, free → 0, amount → paise.
+  const discountMode = String(formData.get("discountMode") ?? "none");
+  let discountedPrice: number | null = null;
+  if (discountMode === "free") discountedPrice = 0;
+  else if (discountMode === "amount") {
+    discountedPrice = rupeesToPaise(String(formData.get("discountedPrice") ?? ""));
+    if (Number.isNaN(discountedPrice)) return { error: "Discounted price must be a valid non-negative amount." };
+  }
   return {
     input: {
       name: String(formData.get("name") ?? ""),
@@ -45,6 +53,7 @@ function readPlanInput(formData: FormData): { input?: PlanInput; error?: string 
       includedSeats,
       perSeatPrice,
       features,
+      discountedPrice,
     },
   };
 }

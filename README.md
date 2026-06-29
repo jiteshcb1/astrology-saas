@@ -96,19 +96,26 @@ Foundation models: `User`, `Organization`, `OrgMember` (+ `Role` enum), `Verific
 
 ## Production deployment (Cloudflare Workers)
 
-The platform deploys to Cloudflare Workers via OpenNext. `wrangler.jsonc` sets `nodejs_compat` + a recent
-`compatibility_date` for full Node APIs; there is intentionally no `middleware.ts`/`proxy.ts` and no edge-runtime
-route (Prisma + Neon need full Node).
+The platform deploys to **Cloudflare Workers** via OpenNext (`@opennextjs/cloudflare`). `wrangler.jsonc` sets
+`nodejs_compat` + a recent `compatibility_date` for full Node APIs; there is intentionally no `middleware.ts`/`proxy.ts`
+and no edge-runtime route (Prisma + Neon need full Node). _(OpenNext targets Workers, not Cloudflare Pages — Pages
+would need `@cloudflare/next-on-pages` + edge runtime on every route.)_
 
 ```bash
-npm run preview                      # build + run locally on the Workers runtime
+npm run preview                      # cf:build (build + WASM trim) + run locally on the Workers runtime
 # Production:
 npm run build
-npx opennextjs-cloudflare build
+npm run cf:build                     # opennextjs-cloudflare build + trim unused Prisma WASM (see below)
 npx wrangler deploy                  # (or: npm run deploy) — needs `wrangler login` + secrets
 ```
 
-Set production secrets with `wrangler secret put <NAME>` (never commit them). The full, ordered go-live procedure —
+**Bundle size / Prisma WASM trim.** Prisma 7 bundles its query-compiler WASM for *five* databases (~75 MB raw); we
+use only Postgres. `scripts/trim-prisma-wasm.mjs` (run by `cf:build`) empties the four unused providers, taking the
+Worker from ~20 MiB → **~5.5 MiB gzipped**. That's **over the Workers *free* 3 MiB limit** (the app's server bundle is
+3.78 MiB gz on its own) but **under the *Paid* 10 MiB limit** — so production needs the **Workers Paid ($5/mo)** plan.
+
+Set production secrets with `wrangler secret put <NAME>` (Workers — *not* `wrangler pages secret put`). The full,
+ordered go-live procedure —
 every env var, the Google OAuth redirect URIs, Hostinger DNS for **astro.hifiai.in**, Neon/R2 confirmation, Sentry
 verification, and the production checklist — is in **[`docs/6-Deployment-Runbook.md`](docs/6-Deployment-Runbook.md)**.
 

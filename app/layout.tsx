@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter, Marcellus } from "next/font/google";
+import { Fraunces, Inter, Marcellus, Noto_Sans_Devanagari } from "next/font/google";
 import "./globals.css";
 
 // Body / UI text.
@@ -11,6 +11,13 @@ const marcellus = Marcellus({
   variable: "--font-marcellus",
   weight: "400",
   subsets: ["latin"],
+  display: "swap",
+});
+// Hindi (Devanagari) — activated on the homepage when the language toggle is set to हिं.
+const notoDeva = Noto_Sans_Devanagari({
+  variable: "--font-noto-deva",
+  weight: ["400", "500", "600"],
+  subsets: ["devanagari"],
   display: "swap",
 });
 
@@ -27,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${fraunces.variable} ${marcellus.variable} h-full antialiased`}
+      className={`${inter.variable} ${fraunces.variable} ${marcellus.variable} ${notoDeva.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
